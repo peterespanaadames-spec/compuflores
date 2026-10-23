@@ -158,13 +158,13 @@ export function LoginPage() {
             <Sparkles className="w-6 h-6" />
           </div>
           <h2 className="auth-title">
-            {isRegister ? 'Crear Cuenta' : 'Bienvenido a Frenyer'}
+            {isRegister ? 'Crear Cuenta' : 'CompuRepuesto Flores Inversiones'}
           </h2>
-          <p className="auth-subtitle">
-            {isRegister
-              ? 'Genera tu usuario para acceder al sistema o comprar'
-              : 'Accede a tu panel administrativo o portal de compras'}
-          </p>
+          {isRegister && (
+            <p className="auth-subtitle">
+              Genera tu usuario para acceder al sistema o comprar
+            </p>
+          )}
         </header>
 
         {/* Tarjeta de Autenticación */}
@@ -234,6 +234,7 @@ export function LoginPage() {
                     <input
                       type="email"
                       required
+                      autoComplete="off"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="tu@correo.com"
@@ -249,6 +250,7 @@ export function LoginPage() {
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
+                      autoComplete="new-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Mínimo 6 caracteres"
