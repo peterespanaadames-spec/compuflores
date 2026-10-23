@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { refreshSupabaseStatus, type SupabaseServerStatus } from '../../lib/supabase/client';
 import {
   Sparkles,
   Mail,
@@ -12,9 +11,7 @@ import {
   ArrowLeft,
   AlertCircle,
   CheckCircle2,
-  Loader2,
-  Building,
-  ShoppingBag
+  Loader2
 } from 'lucide-react';
 
 export function LoginPage() {
@@ -26,34 +23,17 @@ export function LoginPage() {
   const isRegisterInitial = location.pathname.includes('registro');
   const [isRegister, setIsRegister] = useState(isRegisterInitial);
 
-  // Campos
+  // Campos (el rol del registro queda fijo como Cliente de la tienda)
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [accountRole, setAccountRole] = useState<'gerente' | 'cliente'>('gerente');
   const [showPassword, setShowPassword] = useState(false);
 
   // Estados de carga y mensajes
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [status, setStatus] = useState<SupabaseServerStatus | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadStatus = async () => {
-      const serverStatus = await refreshSupabaseStatus();
-      if (!isMounted) return;
-      setStatus(serverStatus);
-    };
-
-    void loadStatus();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,17 +68,13 @@ export function LoginPage() {
           cleanEmail,
           cleanPassword,
           fullName.trim(),
-          accountRole
+          'cliente'
         );
         if (signUpError) {
           setError(signUpError.message || 'Error al crear la cuenta.');
         } else {
-          // Si el usuario registrado es administrador/gerente, dirigir al dashboard
-          if (accountRole === 'gerente') {
-            navigate('/dashboard', { replace: true });
-          } else {
-            navigate('/', { replace: true });
-          }
+          // Cuenta de cliente de la tienda: entra al portal de compras
+          navigate('/', { replace: true });
         }
       } catch (err: any) {
         setError(err?.message || 'Error inesperado durante el registro.');
@@ -160,11 +136,6 @@ export function LoginPage() {
           <h2 className="auth-title">
             {isRegister ? 'Crear Cuenta' : 'CompuRepuesto Flores Inversiones'}
           </h2>
-          {isRegister && (
-            <p className="auth-subtitle">
-              Genera tu usuario para acceder al sistema o comprar
-            </p>
-          )}
         </header>
 
         {/* Tarjeta de Autenticación */}
@@ -187,44 +158,20 @@ export function LoginPage() {
           {/* --- FORMULARIO CON CORREO / CONTRASEÑA --- */}
           <form className="auth-form" onSubmit={handleSubmit}>
                 {isRegister && (
-                  <>
-                    <div className="auth-field">
-                      <label>Nombre Completo</label>
-                      <div className="auth-input-wrapper">
-                        <User className="auth-input-icon" style={{ width: 16, height: 16 }} />
-                        <input
-                          type="text"
-                          required
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          placeholder="Ej. Juan Pérez"
-                          className="auth-input"
-                        />
-                      </div>
+                  <div className="auth-field">
+                    <label>Nombre Completo</label>
+                    <div className="auth-input-wrapper">
+                      <User className="auth-input-icon" style={{ width: 16, height: 16 }} />
+                      <input
+                        type="text"
+                        required
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Ej. Juan Pérez"
+                        className="auth-input"
+                      />
                     </div>
-
-                    <div className="auth-field">
-                      <label>Tipo de acceso al sistema</label>
-                      <div className="auth-role-select">
-                        <button
-                          type="button"
-                          onClick={() => setAccountRole('gerente')}
-                          className={`auth-role-option ${accountRole === 'gerente' ? 'selected' : ''}`}
-                        >
-                          <Building style={{ width: 14, height: 14, display: 'inline', marginRight: 4 }} />
-                          Administrador / ERP
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setAccountRole('cliente')}
-                          className={`auth-role-option ${accountRole === 'cliente' ? 'selected' : ''}`}
-                        >
-                          <ShoppingBag style={{ width: 14, height: 14, display: 'inline', marginRight: 4 }} />
-                          Cliente Tienda
-                        </button>
-                      </div>
-                    </div>
-                  </>
+                  </div>
                 )}
 
                 <div className="auth-field">
@@ -314,12 +261,6 @@ export function LoginPage() {
               </button>
             </div>
         </div>
-
-        {status && (
-          <p className="auth-status-note" style={{ textAlign: 'center', marginTop: 16, fontSize: 12, color: '#94a3b8' }}>
-            Base de datos: {status.supabaseConnected ? 'Conectada (Supabase)' : 'Modo local activo'}
-          </p>
-        )}
       </section>
     </main>
   );

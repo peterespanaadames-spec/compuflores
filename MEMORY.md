@@ -66,7 +66,8 @@
 - Build y ESLint limpios; cambio solo de front (HMR; Ctrl+F5 si el usuario verá la vista vieja).
 
 ## Login simplificado (2026-10-23)
-- Título del login: «CompuRepuesto Flores Inversiones» (antes «Bienvenido a Frenyer»); subtítulo solo en modo registro. Campos de correo (`autoComplete="off"`) y contraseña (`autoComplete="new-password"`) sin autocompletado del navegador — nunca precargar credenciales reales (placeholders genéricos).
+- Título del login: «CompuRepuesto Flores Inversiones» (antes «Bienvenido a Frenyer»). Campos de correo (`autoComplete="off"`) y contraseña (`autoComplete="new-password"`) sin autocompletado del navegador — nunca precargar credenciales reales (placeholders genéricos).
+- Segunda pasada: sin nota «Base de datos: Conectada (Supabase)» (la pantalla ya no consulta el estado del servidor al montar: fuera `status` / `useEffect` / `refreshSupabaseStatus`), sin subtítulo en registro, sin selector «Tipo de acceso al sistema» (rol fijo `cliente`: al registrarse entra directo a `/`, la tienda).
 - `LoginPage.tsx`: eliminados el bloque «Acceso rápido de Administrador» (mostraba credenciales en pantalla — riesgo), el botón «Continuar con Google» (a petición; `signInWithGoogle` sigue disponible en AuthContext para reactivarlo) y la pestaña «Clave de Administrador» (queda solo correo/contraseña; el login local por clave sigue existiendo en el backend `/api/auth/local-login` y en AuthContext `signInWithAccessKey`). Estado/tipos/handlers no usados removidos (`activeTab`, `accessKey`, `googleLoading`, `handleGoogleSignIn`, `handleAccessKeySubmit`, `handleUseAdminCredentials`, `handleUseQuickKey`).
 - Si se pide reactivar el acceso por clave o Google: restaurar pestañas o botón; los helpers del contexto ya existen.
 
