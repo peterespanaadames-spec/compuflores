@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { isInternalRole } from '../../lib/auth/roles';
 import {
   Sparkles,
   Mail,
@@ -88,24 +89,8 @@ export function LoginPage() {
         if (signInError) {
           setError(signInError.message || 'Error al iniciar sesión. Verifica tu correo y contraseña.');
         } else {
-          const storedRole = (localStorage.getItem('frenyer_user_role') || '').toLowerCase();
-          const internalRoles = [
-            'gerente',
-            'administrador',
-            'admin',
-            'cajero',
-            'ventas',
-            'inventario',
-            'almacenista',
-            'contador',
-            'superadmin',
-            'soporte',
-            'director',
-            'propietario',
-            'asociado',
-            'personal'
-          ];
-          if (internalRoles.includes(storedRole)) {
+          // Cliente → tienda; usuario interno → panel administrativo
+          if (isInternalRole(localStorage.getItem('frenyer_user_role'))) {
             navigate('/dashboard', { replace: true });
           } else {
             navigate('/', { replace: true });

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { isInternalRole } from '../../lib/auth/roles';
 import { Sparkles } from 'lucide-react';
 
 interface ProtectedRouteProps {
@@ -31,23 +32,6 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     );
   }
 
-  const internalRoles = [
-    'gerente',
-    'administrador',
-    'admin',
-    'cajero',
-    'ventas',
-    'inventario',
-    'almacenista',
-    'contador',
-    'superadmin',
-    'soporte',
-    'director',
-    'propietario',
-    'asociado',
-    'personal'
-  ];
-
   // Verificar si hay sesión activa en contexto o en almacenamiento local
   let hasActiveUser = Boolean(user);
   let effectiveRole = (role || user?.user_metadata?.role || '').toLowerCase();
@@ -68,11 +52,9 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     const storedRole = (localStorage.getItem('frenyer_user_role') || '').toLowerCase();
 
     // Prioridad: si el rol en contexto ya es un rol interno, prevalece siempre sobre un valor residual en localStorage
-    if (!internalRoles.includes(effectiveRole)) {
-      if (internalRoles.includes(parsedStoredRole)) {
+    if (!isInternalRole(effectiveRole)) {
+      if (isInternalRole(parsedStoredRole)) {
         effectiveRole = parsedStoredRole;
-      } else if (internalRoles.includes(storedRole)) {
-        effectiveRole = storedRole;
       } else if (storedRole) {
         effectiveRole = storedRole;
       }
@@ -85,9 +67,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  const isInternal = internalRoles.includes(effectiveRole);
-
-  if (!isInternal) {
+  // El panel administrativo es solo para usuarios internos; los clientes van a la tienda.
+  if (!isInternalRole(effectiveRole)) {
     return <Navigate to="/" replace />;
   }
 

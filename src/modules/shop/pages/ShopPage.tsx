@@ -39,6 +39,7 @@ import {
   Heart
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase/client';
+import { isInternalRole } from '../../../lib/auth/roles';
 import {
   getActiveExchangeRate,
   convertUSDtoVES,
@@ -322,10 +323,10 @@ export function ShopPage() {
       );
 
       const metadataRole = (user.user_metadata?.role || '').toLowerCase();
-      const isExplicitCustomer = metadataRole === 'cliente' || metadataRole === 'customer';
 
-      // Es cliente SOLO si está explícitamente marcado como cliente/customer y NO está registrado en la base de datos de asociados
-      const isCustomer = isExplicitCustomer && !matched;
+      // Regla simple: es CLIENTE por defecto. Solo es usuario interno quien
+      // está registrado en la base de usuarios del ERP o trae un rol interno.
+      const isCustomer = !matched && !isInternalRole(metadataRole);
 
       if (!isCustomer) {
         // --- ES USUARIO ASOCIADO / ADMINISTRATIVO DEL ERP ---

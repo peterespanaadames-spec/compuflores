@@ -65,6 +65,10 @@
 - Clases nuevas del design system: `.invoice-sheet`, `.iv-label`, `.iv-row`, `.iv-row-strong`, `table.iv-table` (mismo lenguaje visual, tokens/bordes existentes, ~860px en pantalla).
 - Build y ESLint limpios; cambio solo de front (HMR; Ctrl+F5 si el usuario verá la vista vieja).
 
+## Roles de usuario: cliente vs interno (2026-10-23)
+- Regla simple: **cliente por defecto**; solo es usuario interno quien está en la base de usuarios del ERP (`/api/users`) o trae un rol interno en metadata. Cliente → portal propio en la tienda (Mis Pedidos, Mis Compras, Lista de Deseo, Mi Perfil vía `CustomerPortal`); interno → Panel Administrativo ERP (`/dashboard`, protegido por `ProtectedRoute`, que redirige clientes a `/`).
+- Nuevo helper único `src/lib/auth/roles.ts` (`INTERNAL_ROLES`, `isInternalRole`); reemplaza las 3 listas duplicadas en `ShopPage` (ya no exige role=cliente explícito en metadata para ser cliente), `ProtectedRoute` y `LoginPage` (redirige internos a `/dashboard`, clientes a `/`).
+
 ## Login simplificado (2026-10-23)
 - Título del login: «CompuRepuesto Flores Inversiones» (antes «Bienvenido a Frenyer»). Campos de correo (`autoComplete="off"`) y contraseña (`autoComplete="new-password"`) sin autocompletado del navegador — nunca precargar credenciales reales (placeholders genéricos).
 - Segunda pasada: sin nota «Base de datos: Conectada (Supabase)» (la pantalla ya no consulta el estado del servidor al montar: fuera `status` / `useEffect` / `refreshSupabaseStatus`), sin subtítulo en registro, sin selector «Tipo de acceso al sistema» (rol fijo `cliente`: al registrarse entra directo a `/`, la tienda).
