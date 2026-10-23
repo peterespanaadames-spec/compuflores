@@ -1,0 +1,3667 @@
+import { supabase, hasBrowserSupabaseClient as isSupabaseConfigured } from './client';
+import { authenticatedFetch } from './api';
+
+export interface DbCustomer {
+  id: string;
+  organization_id?: string;
+  code?: string;
+  name: string;
+  doc_type: string;
+  doc_number: string;
+  phone?: string;
+  email?: string;
+  credit_limit: number;
+  address?: string;
+  status: 'Activo' | 'Inactivo';
+  orders_count: number;
+  total_spent_usd: number;
+  last_order_date?: string;
+  created_at?: string;
+}
+
+export interface DbSupplier {
+  id: string;
+  organization_id?: string;
+  code?: string;
+  name: string;
+  doc_type: string;
+  doc_number: string;
+  contact_person?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  category?: string;
+  balance_usd: number;
+  status: 'Activo' | 'Inactivo';
+  created_at?: string;
+}
+
+export interface DbBranch {
+  id?: string;
+  organization_id?: string;
+  code: string;
+  name: string;
+  address?: string;
+  phone?: string;
+  status: 'Habilitada' | 'Deshabilitada';
+  is_active: boolean;
+  cash_registers?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface DbProduct {
+  id?: string;
+  organization_id?: string;
+  branch_id?: string;
+  sku: string;
+  barcode?: string;
+  name: string;
+  category: string;
+  brand?: string;
+  cost_usd: number;
+  price_usd: number;
+  stock: number;
+  min_stock: number;
+  unit: string;
+  image_url?: string;
+  status: string;
+  created_at?: string;
+}
+
+export interface DbSale {
+  id?: string;
+  organization_id?: string;
+  branch_id?: string;
+  customer_id?: string;
+  user_id?: string;
+  doc_type: 'FACTURA' | 'NOTA' | 'ESPERA' | 'COTIZACION';
+  doc_number: string;
+  status: 'COMPLETADA' | 'EN_ESPERA' | 'ANULADA';
+  payment_type: 'CONTADO' | 'CREDITO';
+  exchange_rate: number;
+  is_future_rate?: boolean;
+  rate_source?: string;
+  rate_value_date?: string;
+  subtotal_usd: number;
+  discount_usd: number;
+  tax_usd: number;
+  igtf_usd: number;
+  total_usd: number;
+  total_ves: number;
+  notes?: string;
+  quote_status?: 'Creada' | 'Facturada' | 'Rechazada' | 'Pagada';
+  expires_at?: string;
+  converted_to_sale_id?: string;
+  created_at?: string;
+}
+
+export interface DbQuoteItem {
+  id?: string;
+  sale_id: string;
+  product_id?: string;
+  sku: string;
+  name: string;
+  quantity: number;
+  unit_price_usd: number;
+  total_usd: number;
+  total_ves: number;
+}
+
+export interface DbQuote {
+  id: string;
+  organization_id?: string;
+  customer_id?: string;
+  user_id?: string;
+  doc_number: string;
+  status: string;
+  payment_type: string;
+  exchange_rate: number;
+  subtotal_usd: number;
+  total_usd: number;
+  total_ves: number;
+  notes?: string;
+  quote_status?: 'Creada' | 'Facturada' | 'Rechazada' | 'Pagada';
+  expires_at?: string;
+  converted_to_sale_id?: string;
+  created_at?: string;
+  customer?: { id?: string; name?: string; phone?: string; doc_type?: string; doc_number?: string; email?: string };
+  customers?: { id?: string; name?: string; phone?: string; doc_type?: string; doc_number?: string; email?: string };
+  items?: DbQuoteItem[];
+  sale_items?: DbQuoteItem[];
+  vendor_name?: string;
+}
+
+export interface DbSaleItem {
+  id?: string;
+  sale_id: string;
+  product_id?: string;
+  sku: string;
+  name: string;
+  quantity: number;
+  unit_price_usd: number;
+  total_usd: number;
+  total_ves: number;
+}
+
+export interface DbInventoryMovement {
+  id: string;
+  organization_id?: string | null;
+  branch_id?: string | null;
+  product_id?: string | null;
+  sku: string;
+  product_name: string;
+  movement_type: 'ENTRADA' | 'SALIDA' | 'COMPRA' | 'VENTA' | 'AJUSTE_ENTRADA' | 'AJUSTE_SALIDA' | 'AJUSTE_CORRECCION' | 'DEVOLUCION' | string;
+  doc_type: string;
+  doc_number: string;
+  entity_type?: string | null;
+  entity_name?: string | null;
+  quantity: number;
+  unit_cost_usd: number;
+  unit_price_usd: number;
+  exchange_rate: number;
+  total_usd: number;
+  total_ves: number;
+  previous_stock?: number | null;
+  new_stock?: number | null;
+  reason?: string | null;
+  notes?: string | null;
+  created_at: string;
+}
+
+// ---------------------------------------------------------------------------
+// CUSTOMERS
+// ---------------------------------------------------------------------------
+
+export async function fetchCustomersFromSupabase(): Promise<DbCustomer[]> {
+  // 1. Try server proxy
+  try {
+    const res = await authenticatedFetch('/api/customers');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        return json.data;
+      }
+    }
+  } catch {
+    // Fall back to direct client
+  }
+
+  // Cero simulación: solo datos reales registrados en Supabase
+  return [];
+}
+
+export async function createCustomerInSupabase(customer: Omit<DbCustomer, 'id' | 'created_at'>): Promise<DbCustomer | null> {
+  // 1. Try server proxy
+  try {
+    const res = await authenticatedFetch('/api/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(customer)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.data) {
+        return json.data;
+      }
+    }
+  } catch {
+    // Fall back to direct client
+  }
+
+  // 2. Direct Supabase client
+  try {
+    const orgId = await getActiveOrgId();
+    const payload: any = { ...customer };
+    if (orgId && !payload.organization_id) {
+      payload.organization_id = orgId;
+    }
+
+    const { data, error } = await supabase
+      .from('customers')
+      .insert([payload])
+      .select();
+
+    if (error) {
+      console.error('Error creating customer in Supabase:', error.message);
+      return null;
+    }
+    return Array.isArray(data) ? data[0] : (data || payload);
+  } catch (err) {
+    console.error('Network error creating customer in Supabase:', err);
+    return null;
+  }
+}
+
+export async function updateCustomerInSupabase(id: string, updates: Partial<DbCustomer>): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('customers')
+      .update(updates)
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error updating customer in Supabase:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Network error updating customer in Supabase:', err);
+    return false;
+  }
+}
+
+export async function deleteCustomerFromSupabase(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('customers')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting customer from Supabase:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Network error deleting customer from Supabase:', err);
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SUPPLIERS
+// ---------------------------------------------------------------------------
+
+export async function fetchSuppliersFromSupabase(organizationId?: string): Promise<DbSupplier[]> {
+  const rawLocal: DbSupplier[] = typeof window !== 'undefined'
+    ? JSON.parse(localStorage.getItem('frenyer_local_suppliers') || '[]')
+    : [];
+
+  let serverData: DbSupplier[] = [];
+  try {
+    const res = await authenticatedFetch('/api/suppliers');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        serverData = json.data;
+      }
+    }
+  } catch { }
+
+  let supabaseData: DbSupplier[] = [];
+  if (isSupabaseConfigured) {
+    try {
+      const scopedOrganizationId = organizationId || await getActiveOrgId();
+      let query = supabase
+        .from('suppliers')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      let { data, error } = await query;
+      if (!error && (!data || data.length === 0) && scopedOrganizationId) {
+        // Fallback: consultar sin restricción de organization_id para recuperar proveedores globales o de demostración
+        try {
+          const { data: allData, error: allErr } = await supabase
+            .from('suppliers')
+            .select('*')
+            .order('created_at', { ascending: false });
+          if (!allErr && allData && allData.length > 0) {
+            data = allData;
+          }
+        } catch { }
+      }
+
+      if (!error && data) {
+        supabaseData = data;
+      }
+    } catch (err) {
+      console.warn('Error consultando proveedores en Supabase:', err);
+    }
+  }
+
+  // Helper de clave canónica para deduplicar
+  const getSupplierKey = (s: Partial<DbSupplier>): string => {
+    const doc = (s.doc_number || '').trim().toUpperCase().replace(/[\s.-]/g, '');
+    if (doc) return `doc:${doc}`;
+    const name = (s.name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    if (name) return `name:${name}`;
+    return `id:${s.id || ''}`;
+  };
+
+  const canonicalMap = new Map<string, DbSupplier>();
+
+  // 1. Agregar datos remotos de Supabase
+  for (const s of supabaseData) {
+    if (!s) continue;
+    const k = getSupplierKey(s);
+    canonicalMap.set(k, s);
+  }
+
+  // 2. Fusionar datos del servidor proxy (priorizar UUID remoto si existe)
+  for (const s of serverData) {
+    if (!s) continue;
+    const k = getSupplierKey(s);
+    const existing = canonicalMap.get(k);
+    if (existing) {
+      canonicalMap.set(k, {
+        ...s,
+        ...existing,
+        id: (existing.id && isValidUuid(existing.id)) ? existing.id : (s.id || existing.id),
+        code: existing.code || s.code
+      });
+    } else {
+      canonicalMap.set(k, s);
+    }
+  }
+
+  // 3. Fusionar datos de localStorage solo si no están ya registrados
+  for (const s of rawLocal) {
+    if (!s) continue;
+    const k = getSupplierKey(s);
+    if (!canonicalMap.has(k)) {
+      canonicalMap.set(k, s);
+    }
+  }
+
+  const merged = Array.from(canonicalMap.values());
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('frenyer_local_suppliers', JSON.stringify(merged));
+  }
+
+  return merged.length > 0 ? merged : rawLocal;
+}
+
+export async function createSupplierInSupabase(
+  supplier: Omit<DbSupplier, 'id' | 'created_at'> & { id?: string }
+): Promise<DbSupplier | null> {
+  const orgId = await getActiveOrgId();
+
+  // Comprobar si ya existe un proveedor idéntico localmente para no duplicar
+  if (typeof window !== 'undefined') {
+    const local = JSON.parse(localStorage.getItem('frenyer_local_suppliers') || '[]');
+    const normDoc = (supplier.doc_number || '').trim().toUpperCase().replace(/[\s.-]/g, '');
+    const normName = (supplier.name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    const existing = local.find((s: any) => 
+      (normDoc && s.doc_number && s.doc_number.trim().toUpperCase().replace(/[\s.-]/g, '') === normDoc) ||
+      (normName && s.name && s.name.trim().toLowerCase().replace(/\s+/g, ' ') === normName)
+    );
+    if (existing) {
+      await updateSupplierInSupabase(existing.id, supplier);
+      return { ...existing, ...supplier };
+    }
+  }
+
+  const newId = supplier.id && isValidUuid(supplier.id)
+    ? supplier.id
+    : ((typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'b1c2d3e4-3333-4000-8000-' + Date.now().toString().slice(-12).padStart(12, '0'));
+
+  const supplierRecord: DbSupplier = {
+    id: newId,
+    organization_id: orgId || '00000000-0000-0000-0000-000000000001',
+    code: supplier.code || `PRV-0001`,
+    name: supplier.name,
+    doc_type: supplier.doc_type || 'RIF (J / G / V)',
+    doc_number: (supplier.doc_number || '').trim().toUpperCase(),
+    contact_person: supplier.contact_person || '',
+    phone: supplier.phone || '',
+    email: supplier.email || '',
+    address: supplier.address || '',
+    category: supplier.category || 'General',
+    balance_usd: Number(supplier.balance_usd) || 0,
+    status: (supplier.status as 'Activo' | 'Inactivo') || 'Activo',
+    created_at: new Date().toISOString()
+  };
+
+  // 1. Try server proxy
+  try {
+    const res = await authenticatedFetch('/api/suppliers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(supplier)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.data) {
+        const resultSupplier: DbSupplier = {
+          ...supplierRecord,
+          ...json.data,
+          address: supplier.address || json.data.address || ''
+        };
+        return resultSupplier;
+      }
+    }
+  } catch {
+    // Fall back
+  }
+
+  // 2. Try direct Supabase client
+  if (isSupabaseConfigured) {
+    try {
+      const payload: any = {
+        organization_id: orgId || '00000000-0000-0000-0000-000000000001',
+        code: supplierRecord.code,
+        name: supplier.name,
+        doc_type: supplier.doc_type || 'RIF (J / G / V)',
+        doc_number: supplier.doc_number || '',
+        contact_person: supplier.contact_person || '',
+        phone: supplier.phone || '',
+        email: supplier.email || '',
+        address: supplier.address || '',
+        category: supplier.category || 'General',
+        balance_usd: Number(supplier.balance_usd) || 0,
+        status: supplier.status || 'Activo'
+      };
+
+      if (supplier.id && isValidUuid(supplier.id)) {
+        payload.id = supplier.id;
+      }
+
+      let currentPayload = { ...payload };
+      let attempts = 0;
+      while (attempts < 6) {
+        attempts++;
+        const { data, error } = await supabase
+          .from('suppliers')
+          .insert([currentPayload])
+          .select()
+          .single();
+
+        if (!error && data) {
+          const synced: DbSupplier = {
+            ...supplierRecord,
+            ...data,
+            address: supplier.address || data.address || ''
+          };
+          return synced;
+        }
+
+        if (error) {
+          const match = error.message.match(/Could not find the '([^']+)' column of 'suppliers'/i);
+          if (match && match[1] && match[1] in currentPayload) {
+            console.warn(`Columna '${match[1]}' no disponible en 'suppliers' de Supabase; reintentando sin ella...`);
+            delete currentPayload[match[1]];
+            continue;
+          }
+          console.warn('Aviso creando proveedor en Supabase:', error.message);
+          break;
+        }
+      }
+    } catch (err) {
+      console.warn('Network notice creando proveedor en Supabase:', err);
+    }
+  }
+
+  // 3. Fallback resiliente con persistencia local garantizada
+  if (typeof window !== 'undefined') {
+    const existing = JSON.parse(localStorage.getItem('frenyer_local_suppliers') || '[]');
+    existing.push(supplierRecord);
+    localStorage.setItem('frenyer_local_suppliers', JSON.stringify(existing));
+  }
+  return supplierRecord;
+}
+
+export async function updateSupplierInSupabase(id: string, updates: Partial<DbSupplier>): Promise<boolean> {
+  // 1. Try server proxy
+  try {
+    const res = await authenticatedFetch(`/api/suppliers/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return true;
+    }
+  } catch {
+    // Fall back
+  }
+
+  if (isSupabaseConfigured) {
+    try {
+      let currentUpdates = { ...updates };
+      let attempts = 0;
+      while (attempts < 6) {
+        attempts++;
+        const { error } = await supabase
+          .from('suppliers')
+          .update(currentUpdates)
+          .eq('id', id);
+
+        if (!error) {
+          return true;
+        }
+
+        const match = error.message.match(/Could not find the '([^']+)' column of 'suppliers'/i);
+        if (match && match[1] && match[1] in currentUpdates) {
+          delete (currentUpdates as any)[match[1]];
+          continue;
+        }
+
+        console.warn('Aviso actualizando proveedor en Supabase:', error.message);
+        break;
+      }
+    } catch (err) {
+      console.warn('Network notice updating supplier in Supabase:', err);
+    }
+  }
+
+  // Persistir localmente en caso de fallo de Supabase
+  if (typeof window !== 'undefined') {
+    const existing = JSON.parse(localStorage.getItem('frenyer_local_suppliers') || '[]');
+    const index = existing.findIndex((s: DbSupplier) => s.id === id);
+    if (index !== -1) {
+      existing[index] = { ...existing[index], ...updates };
+      localStorage.setItem('frenyer_local_suppliers', JSON.stringify(existing));
+    }
+  }
+  return true;
+}
+
+export async function deleteSupplierFromSupabase(id: string): Promise<boolean> {
+  try {
+    const res = await authenticatedFetch(`/api/suppliers/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return true;
+    }
+  } catch {
+    // ignore
+  }
+
+  if (!isSupabaseConfigured) return true;
+
+  try {
+    const { error } = await supabase
+      .from('suppliers')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.warn('Aviso eliminando proveedor de Supabase:', error.message);
+    }
+    return true;
+  } catch (err) {
+    console.warn('Network notice deleting supplier from Supabase:', err);
+    return true;
+  }
+}
+
+export async function getActiveOrgId(): Promise<string | null> {
+  // 1. Organizacion de la sesion activa (la resuelve el servidor con las RLS)
+  try {
+    const res = await authenticatedFetch('/api/auth/session');
+    if (res.ok) {
+      const json = await res.json();
+      const orgId = json?.data?.organizationId;
+      if (orgId) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('frenyer_org_id', orgId);
+        }
+        return orgId;
+      }
+    }
+  } catch (err) {
+    console.warn('Aviso resolviendo la organizacion de la sesion:', err);
+  }
+
+  // 2. Organizacion almacenada localmente
+  if (typeof window !== 'undefined') {
+    const storedOrg = localStorage.getItem('frenyer_org_id');
+    if (storedOrg) return storedOrg;
+  }
+
+  // 3. Organizacion por defecto que expone el servidor para el canal publico
+  try {
+    const res = await fetch('/api/public/organization', { credentials: 'include' });
+    if (res.ok) {
+      const json = await res.json();
+      const orgId = json?.data?.organizationId;
+      if (orgId) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('frenyer_org_id', orgId);
+        }
+        return orgId;
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  // 4. UUID por defecto para entornos demo/locales
+  return '00000000-0000-0000-0000-000000000001';
+}
+
+// ---------------------------------------------------------------------------
+// PRODUCTS / INVENTORY
+// ---------------------------------------------------------------------------
+
+export async function fetchProductsFromSupabase(): Promise<DbProduct[]> {
+  // 1. Try local server proxy (immune to iframe CORS and ad-blockers)
+  try {
+    const res = await authenticatedFetch('/api/products');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        const map = new Map<string, DbProduct>();
+        json.data.forEach((p: DbProduct) => {
+          if (p.sku && !map.has(p.sku)) {
+            map.set(p.sku, p);
+          }
+        });
+        return Array.from(map.values());
+      }
+    }
+  } catch {
+    // Fall back to direct client
+  }
+
+  if (!isSupabaseConfigured) {
+    return [];
+  }
+
+  // 2. Direct Supabase client fallback
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (error) {
+      console.warn('Error querying Supabase products:', error.message);
+      return [];
+    }
+    const productsList = data || [];
+    const map = new Map<string, DbProduct>();
+    productsList.forEach(p => {
+      if (p.sku && !map.has(p.sku)) {
+        map.set(p.sku, p);
+      }
+    });
+    return Array.from(map.values());
+  } catch (err) {
+    console.error('Network error fetching products from Supabase:', err);
+    return [];
+  }
+}
+
+export async function fetchProductBySkuFromSupabase(sku: string): Promise<DbProduct | null> {
+  if (!sku) return null;
+
+  // 1. Try local server proxy
+  try {
+    const res = await fetch(`/api/products/${encodeURIComponent(sku)}`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.data) {
+        return json.data;
+      }
+    }
+  } catch {
+    // fallback
+  }
+
+  // 2. Direct Supabase
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('sku', sku)
+      .limit(1);
+
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return data[0];
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchProductStockFromSupabase(sku: string): Promise<number> {
+  if (!sku) {
+    return 0;
+  }
+
+  // 1. Try server proxy
+  try {
+    const res = await fetch(`/api/products/${encodeURIComponent(sku)}/stock`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && typeof json.stock === 'number') {
+        return json.stock;
+      }
+    }
+  } catch {
+    // fallback
+  }
+
+  // 2. Direct Supabase
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('stock')
+      .eq('sku', sku)
+      .limit(1);
+
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return Number(data[0].stock) || 0;
+    }
+  } catch {}
+
+  return 0;
+}
+
+export function isValidUuid(val?: string | null): boolean {
+  if (!val || typeof val !== 'string') return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val.trim());
+}
+
+export async function createProductInSupabase(product: DbProduct): Promise<{ success: boolean; data?: DbProduct; error?: string }> {
+  const sanitizedProduct = { ...product };
+  if (sanitizedProduct.branch_id && !isValidUuid(sanitizedProduct.branch_id)) {
+    delete sanitizedProduct.branch_id;
+  }
+
+  // 1. Try local server proxy first
+  try {
+    const res = await authenticatedFetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(sanitizedProduct)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) {
+        return { success: true, data: json.data };
+      } else if (json.error) {
+        if (/uuid|branch_id|branches|foreign key/i.test(json.error) && sanitizedProduct.branch_id) {
+          const retryProd = { ...sanitizedProduct };
+          delete retryProd.branch_id;
+          const retryRes = await authenticatedFetch('/api/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(retryProd)
+          });
+          if (retryRes.ok) {
+            const retryJson = await retryRes.json();
+            if (retryJson.success) return { success: true, data: retryJson.data };
+          }
+        }
+        return { success: false, error: json.error };
+      }
+    }
+  } catch {
+    // Fall back to direct client
+  }
+
+  // 2. Direct Supabase client fallback
+  try {
+    const orgId = await getActiveOrgId();
+    let payload: any = { ...sanitizedProduct };
+    if (orgId && !payload.organization_id) {
+      payload.organization_id = orgId;
+    }
+    if (payload.branch_id && !isValidUuid(payload.branch_id)) {
+      delete payload.branch_id;
+    }
+
+    if (payload.sku) {
+      const { data: existing } = await supabase
+        .from('products')
+        .select('*')
+        .eq('sku', payload.sku)
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        const { data: updateData, error: updateError } = await supabase
+          .from('products')
+          .update(payload)
+          .eq('sku', payload.sku)
+          .select();
+        if (!updateError && updateData) {
+          const row = Array.isArray(updateData) ? updateData[0] : updateData;
+          return { success: true, data: row };
+        }
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('products')
+      .insert([payload])
+      .select();
+
+    if (error) {
+      if (/uuid|branch_id|branches|foreign key/i.test(error.message) && payload.branch_id) {
+        const retryPayload = { ...payload };
+        delete retryPayload.branch_id;
+        const retryResult = await supabase
+          .from('products')
+          .insert([retryPayload])
+          .select();
+        if (!retryResult.error && retryResult.data) {
+          const resRow = Array.isArray(retryResult.data) ? retryResult.data[0] : retryResult.data;
+          return { success: true, data: resRow || retryPayload };
+        }
+      }
+      console.error('Error inserting product in Supabase:', error);
+      return { success: false, error: error.message };
+    }
+    const createdRow = Array.isArray(data) ? data[0] : (data || payload);
+    return { success: true, data: createdRow };
+  } catch (err: any) {
+    console.error('Network error creating product in Supabase:', err);
+    return { success: false, error: err?.message || 'Error de conexión con Supabase' };
+  }
+}
+
+export async function updateProductInSupabase(sku: string, updates: Partial<DbProduct>): Promise<{ success: boolean; error?: string }> {
+  const sanitizedUpdates = { ...updates };
+  if (sanitizedUpdates.branch_id && !isValidUuid(sanitizedUpdates.branch_id)) {
+    delete sanitizedUpdates.branch_id;
+  }
+
+  // 1. Try server proxy
+  try {
+    const res = await authenticatedFetch(`/api/products/${encodeURIComponent(sku)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(sanitizedUpdates)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return { success: true };
+      if (json.error) {
+        if (/uuid|branch_id|branches|foreign key/i.test(json.error) && sanitizedUpdates.branch_id) {
+          const retryUpdates = { ...sanitizedUpdates };
+          delete retryUpdates.branch_id;
+          const retryRes = await authenticatedFetch(`/api/products/${encodeURIComponent(sku)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(retryUpdates)
+          });
+          if (retryRes.ok) {
+            const retryJson = await retryRes.json();
+            if (retryJson.success) return { success: true };
+          }
+        }
+        return { success: false, error: json.error };
+      }
+    }
+  } catch {
+    // Fall back to direct client
+  }
+
+  // 2. Direct Supabase client
+  try {
+    let payload: any = { ...sanitizedUpdates };
+    if (payload.branch_id && !isValidUuid(payload.branch_id)) {
+      delete payload.branch_id;
+    }
+
+    const { error } = await supabase
+      .from('products')
+      .update(payload)
+      .eq('sku', sku);
+
+    if (error) {
+      if (/uuid|branch_id|branches|foreign key/i.test(error.message) && payload.branch_id) {
+        const retryPayload = { ...payload };
+        delete retryPayload.branch_id;
+        const retryResult = await supabase
+          .from('products')
+          .update(retryPayload)
+          .eq('sku', sku);
+        if (!retryResult.error) {
+          return { success: true };
+        }
+      }
+      console.error('Error updating product in Supabase:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    console.error('Network error updating product in Supabase:', err);
+    return { success: false, error: err?.message || 'Error de red' };
+  }
+}
+
+export async function deleteProductFromSupabase(sku: string): Promise<{ success: boolean; error?: string }> {
+  // 1. Try server proxy
+  try {
+    const res = await authenticatedFetch(`/api/products/${encodeURIComponent(sku)}`, {
+      method: 'DELETE'
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return { success: true };
+      if (json.error) return { success: false, error: json.error };
+    }
+  } catch {
+    // Fall back to direct client
+  }
+
+  // 2. Direct Supabase client
+  try {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('sku', sku);
+
+    if (error) {
+      console.error('Error deleting product from Supabase:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    console.error('Network error deleting product from Supabase:', err);
+    return { success: false, error: err?.message || 'Error de red' };
+  }
+}
+
+export async function updateProductStockInSupabase(sku: string, newStock: number): Promise<boolean> {
+  if (!sku) return false;
+
+  // 1. Try server proxy
+  try {
+    const res = await authenticatedFetch(`/api/products/${encodeURIComponent(sku)}/stock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stock: newStock })
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return true;
+    }
+  } catch {
+    // Fall back to direct client
+  }
+
+  // 2. Direct Supabase client
+  try {
+    const { error } = await supabase
+      .from('products')
+      .update({ stock: newStock })
+      .eq('sku', sku);
+
+    if (error) {
+      console.error('Error updating product stock in Supabase:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Network error updating stock in Supabase:', err);
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SALES & POS EMISSION
+// ---------------------------------------------------------------------------
+
+export async function recordSaleInSupabase(
+  sale: DbSale,
+  items: DbSaleItem[],
+  payments: Array<{ method: string; amount_usd: number; amount_ves: number; exchange_rate: number; bank_account_id?: string | null; reference?: string | null }>
+): Promise<{ success: boolean; saleId?: string; error?: string }> {
+  try {
+    const organizationId = sale.organization_id || await getActiveOrgId();
+    if (!organizationId) {
+      return { success: false, error: 'No hay una organización activa autorizada para registrar la venta.' };
+    }
+
+    // Todo el flujo (stock, venta, ítems, pagos, tesorería, kárdex y CxC)
+    // se ejecuta en el servidor con la sesión del usuario. Incluye también
+    // la validación de stock y el descuento de inventario.
+    const response = await authenticatedFetch('/api/sales', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sale: { ...sale, organization_id: organizationId },
+        items,
+        payments
+      })
+    });
+
+    const json = await response.json().catch(() => null);
+
+    if (json?.warnings && Array.isArray(json.warnings) && json.warnings.length > 0) {
+      console.warn('Avisos del servidor al emitir la venta:', json.warnings);
+    }
+
+    if (!json?.success) {
+      return { success: false, saleId: json?.saleId, error: json?.error || 'El servidor no pudo emitir la venta.' };
+    }
+
+    // El servidor ya descontó el stock; no se repite la acción desde el cliente.
+    return { success: true, saleId: json.saleId };
+  } catch (err: any) {
+    console.error('Error de red emitiendo la venta:', err);
+    return { success: false, error: err?.message || 'Error de conexión' };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// COTIZACIONES / PRESUPUESTOS (Almacenadas en la tabla sales con doc_type = 'COTIZACION')
+// ---------------------------------------------------------------------------
+
+export async function fetchQuotesFromSupabase(): Promise<DbQuote[]> {
+  const localQuotes: DbQuote[] = typeof window !== 'undefined'
+    ? JSON.parse(localStorage.getItem('frenyer_local_quotes') || '[]')
+    : [];
+
+  // 1. Intentar proxy del servidor primero si está disponible
+  try {
+    const res = await authenticatedFetch('/api/quotes');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        return json.data;
+      }
+    }
+  } catch {
+    // Si falla el proxy, intentar cliente directo
+  }
+
+  if (!isSupabaseConfigured) {
+    return localQuotes;
+  }
+
+  // 2. Cliente directo de Supabase: consulta sobre la tabla core 'sales'
+  try {
+    const { data, error } = await supabase
+      .from('sales')
+      .select(`
+        id,
+        organization_id,
+        customer_id,
+        doc_number,
+        status,
+        payment_type,
+        exchange_rate,
+        subtotal_usd,
+        total_usd,
+        total_ves,
+        notes,
+        quote_status,
+        expires_at,
+        converted_to_sale_id,
+        created_at,
+        customers (id, name, phone, doc_type, doc_number, email),
+        sale_items (
+          id,
+          sku,
+          name,
+          quantity,
+          unit_price_usd,
+          total_usd,
+          total_ves
+        )
+      `)
+      .eq('doc_type', 'COTIZACION')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      // Fallback sin columnas extendidas si no existen
+      const fallback = await supabase
+        .from('sales')
+        .select(`
+          id,
+          organization_id,
+          customer_id,
+          doc_number,
+          status,
+          payment_type,
+          exchange_rate,
+          subtotal_usd,
+          total_usd,
+          total_ves,
+          notes,
+          created_at,
+          customers (id, name, phone, doc_type, doc_number, email),
+          sale_items (
+            id,
+            sku,
+            name,
+            quantity,
+            unit_price_usd,
+            total_usd,
+            total_ves
+          )
+        `)
+        .eq('doc_type', 'COTIZACION')
+        .order('created_at', { ascending: false });
+
+      if (!fallback.error && fallback.data) {
+        const enriched = (fallback.data as any[]).map(q => ({
+          ...q,
+          quote_status: q.status === 'CANCELADA' ? 'Rechazada' : 'Creada',
+          expires_at: null,
+          converted_to_sale_id: null,
+          items: q.sale_items || []
+        })) as DbQuote[];
+        return enriched;
+      }
+
+      console.warn('Aviso al consultar cotizaciones en Supabase:', error.message);
+      return localQuotes;
+    }
+
+    const dbQuotes = (data || []).map((q: any) => ({
+      ...q,
+      customer: q.customers || q.customer,
+      items: q.sale_items || q.items || []
+    })) as DbQuote[];
+
+    // Si la base de datos tiene cotizaciones, devolverlas (unificando cualquier cotización local no persistida)
+    if (dbQuotes.length > 0) {
+      const dbIds = new Set(dbQuotes.map(q => q.id));
+      const missingLocal = localQuotes.filter(lq => !dbIds.has(lq.id));
+      return [...dbQuotes, ...missingLocal];
+    }
+
+    return localQuotes;
+  } catch (err) {
+    console.warn('Aviso de red consultando cotizaciones en Supabase:', err);
+    return localQuotes;
+  }
+}
+
+/** Quita una cotización del almacenamiento local del navegador. */
+function cleanLocalQuotes(quoteId: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const localQuotes = JSON.parse(localStorage.getItem('frenyer_local_quotes') || '[]');
+    localStorage.setItem(
+      'frenyer_local_quotes',
+      JSON.stringify(localQuotes.filter((q: any) => q.id !== quoteId))
+    );
+  } catch {
+    // ignore
+  }
+}
+
+/** Mantiene sincronizada la copia local de una cotización. */
+function syncLocalQuote(quoteId: string, patch: Record<string, any>): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const localQuotes = JSON.parse(localStorage.getItem('frenyer_local_quotes') || '[]');
+    const updated = localQuotes.map((q: any) => (q.id === quoteId ? { ...q, ...patch } : q));
+    localStorage.setItem('frenyer_local_quotes', JSON.stringify(updated));
+  } catch {
+    // ignore
+  }
+}
+
+export async function createQuoteInSupabase(input: {
+  customerId?: string;
+  validityDays: number;
+  notes: string;
+  items: Array<{ sku: string; name: string; quantity: number; unit_price_usd: number }>;
+  exchangeRate: number;
+  rateSource?: string;
+  isFutureRate?: boolean;
+  rateValueDate?: string;
+}): Promise<{ success: boolean; quoteId?: string; docNumber?: string; error?: string }> {
+  try {
+    let organizationId = await getActiveOrgId();
+    if (!organizationId) {
+      organizationId = '00000000-0000-0000-0000-000000000001';
+    }
+
+    // 1. Proxy del servidor: la credencial de Supabase no vive en el navegador.
+    try {
+      const res = await authenticatedFetch('/api/quotes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: input.customerId,
+          validityDays: input.validityDays,
+          notes: input.notes,
+          items: input.items,
+          exchangeRate: input.exchangeRate,
+          rateSource: input.rateSource,
+          isFutureRate: input.isFutureRate,
+          rateValueDate: input.rateValueDate,
+          organizationId
+        })
+      });
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
+        return { success: true, quoteId: json.quoteId, docNumber: json.docNumber };
+      }
+      if (res.status === 401) {
+        return { success: false, error: 'Sesión requerida para crear cotizaciones.' };
+      }
+    } catch (err) {
+      console.warn('Aviso en /api/quotes proxy:', err);
+    }
+
+    const subtotal = input.items.reduce((acc, it) => acc + (it.quantity * it.unit_price_usd), 0);
+    const totalVes = Math.round(subtotal * input.exchangeRate * 100) / 100;
+
+    // Obtener siguiente correlativo de cotizaciones de la tabla 'sales'
+    const { data: latestQuotes } = await supabase
+      .from('sales')
+      .select('doc_number')
+      .eq('doc_type', 'COTIZACION')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    const nextNum = latestQuotes && latestQuotes[0] ? (parseInt(latestQuotes[0].doc_number, 10) || 0) + 1 : 1;
+    const docNumber = String(nextNum).padStart(4, '0');
+    const expiresAt = new Date(Date.now() + (Math.max(1, input.validityDays || 7)) * 86400000).toISOString();
+
+    // Inserción en la tabla core 'sales' (únicamente columnas que existen en sales)
+    const salePayload: Record<string, any> = {
+      organization_id: organizationId,
+      customer_id: input.customerId || null,
+      doc_type: 'COTIZACION',
+      doc_number: docNumber,
+      status: 'COMPLETADA',
+      payment_type: 'CONTADO',
+      exchange_rate: input.exchangeRate,
+      subtotal_usd: subtotal,
+      discount_usd: 0,
+      tax_usd: 0,
+      igtf_usd: 0,
+      total_usd: subtotal,
+      total_ves: totalVes,
+      notes: input.notes ? input.notes.trim() : null,
+      quote_status: 'Creada',
+      expires_at: expiresAt
+    };
+
+    let insertSaleRes = await supabase
+      .from('sales')
+      .insert([salePayload])
+      .select('id, doc_number, created_at');
+
+    // Si falló por las columnas opcionales quote_status o expires_at, reintentar sin ellas
+    if (
+      insertSaleRes.error &&
+      (insertSaleRes.error.message.includes('quote_status') ||
+       insertSaleRes.error.message.includes('expires_at') ||
+       (insertSaleRes.error as any).code === '42703')
+    ) {
+      delete salePayload.quote_status;
+      delete salePayload.expires_at;
+      insertSaleRes = await supabase
+        .from('sales')
+        .insert([salePayload])
+        .select('id, doc_number, created_at');
+    }
+
+    const quoteRow = Array.isArray(insertSaleRes.data) ? insertSaleRes.data[0] : insertSaleRes.data;
+
+    if (insertSaleRes.error || !quoteRow) {
+      console.warn('Aviso guardando cotización en Supabase:', insertSaleRes.error?.message);
+      // Fallback seguro a almacenamiento local para garantizar persistencia y no perder datos
+      const localId = `local_quote_${Date.now()}`;
+      if (typeof window !== 'undefined') {
+        const localQuotes = JSON.parse(localStorage.getItem('frenyer_local_quotes') || '[]');
+        localQuotes.unshift({
+          id: localId,
+          organization_id: organizationId,
+          customer_id: input.customerId,
+          doc_number: docNumber,
+          status: 'COMPLETADA',
+          payment_type: 'CONTADO',
+          exchange_rate: input.exchangeRate,
+          subtotal_usd: subtotal,
+          total_usd: subtotal,
+          total_ves: totalVes,
+          notes: input.notes,
+          quote_status: 'Creada',
+          expires_at: expiresAt,
+          created_at: new Date().toISOString(),
+          items: input.items,
+          sale_items: input.items.map(it => ({
+            sku: it.sku,
+            name: it.name,
+            quantity: it.quantity,
+            unit_price_usd: it.unit_price_usd,
+            total_usd: Math.round(it.quantity * it.unit_price_usd * 100) / 100,
+            total_ves: Math.round(it.quantity * it.unit_price_usd * input.exchangeRate * 100) / 100
+          }))
+        });
+        localStorage.setItem('frenyer_local_quotes', JSON.stringify(localQuotes));
+      }
+      return { success: true, quoteId: localId, docNumber };
+    }
+
+    const quoteId = quoteRow.id;
+
+    // Inserción de ítems en la tabla core 'sale_items'
+    if (input.items && input.items.length > 0) {
+      const itemsToInsert = input.items.map(it => ({
+        sale_id: quoteId,
+        sku: it.sku,
+        name: it.name,
+        quantity: Math.max(1, Number(it.quantity) || 1),
+        unit_price_usd: Number(it.unit_price_usd) || 0,
+        total_usd: Math.round((Number(it.quantity) || 1) * (Number(it.unit_price_usd) || 0) * 100) / 100,
+        total_ves: Math.round((Number(it.quantity) || 1) * (Number(it.unit_price_usd) || 0) * input.exchangeRate * 100) / 100
+      }));
+
+      await supabase.from('sale_items').insert(itemsToInsert);
+    }
+
+    // Guardar espejo en local
+    if (typeof window !== 'undefined') {
+      const localQuotes = JSON.parse(localStorage.getItem('frenyer_local_quotes') || '[]');
+      localQuotes.unshift({
+        id: quoteId,
+        organization_id: organizationId,
+        customer_id: input.customerId,
+        doc_number: docNumber,
+        status: 'COMPLETADA',
+        payment_type: 'CONTADO',
+        exchange_rate: input.exchangeRate,
+        subtotal_usd: subtotal,
+        total_usd: subtotal,
+        total_ves: totalVes,
+        notes: input.notes,
+        quote_status: 'Creada',
+        expires_at: expiresAt,
+        created_at: quoteRow.created_at || new Date().toISOString(),
+        items: input.items,
+        sale_items: input.items
+      });
+      localStorage.setItem('frenyer_local_quotes', JSON.stringify(localQuotes.slice(0, 50)));
+    }
+
+    return { success: true, quoteId, docNumber };
+  } catch (err: any) {
+    console.error('Error creando cotización en Supabase:', err);
+    return { success: false, error: err?.message || 'Error de conexión con Supabase' };
+  }
+}
+
+export async function getNextInvoiceCorrelative(): Promise<string> {
+  try {
+    const { data, error } = await supabase
+      .from('sales')
+      .select('doc_number')
+      .eq('doc_type', 'FACTURA')
+      .order('created_at', { ascending: false });
+
+    const numbers: number[] = [];
+    if (!error && Array.isArray(data)) {
+      for (const row of data) {
+        if (row.doc_number) {
+          const match = String(row.doc_number).match(/\d+/);
+          if (match) {
+            const num = parseInt(match[0], 10);
+            if (!isNaN(num)) numbers.push(num);
+          }
+        }
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      const localSales = JSON.parse(localStorage.getItem('frenyer_local_sales') || '[]');
+      for (const s of localSales) {
+        if (s.doc_type === 'FACTURA' && s.doc_number) {
+          const match = String(s.doc_number).match(/\d+/);
+          if (match) {
+            const num = parseInt(match[0], 10);
+            if (!isNaN(num)) numbers.push(num);
+          }
+        }
+      }
+    }
+
+    const maxNum = numbers.length > 0 ? Math.max(...numbers) : 0;
+    return String(maxNum + 1).padStart(4, '0');
+  } catch (err) {
+    console.warn('Error calculando correlativo de factura:', err);
+    return '0001';
+  }
+}
+
+export interface ConvertQuoteOptions {
+  quoteId: string;
+  paymentType: 'CONTADO' | 'CREDITO';
+  customDocNumber?: string;
+  // Opciones de Contado (Tesorería / Cuentas Bancarias):
+  bankAccountId?: string;
+  paymentMethod?: string;
+  paymentReference?: string;
+  // Opciones de Crédito (Cuentas por Cobrar):
+  dueDate?: string;
+  creditNotes?: string;
+}
+
+export async function convertQuoteToInvoiceInSupabase(
+  quoteIdOrOptions: string | ConvertQuoteOptions,
+  legacyPaymentType?: 'CONTADO' | 'CREDITO'
+): Promise<{
+  success: boolean;
+  invoiceId?: string;
+  invoiceDocNumber?: string;
+  totalUsd?: number;
+  totalVes?: number;
+  paymentType?: 'CONTADO' | 'CREDITO';
+  bankAccountName?: string;
+  paymentMethod?: string;
+  dueDate?: string;
+  removedItems?: Array<{ sku: string; name: string; quantity: number; available: number; reason: string }>;
+  error?: string;
+}> {
+  try {
+    const options: ConvertQuoteOptions = typeof quoteIdOrOptions === 'string'
+      ? { quoteId: quoteIdOrOptions, paymentType: legacyPaymentType || 'CONTADO' }
+      : quoteIdOrOptions;
+
+    const { quoteId, paymentType = 'CONTADO' } = options;
+    const organizationId = await getActiveOrgId() || '00000000-0000-0000-0000-000000000001';
+
+    // 1. Obtener la cotización con sus ítems y datos de cliente
+    let quote: any = null;
+    let rawItems: any[] = [];
+
+    const { data: dbQuote, error: qErr } = await supabase
+      .from('sales')
+      .select('*, sale_items(*), customers(name, doc_number)')
+      .eq('id', quoteId)
+      .maybeSingle();
+
+    if (!qErr && dbQuote) {
+      quote = dbQuote;
+      rawItems = dbQuote.sale_items || [];
+    } else if (typeof window !== 'undefined') {
+      const localQuotes = JSON.parse(localStorage.getItem('frenyer_local_quotes') || '[]');
+      const foundLocal = localQuotes.find((q: any) => q.id === quoteId);
+      if (foundLocal) {
+        quote = foundLocal;
+        rawItems = (foundLocal.sale_items || foundLocal.items || []).map((it: any) => ({
+          sku: it.sku,
+          name: it.name,
+          quantity: it.quantity,
+          unit_price_usd: it.unitPriceUSD || it.unit_price_usd,
+          total_usd: it.totalUSD || it.total_usd,
+          total_ves: it.totalVES || it.total_ves
+        }));
+      }
+    }
+
+    if (!quote) {
+      return { success: false, error: 'No se encontró la cotización a convertir.' };
+    }
+
+    // 2. Determinar correlativo de la factura (verificando secuencia del sistema)
+    let invDocNumber = '';
+    if (options.customDocNumber && options.customDocNumber.trim()) {
+      const trimmed = options.customDocNumber.trim();
+      invDocNumber = /^\d+$/.test(trimmed) ? trimmed.padStart(4, '0') : trimmed;
+    } else {
+      invDocNumber = await getNextInvoiceCorrelative();
+    }
+
+    // 3. Verificación de inventario y descuento de stock
+    const removedItems: Array<{ sku: string; name: string; quantity: number; available: number; reason: string }> = [];
+    const keptItems: any[] = [];
+    let runningTotalUsd = 0;
+
+    for (const it of rawItems) {
+      const qty = Number(it.quantity) || 1;
+      const unitPrice = Number(it.unit_price_usd) || 0;
+      const itemSku = it.sku;
+
+      if (!itemSku) {
+        keptItems.push(it);
+        runningTotalUsd += Number(it.total_usd) || (qty * unitPrice);
+        continue;
+      }
+
+      const { data: prodList } = await supabase
+        .from('products')
+        .select('id, stock, name')
+        .eq('sku', itemSku)
+        .limit(1);
+
+      const prod = prodList && prodList.length > 0 ? prodList[0] : null;
+
+      const currentStock = prod ? Number(prod.stock) || 0 : null;
+      if (currentStock !== null && currentStock <= 0) {
+        removedItems.push({
+          sku: itemSku,
+          name: it.name || prod?.name || itemSku,
+          quantity: qty,
+          available: 0,
+          reason: 'Sin existencia disponible en inventario'
+        });
+        continue;
+      }
+
+      // Si hay producto y existencia, rebajar stock
+      if (prod && currentStock !== null && currentStock > 0) {
+        const nextStock = Math.max(0, currentStock - qty);
+        await supabase
+          .from('products')
+          .update({ stock: nextStock })
+          .eq('sku', itemSku);
+      }
+
+      keptItems.push(it);
+      runningTotalUsd += Number(it.total_usd) || (qty * unitPrice);
+    }
+
+    if (keptItems.length === 0 && rawItems.length > 0) {
+      return {
+        success: false,
+        removedItems,
+        error: 'Ningún ítem de la cotización cuenta con stock disponible para facturar.'
+      };
+    }
+
+    const exchangeRate = Number(quote.exchange_rate) || 1;
+    const finalTotalUsd = keptItems.length === rawItems.length
+      ? (Number(quote.total_usd) || runningTotalUsd)
+      : Math.round(runningTotalUsd * 100) / 100;
+    const finalTotalVes = Math.round(finalTotalUsd * exchangeRate * 100) / 100;
+
+    // 4. Crear registro de FACTURA en la tabla sales
+    const invoicePayload = {
+      organization_id: quote.organization_id || organizationId,
+      customer_id: quote.customer_id,
+      doc_type: 'FACTURA',
+      doc_number: invDocNumber,
+      status: 'COMPLETADA',
+      payment_type: paymentType,
+      exchange_rate: exchangeRate,
+      subtotal_usd: finalTotalUsd,
+      discount_usd: quote.discount_usd || 0,
+      tax_usd: quote.tax_usd || 0,
+      igtf_usd: quote.igtf_usd || 0,
+      total_usd: finalTotalUsd,
+      total_ves: finalTotalVes,
+      notes: `Factura generada desde Cotización COT-${quote.doc_number}.${options.creditNotes ? ' ' + options.creditNotes : (quote.notes ? ' ' + quote.notes : '')}`,
+      created_at: new Date().toISOString()
+    };
+
+    let newInvoiceId = '';
+    const { data: newInvoiceRows, error: invErr } = await supabase
+      .from('sales')
+      .insert([invoicePayload])
+      .select('id, doc_number');
+
+    const newInvoice = Array.isArray(newInvoiceRows) ? newInvoiceRows[0] : newInvoiceRows;
+
+    if (invErr || !newInvoice) {
+      console.warn('Aviso insertando factura en Supabase:', invErr?.message);
+      newInvoiceId = `local_inv_${Date.now()}`;
+      if (typeof window !== 'undefined') {
+        const localSales = JSON.parse(localStorage.getItem('frenyer_local_sales') || '[]');
+        localSales.unshift({
+          id: newInvoiceId,
+          ...invoicePayload,
+          sale_items: keptItems
+        });
+        localStorage.setItem('frenyer_local_sales', JSON.stringify(localSales));
+      }
+    } else {
+      newInvoiceId = newInvoice.id;
+    }
+
+    // 5. Insertar ítems en sale_items
+    if (keptItems.length > 0 && newInvoiceId) {
+      const itemsPayload = keptItems.map((it: any) => ({
+        sale_id: newInvoiceId,
+        sku: it.sku || null,
+        name: it.name || 'Producto',
+        quantity: it.quantity || 1,
+        unit_price_usd: it.unit_price_usd || it.unitPriceUSD || 0,
+        total_usd: it.total_usd || it.totalUSD || 0,
+        total_ves: it.total_ves || it.totalVES || 0
+      }));
+      await supabase.from('sale_items').insert(itemsPayload);
+    }
+
+    // 6. Marcar la cotización como 'Facturada' y enlazar la factura
+    await supabase
+      .from('sales')
+      .update({
+        quote_status: 'Facturada',
+        converted_to_sale_id: newInvoiceId
+      })
+      .eq('id', quoteId);
+
+    // Actualizar también en almacenamiento local si existe
+    if (typeof window !== 'undefined') {
+      const localQuotes = JSON.parse(localStorage.getItem('frenyer_local_quotes') || '[]');
+      const updated = localQuotes.map((q: any) => {
+        if (q.id === quoteId) {
+          return {
+            ...q,
+            quote_status: 'Facturada',
+            status: 'Facturada',
+            converted_to_sale_id: newInvoiceId
+          };
+        }
+        return q;
+      });
+      localStorage.setItem('frenyer_local_quotes', JSON.stringify(updated));
+    }
+
+    // 7. REGISTROS FINANCIEROS (CUENTAS BANCARIAS O CUENTAS POR COBRAR)
+    let selectedBankName = '';
+    const customerDisplayName = quote.customers?.name || quote.customer?.name || 'Cliente';
+
+    if (paymentType === 'CONTADO') {
+      // 7.A CONTADO: Registrar en tabla payments y abonar a la cuenta bancaria / caja
+      let bankAcc: any = null;
+      if (options.bankAccountId) {
+        const { data: bData } = await supabase
+          .from('bank_accounts')
+          .select('*')
+          .eq('id', options.bankAccountId)
+          .maybeSingle();
+        if (bData) {
+          bankAcc = bData;
+          selectedBankName = bData.bank_name;
+        }
+      }
+
+      const methodLabel = `${options.paymentMethod || 'Contado'}${selectedBankName ? ` (${selectedBankName})` : ''}`;
+
+      // Insertar pago en tabla payments
+      await supabase.from('payments').insert([{
+        sale_id: newInvoiceId,
+        bank_account_id: options.bankAccountId || null,
+        method: methodLabel,
+        amount_usd: finalTotalUsd,
+        amount_ves: finalTotalVes,
+        exchange_rate: exchangeRate,
+        reference_number: options.paymentReference?.trim() || invDocNumber
+      }]);
+
+      // Si se vinculó una cuenta bancaria, registrar movimiento y actualizar su saldo
+      if (options.bankAccountId && bankAcc) {
+        const isVes = bankAcc.currency === 'VES';
+        const depositAmount = isVes ? finalTotalVes : finalTotalUsd;
+
+        // Intentar registrar movimiento formal a través de la API
+        try {
+          await authenticatedFetch('/api/bank-movements', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              bank_account_id: options.bankAccountId,
+              type: 'ENTRADA',
+              concept: `Cobro Factura ${invDocNumber} (Cotización COT-${quote.doc_number}) - ${customerDisplayName}`,
+              reference: options.paymentReference?.trim() || invDocNumber,
+              user_name: 'Facturación / Caja',
+              rate: exchangeRate,
+              commission: 0,
+              amount: depositAmount
+            })
+          });
+        } catch (movErr) {
+          console.warn('Aviso registrando /api/bank-movements:', movErr);
+        }
+
+        // Actualizar directamente el saldo de la cuenta bancaria para garantizar inmediatez
+        const currentBalance = Number(bankAcc.balance) || 0;
+        const updatedBalance = Math.round((currentBalance + depositAmount) * 100) / 100;
+        await supabase
+          .from('bank_accounts')
+          .update({ balance: updatedBalance })
+          .eq('id', options.bankAccountId);
+      }
+    } else {
+      // 7.B CRÉDITO: Registrar en tabla accounts_receivable (Cuentas por Cobrar)
+      const dueDate = options.dueDate || new Date(Date.now() + 15 * 86400000).toISOString().slice(0, 10);
+      const cxcPayload = {
+        organization_id: quote.organization_id || organizationId,
+        customer_id: quote.customer_id,
+        sale_id: newInvoiceId,
+        doc_number: invDocNumber,
+        total_usd: finalTotalUsd,
+        balance_usd: finalTotalUsd,
+        status: 'PENDIENTE',
+        due_date: dueDate
+      };
+
+      const { error: cxcErr } = await supabase
+        .from('accounts_receivable')
+        .insert([cxcPayload]);
+
+      if (cxcErr) {
+        console.warn('Aviso insertando en accounts_receivable:', cxcErr.message);
+      }
+
+      // Si existe cache local de cuentas por cobrar, sincronizar
+      if (typeof window !== 'undefined') {
+        const localCxc = JSON.parse(localStorage.getItem('frenyer_local_cxc') || '[]');
+        localCxc.unshift({
+          id: `local_cxc_${Date.now()}`,
+          ...cxcPayload,
+          customer_name: customerDisplayName
+        });
+        localStorage.setItem('frenyer_local_cxc', JSON.stringify(localCxc));
+      }
+    }
+
+    return {
+      success: true,
+      invoiceId: newInvoiceId,
+      invoiceDocNumber: invDocNumber,
+      totalUsd: finalTotalUsd,
+      totalVes: finalTotalVes,
+      paymentType,
+      bankAccountName: selectedBankName || (options.paymentMethod || 'Contado'),
+      paymentMethod: options.paymentMethod || 'Contado',
+      dueDate: options.dueDate,
+      removedItems
+    };
+  } catch (err: any) {
+    console.error('Error convirtiendo cotización en Supabase:', err);
+    return { success: false, error: err?.message || 'Error de conexión con Supabase' };
+  }
+}
+
+export async function deleteQuoteFromSupabase(quoteId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    // 1. Proxy del servidor
+    try {
+      const res = await authenticatedFetch(`/api/quotes/${encodeURIComponent(quoteId)}`, { method: 'DELETE' });
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
+        cleanLocalQuotes(quoteId);
+        return { success: true };
+      }
+      if (res.status === 401) {
+        return { success: false, error: 'Sesión requerida para eliminar cotizaciones.' };
+      }
+    } catch (err) {
+      console.warn('Aviso en proxy de eliminación de cotización:', err);
+    }
+
+    // 2. Eliminar ítems de la cotización
+    await supabase.from('sale_items').delete().eq('sale_id', quoteId);
+
+    // 3. Eliminar la cotización en sales
+    const { error } = await supabase.from('sales').delete().eq('id', quoteId);
+
+    // 4. Limpiar también de almacenamiento local si existe
+    cleanLocalQuotes(quoteId);
+
+    if (error) {
+      console.warn('Aviso eliminando cotización de Supabase:', error.message);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error eliminando cotización:', err);
+    return { success: false, error: err?.message || 'Error de conexión' };
+  }
+}
+
+export async function updateQuoteInSupabase(
+  quoteId: string,
+  input: {
+    customerId?: string;
+    validityDays: number;
+    notes?: string;
+    items: Array<{ sku: string; name: string; quantity: number; unit_price_usd: number }>;
+    exchangeRate: number;
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // 1. Proxy del servidor: la credencial de Supabase no vive en el navegador.
+    try {
+      const res = await authenticatedFetch(`/api/quotes/${encodeURIComponent(quoteId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: input.customerId,
+          validityDays: input.validityDays,
+          notes: input.notes,
+          items: input.items,
+          exchangeRate: input.exchangeRate
+        })
+      });
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
+        syncLocalQuote(quoteId, {
+          customer_id: input.customerId,
+          subtotal_usd: json.data?.subtotal_usd,
+          total_usd: json.data?.total_usd,
+          total_ves: json.data?.total_ves,
+          notes: input.notes,
+          items: input.items,
+          sale_items: json.data?.sale_items
+        });
+        return { success: true };
+      }
+      if (res.status === 401) {
+        return { success: false, error: 'Sesión requerida para actualizar cotizaciones.' };
+      }
+    } catch (err) {
+      console.warn('Aviso en /api/quotes proxy (actualización):', err);
+    }
+
+    const subtotal = input.items.reduce((acc, it) => acc + (it.quantity * it.unit_price_usd), 0);
+    const totalVes = Math.round(subtotal * input.exchangeRate * 100) / 100;
+
+    // Actualizar cabecera de la cotización en sales (sin columnas inexistentes como updated_at)
+    const updateData: Record<string, any> = {
+      customer_id: input.customerId || null,
+      exchange_rate: input.exchangeRate,
+      subtotal_usd: subtotal,
+      total_usd: subtotal,
+      total_ves: totalVes,
+      notes: input.notes || null
+    };
+
+    if (input.validityDays) {
+      updateData.expires_at = new Date(Date.now() + input.validityDays * 86400000).toISOString();
+    }
+
+    const { error: saleErr } = await supabase
+      .from('sales')
+      .update(updateData)
+      .eq('id', quoteId);
+
+    if (saleErr) {
+      console.warn('Aviso actualizando cotización en Supabase:', saleErr.message);
+    }
+
+    // Reemplazar ítems en sale_items
+    await supabase.from('sale_items').delete().eq('sale_id', quoteId);
+
+    const itemsToInsert = input.items.map(it => ({
+      sale_id: quoteId,
+      sku: it.sku,
+      name: it.name,
+      quantity: it.quantity,
+      unit_price_usd: it.unit_price_usd,
+      total_usd: Math.round(it.quantity * it.unit_price_usd * 100) / 100,
+      total_ves: Math.round(it.quantity * it.unit_price_usd * input.exchangeRate * 100) / 100
+    }));
+
+    if (itemsToInsert.length > 0) {
+      await supabase.from('sale_items').insert(itemsToInsert);
+    }
+
+    // Actualizar en localStorage si existe
+    syncLocalQuote(quoteId, {
+      customer_id: input.customerId,
+      subtotal_usd: subtotal,
+      total_usd: subtotal,
+      total_ves: totalVes,
+      notes: input.notes,
+      items: input.items,
+      sale_items: itemsToInsert
+    });
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error actualizando cotización:', err);
+    return { success: false, error: err?.message || 'Error de conexión' };
+  }
+}
+
+export async function rejectQuoteInSupabase(quoteId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const organizationId = await getActiveOrgId();
+    if (!organizationId) {
+      return { success: false, error: 'No hay una organización activa autorizada para rechazar la cotización.' };
+    }
+
+    // 1. Proxy del servidor
+    try {
+      const res = await authenticatedFetch(`/api/quotes/${encodeURIComponent(quoteId)}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Rechazada' })
+      });
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
+        return { success: true };
+      }
+      if (res.status === 401) {
+        return { success: false, error: 'Sesión requerida para rechazar cotizaciones.' };
+      }
+    } catch (err) {
+      console.warn('Aviso en proxy de rechazo de cotización:', err);
+    }
+
+    const { error } = await supabase.rpc('reject_quote', { p_quote_id: quoteId });
+
+    if (error) {
+      if (error.message?.includes('reject_quote') || (error as any).code === '42883') {
+        // Fallback directo a actualización de registro
+        let upd = await supabase.from('sales').update({ quote_status: 'Rechazada' }).eq('id', quoteId);
+        if (upd.error && (upd.error.message.includes('quote_status') || (upd.error as any).code === '42703')) {
+          upd = await supabase.from('sales').update({ status: 'CANCELADA' }).eq('id', quoteId);
+        }
+        return { success: !upd.error, error: upd.error?.message };
+      }
+      console.warn('Aviso rechazando cotización:', error.message);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error rechazando cotización en Supabase:', err);
+    return { success: false, error: err?.message || 'Error de conexión con Supabase' };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 5. GESTIÓN DIRECTA DE CUENTAS BANCARIAS Y MOVIMIENTOS
+// ---------------------------------------------------------------------------
+
+export async function fetchBankAccountsFromSupabase(): Promise<{ success: boolean; data: any[]; error?: string }> {
+  // 1. Try server proxy
+  try {
+    const res = await authenticatedFetch('/api/bank-accounts');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        return { success: true, data: json.data };
+      }
+    }
+  } catch {
+    // Fall back to direct client
+  }
+
+  // 2. Direct Supabase client
+  try {
+    const { data, error } = await supabase
+      .from('bank_accounts')
+      .select('*')
+      .order('bank_name', { ascending: true });
+
+    if (error) {
+      return { success: false, data: [], error: error.message };
+    }
+    return { success: true, data: data || [] };
+  } catch (err: any) {
+    return { success: false, data: [], error: err?.message };
+  }
+}
+
+export async function createBankAccountInSupabase(account: {
+  bank_name: string;
+  account_number: string;
+  account_type: string;
+  currency: string;
+  balance: number;
+  status?: string;
+}): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('bank_accounts')
+      .insert([{
+        bank_name: account.bank_name,
+        account_number: account.account_number,
+        account_type: account.account_type,
+        currency: account.currency,
+        balance: account.balance,
+        status: account.status || 'Activo'
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+export async function updateBankAccountInSupabase(
+  id: string,
+  updates: Record<string, any>
+): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('bank_accounts')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+export async function deleteBankAccountInSupabase(
+  id: string,
+  isPermanent: boolean = false
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (isPermanent) {
+      const { error } = await supabase
+        .from('bank_accounts')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      return { success: true };
+    }
+
+    // Soft delete: mover a inactivas
+    const { error } = await supabase
+      .from('bank_accounts')
+      .update({ status: 'Inactivo' })
+      .eq('id', id);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 9. COMPRAS E INGRESO DE INVENTARIO
+// ---------------------------------------------------------------------------
+
+export interface DbPurchaseItem {
+  id?: string;
+  purchase_id?: string;
+  product_id?: string;
+  sku: string;
+  name: string;
+  quantity: number;
+  unit_cost_usd: number;
+  total_usd: number;
+  total_ves: number;
+}
+
+export interface DbPurchase {
+  id: string;
+  organization_id?: string;
+  supplier_id?: string;
+  doc_number: string;
+  invoice_number: string;
+  purchase_date: string;
+  warehouse: string;
+  payment_type: 'CONTADO' | 'CREDITO';
+  exchange_rate: number;
+  subtotal_usd: number;
+  total_usd: number;
+  total_ves: number;
+  notes?: string;
+  status: 'COMPLETADA' | 'ANULADA';
+  bank_account_id?: string;
+  payment_method?: string;
+  payment_reference?: string;
+  due_date?: string;
+  payable_id?: string;
+  created_at?: string;
+  suppliers?: { id?: string; name?: string; doc_number?: string; phone?: string; rif?: string };
+  purchase_items?: DbPurchaseItem[];
+}
+
+export async function fetchPurchasesFromSupabase(): Promise<DbPurchase[]> {
+  const localPurchases: DbPurchase[] = typeof window !== 'undefined'
+    ? JSON.parse(localStorage.getItem('frenyer_local_purchases') || '[]')
+    : [];
+
+  // 1. Intentar endpoint proxy del servidor
+  try {
+    const res = await authenticatedFetch('/api/purchases');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        return json.data;
+      }
+    }
+  } catch {
+    // Continuar con cliente directo
+  }
+
+  if (!isSupabaseConfigured) {
+    return localPurchases;
+  }
+
+  // 2. Cliente directo Supabase
+  try {
+    const orgId = await getActiveOrgId();
+    let query = supabase
+      .from('purchases')
+      .select('*, suppliers(id, name, doc_number, phone), purchase_items(*)')
+      .order('created_at', { ascending: false });
+
+    if (orgId) {
+      query = query.eq('organization_id', orgId);
+    }
+
+    const { data, error } = await query;
+    if (!error && Array.isArray(data) && data.length > 0) {
+      const dbIds = new Set(data.map((p: any) => p.id));
+      const missingLocal = localPurchases.filter(lp => !dbIds.has(lp.id));
+      return [...data, ...missingLocal] as DbPurchase[];
+    }
+  } catch (err) {
+    console.warn('Aviso consultando compras en Supabase:', err);
+  }
+
+  return localPurchases;
+}
+
+export async function createPurchaseInSupabase(input: {
+  supplierId?: string;
+  supplierName?: string;
+  supplierDoc?: string;
+  invoiceNumber: string;
+  purchaseDate: string;
+  warehouse: string;
+  paymentType: 'CONTADO' | 'CREDITO';
+  exchangeRate: number;
+  notes?: string;
+  updateCosts: boolean;
+  items: Array<{
+    productId?: string;
+    sku: string;
+    name: string;
+    quantity: number;
+    unitCostUSD: number;
+  }>;
+  bankAccountId?: string;
+  bankAccountName?: string;
+  paymentMethod?: string;
+  paymentReference?: string;
+  dueDate?: string;
+}): Promise<{ success: boolean; purchaseId?: string; docNumber?: string; error?: string }> {
+  try {
+    const orgId = (await getActiveOrgId()) || '00000000-0000-0000-0000-000000000001';
+    const rate = Number(input.exchangeRate) || 1;
+
+    // Calcular totales
+    const subtotal = input.items.reduce((acc, it) => acc + (it.quantity * it.unitCostUSD), 0);
+    const totalUsd = Math.round(subtotal * 100) / 100;
+    const totalVes = Math.round(totalUsd * rate * 100) / 100;
+
+    // Obtener siguiente correlativo CMP-0000X
+    let nextNum = 1;
+    try {
+      const { data: latest } = await supabase
+        .from('purchases')
+        .select('doc_number')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (latest && latest[0]?.doc_number) {
+        const num = parseInt(latest[0].doc_number.replace(/\D/g, ''), 10);
+        if (!isNaN(num)) nextNum = num + 1;
+      }
+    } catch {
+      // ignore
+    }
+
+    if (typeof window !== 'undefined') {
+      const local = JSON.parse(localStorage.getItem('frenyer_local_purchases') || '[]');
+      if (local.length >= nextNum) nextNum = local.length + 1;
+    }
+
+    const docNumber = `CMP-${String(nextNum).padStart(5, '0')}`;
+
+    // 1. Intentar RPC en Supabase o llamada al endpoint
+    const rpcPayload = {
+      p_supplier_id: input.supplierId || null,
+      p_invoice_number: input.invoiceNumber.trim() || docNumber,
+      p_purchase_date: input.purchaseDate,
+      p_warehouse: input.warehouse,
+      p_payment_type: input.paymentType,
+      p_exchange_rate: rate,
+      p_notes: input.notes?.trim() || null,
+      p_update_costs: input.updateCosts,
+      p_items: input.items.map(it => ({
+        sku: it.sku,
+        name: it.name,
+        quantity: it.quantity,
+        unit_cost_usd: it.unitCostUSD
+      })),
+      p_bank_account_id: input.bankAccountId || null,
+      p_payment_method: input.paymentMethod || null,
+      p_payment_reference: input.paymentReference || null,
+      p_due_date: input.dueDate || null
+    };
+
+    let createdPurchaseId = '';
+
+    // Intento 1: Servidor /api/purchases
+    try {
+      const res = await authenticatedFetch('/api/purchases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...input,
+          ...rpcPayload,
+          docNumber,
+          exchangeRate: rate
+        })
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          createdPurchaseId = json.purchaseId || json.data?.purchase_id || json.data?.id;
+        }
+      }
+    } catch {
+      // Continuar con Supabase directo
+    }
+
+    // Intento 2: Supabase RPC directo
+    if (!createdPurchaseId && isSupabaseConfigured) {
+      try {
+        const { data: rpcData, error: rpcErr } = await supabase.rpc('record_internal_purchase', {
+          ...rpcPayload,
+          p_organization_id: orgId
+        });
+
+        if (!rpcErr && rpcData) {
+          createdPurchaseId = rpcData.purchase_id;
+        }
+      } catch {
+        // Fallback a inserción directa
+      }
+    }
+
+    // Intento 3: Inserción directa en tabla purchases si la tabla existe
+    if (!createdPurchaseId && isSupabaseConfigured) {
+      try {
+        const { data: directPurchase, error: pErr } = await supabase
+          .from('purchases')
+          .insert([{
+            organization_id: orgId,
+            supplier_id: input.supplierId || null,
+            doc_number: docNumber,
+            invoice_number: input.invoiceNumber.trim() || docNumber,
+            purchase_date: input.purchaseDate,
+            warehouse: input.warehouse,
+            payment_type: input.paymentType,
+            exchange_rate: rate,
+            subtotal_usd: totalUsd,
+            total_usd: totalUsd,
+            total_ves: totalVes,
+            notes: input.notes?.trim() || null,
+            status: 'COMPLETADA',
+            bank_account_id: input.bankAccountId || null,
+            payment_method: input.paymentMethod || null,
+            payment_reference: input.paymentReference || null,
+            due_date: input.dueDate || null
+          }])
+          .select()
+          .single();
+
+        if (!pErr && directPurchase) {
+          createdPurchaseId = directPurchase.id;
+
+          // Insertar ítems
+          const pItems = input.items.map(it => ({
+            purchase_id: createdPurchaseId,
+            sku: it.sku,
+            name: it.name,
+            quantity: it.quantity,
+            unit_cost_usd: it.unitCostUSD,
+            total_usd: Math.round(it.quantity * it.unitCostUSD * 100) / 100,
+            total_ves: Math.round(it.quantity * it.unitCostUSD * rate * 100) / 100
+          }));
+          await supabase.from('purchase_items').insert(pItems);
+
+          // Actualizar inventario (stock)
+          for (const it of input.items) {
+            const { data: prod } = await supabase
+              .from('products')
+              .select('id, stock')
+              .eq('sku', it.sku)
+              .single();
+            
+            if (prod) {
+              await supabase
+                .from('products')
+                .update({ stock: Number(prod.stock || 0) + Number(it.quantity) })
+                .eq('id', prod.id);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error en inserción directa:', err);
+      }
+    }
+
+    // Si aún no hay ID (modo local / sin tablas migradas aún en supabase)
+    if (!createdPurchaseId) {
+      createdPurchaseId = `pur_${Date.now()}`;
+    }
+
+    // Actualizar stock de productos en Supabase e inventario
+    for (const it of input.items) {
+      if (!it.sku) {
+        continue;
+      }
+      try {
+        const { data: prodList } = await supabase
+          .from('products')
+          .select('id, stock, cost_usd')
+          .eq('sku', it.sku)
+          .limit(1);
+
+        const prod = prodList && prodList.length > 0 ? prodList[0] : null;
+
+        if (prod) {
+          const newStock = Math.max(0, (Number(prod.stock) || 0) + it.quantity);
+          const updatePayload: any = { stock: newStock };
+          if (input.updateCosts && it.unitCostUSD > 0) {
+            updatePayload.cost_usd = it.unitCostUSD;
+          }
+          await supabase.from('products').update(updatePayload).eq('sku', it.sku);
+          
+          // Registrar movimiento en el kárdex
+          try {
+            await supabase.from('inventory_movements').insert([{
+              organization_id: orgId,
+              product_id: prod.id,
+              sku: it.sku,
+              product_name: it.name,
+              movement_type: 'COMPRA',
+              doc_type: 'COMPRA_INTERNA',
+              doc_number: docNumber,
+              entity_type: 'PROVEEDOR',
+              entity_name: input.supplierName || 'Proveedor',
+              quantity: Math.abs(it.quantity),
+              unit_cost_usd: it.unitCostUSD,
+              total_usd: Math.round(it.quantity * it.unitCostUSD * 100) / 100,
+              previous_stock: Number(prod.stock) || 0,
+              new_stock: newStock,
+              reason: 'Compra interna de inventario',
+              created_at: new Date().toISOString()
+            }]);
+          } catch (mvErr) {
+            console.warn('Aviso registrando movimiento de compra:', mvErr);
+          }
+        }
+      } catch (err) {
+        console.warn('Aviso actualizando stock de producto:', err);
+      }
+    }
+
+    // Si es Crédito, registrar y conciliar automáticamente el compromiso en accounts_payable
+    if (input.paymentType === 'CREDITO') {
+      const payablePayload = {
+        organization_id: orgId,
+        supplier_name: (input.supplierName || 'Proveedor').trim(),
+        doc_number: input.invoiceNumber.trim() || docNumber,
+        concept: `Compra de inventario (${docNumber})`,
+        origin: 'Compra Interna',
+        total_usd: totalUsd,
+        balance_usd: totalUsd,
+        status: 'PENDIENTE',
+        due_date: input.dueDate || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+        description: input.notes?.trim() || `Compra a crédito registrada bajo ${docNumber}`
+      };
+
+      // 1. Guardar en servidor proxy
+      try {
+        await authenticatedFetch('/api/accounts-payable', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payablePayload)
+        });
+      } catch (apErr) {
+        console.warn('Aviso registrando cuenta por pagar en servidor:', apErr);
+      }
+
+      // 2. Guardar en Supabase accounts_payable
+      try {
+        await supabase.from('accounts_payable').insert([payablePayload]);
+      } catch (err) {
+        console.warn('Aviso registrando cuenta por pagar en Supabase:', err);
+      }
+
+      // 3. Guardar en caché local
+      if (typeof window !== 'undefined') {
+        const localP = JSON.parse(localStorage.getItem('frenyer_local_payables') || '[]');
+        localP.unshift({ id: 'pay-' + Date.now(), ...payablePayload });
+        localStorage.setItem('frenyer_local_payables', JSON.stringify(localP));
+      }
+    }
+
+    // Si es Contado, actualizar saldo de cuenta bancaria y registrar movimiento
+    if (input.paymentType === 'CONTADO' && input.bankAccountId) {
+      try {
+        const { data: bAcc } = await supabase
+          .from('bank_accounts')
+          .select('*')
+          .eq('id', input.bankAccountId)
+          .maybeSingle();
+
+        if (bAcc) {
+          const deductAmount = bAcc.currency === 'VES' ? totalVes : totalUsd;
+          const newBal = Math.round((Number(bAcc.balance) - deductAmount) * 100) / 100;
+          await supabase.from('bank_accounts').update({ balance: newBal }).eq('id', bAcc.id);
+
+          await supabase.from('bank_movements').insert([{
+            organization_id: orgId,
+            bank_account_id: bAcc.id,
+            type: 'SALIDA',
+            concept: `Compra inventario - Factura: ${input.invoiceNumber.trim() || docNumber}`,
+            reference: input.paymentReference?.trim() || docNumber,
+            user_name: 'Sistema / Compras',
+            rate,
+            commission: 0,
+            amount: deductAmount
+          }]);
+        }
+      } catch (err) {
+        console.warn('Aviso actualizando cuenta bancaria:', err);
+      }
+    }
+
+    // Guardar espejo en localStorage
+    if (typeof window !== 'undefined') {
+      const local = JSON.parse(localStorage.getItem('frenyer_local_purchases') || '[]');
+      const newPurchaseRecord: DbPurchase = {
+        id: createdPurchaseId,
+        organization_id: orgId,
+        supplier_id: input.supplierId,
+        doc_number: docNumber,
+        invoice_number: input.invoiceNumber.trim() || docNumber,
+        purchase_date: input.purchaseDate,
+        warehouse: input.warehouse,
+        payment_type: input.paymentType,
+        exchange_rate: rate,
+        subtotal_usd: totalUsd,
+        total_usd: totalUsd,
+        total_ves: totalVes,
+        notes: input.notes?.trim(),
+        status: 'COMPLETADA',
+        bank_account_id: input.bankAccountId,
+        payment_method: input.paymentMethod,
+        payment_reference: input.paymentReference,
+        due_date: input.dueDate,
+        created_at: new Date().toISOString(),
+        suppliers: {
+          name: input.supplierName,
+          doc_number: input.supplierDoc,
+          rif: input.supplierDoc
+        },
+        purchase_items: input.items.map(it => ({
+          sku: it.sku,
+          name: it.name,
+          quantity: it.quantity,
+          unit_cost_usd: it.unitCostUSD,
+          total_usd: Math.round(it.quantity * it.unitCostUSD * 100) / 100,
+          total_ves: Math.round(it.quantity * it.unitCostUSD * rate * 100) / 100
+        }))
+      };
+
+      local.unshift(newPurchaseRecord);
+      localStorage.setItem('frenyer_local_purchases', JSON.stringify(local));
+    }
+
+    return {
+      success: true,
+      purchaseId: createdPurchaseId,
+      docNumber
+    };
+  } catch (err: any) {
+    console.error('Error registrando compra en Supabase:', err);
+    return { success: false, error: err?.message || 'Error registrando compra' };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 12. SEDES Y ALMACENES (BRANCHES)
+// ---------------------------------------------------------------------------
+
+export const DEFAULT_INITIAL_BRANCHES: DbBranch[] = [];
+
+const LEGACY_MOCK_BRANCH_CODES = new Set(['SP-01', 'SUC-02', 'SUC-03', 'SUC-04']);
+const LEGACY_MOCK_BRANCH_NAMES = new Set(['Tienda Bella Vista', 'Almacén Agua Dulce', 'Tienda Online - Almacén', 'luis bella vista']);
+
+function filterOutLegacyMockBranches(branches: DbBranch[]): DbBranch[] {
+  if (!Array.isArray(branches)) return [];
+  return branches.filter(b => {
+    if (!b) return false;
+    const isMock = LEGACY_MOCK_BRANCH_CODES.has(b.code) && LEGACY_MOCK_BRANCH_NAMES.has(b.name);
+    return !isMock;
+  });
+}
+
+function syncBranchToLocalStorage(branch: DbBranch) {
+  if (typeof window === 'undefined') return;
+  const rawList: DbBranch[] = JSON.parse(localStorage.getItem('frenyer_local_branches') || 'null') || [];
+  const list = filterOutLegacyMockBranches(rawList);
+  const idx = list.findIndex(b => b.id === branch.id || (b.code && b.code === branch.code));
+  if (idx >= 0) {
+    list[idx] = { ...list[idx], ...branch };
+  } else {
+    list.push(branch);
+  }
+  localStorage.setItem('frenyer_local_branches', JSON.stringify(list));
+}
+
+function updateBranchInLocalStorage(id: string, updates: Partial<DbBranch>) {
+  if (typeof window === 'undefined') return;
+  const rawList: DbBranch[] = JSON.parse(localStorage.getItem('frenyer_local_branches') || 'null') || [];
+  const list = filterOutLegacyMockBranches(rawList);
+  const updated = list.map(b => b.id === id ? { ...b, ...updates } : b);
+  localStorage.setItem('frenyer_local_branches', JSON.stringify(updated));
+}
+
+function deleteBranchFromLocalStorage(id: string) {
+  if (typeof window === 'undefined') return;
+  const rawList: DbBranch[] = JSON.parse(localStorage.getItem('frenyer_local_branches') || 'null') || [];
+  const list = filterOutLegacyMockBranches(rawList);
+  const updated = list.filter(b => b.id !== id);
+  localStorage.setItem('frenyer_local_branches', JSON.stringify(updated));
+}
+
+export async function fetchBranchesFromSupabase(): Promise<DbBranch[]> {
+  // 1. Limpiar sedes mock heredadas de localStorage si existían
+  if (typeof window !== 'undefined') {
+    const rawLocal = localStorage.getItem('frenyer_local_branches');
+    if (rawLocal) {
+      try {
+        const parsed = JSON.parse(rawLocal);
+        const filtered = filterOutLegacyMockBranches(parsed);
+        if (filtered.length !== parsed.length) {
+          localStorage.setItem('frenyer_local_branches', JSON.stringify(filtered));
+        }
+      } catch {
+        localStorage.removeItem('frenyer_local_branches');
+      }
+    }
+  }
+
+  // 2. Intentar consultar endpoint API del servidor (consulta Supabase en tiempo real)
+  try {
+    const res = await authenticatedFetch('/api/branches');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        const cleanData = filterOutLegacyMockBranches(json.data);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('frenyer_local_branches', JSON.stringify(cleanData));
+        }
+        return cleanData;
+      }
+    }
+  } catch {
+    // Fall back to direct client
+  }
+
+  // 3. Consultar cliente directo Supabase si está configurado
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('branches')
+        .select('*')
+        .order('created_at', { ascending: true });
+      if (!error && Array.isArray(data)) {
+        const cleanData = filterOutLegacyMockBranches(data);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('frenyer_local_branches', JSON.stringify(cleanData));
+        }
+        return cleanData;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // 4. Si la red no responde, retornar únicamente sedes creadas localmente por el usuario (cero mocks predeterminados)
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('frenyer_local_branches');
+    if (stored) {
+      try {
+        return filterOutLegacyMockBranches(JSON.parse(stored));
+      } catch {
+        return [];
+      }
+    }
+  }
+
+  return [];
+}
+
+export async function createBranchInSupabase(branch: Partial<DbBranch>): Promise<{ success: boolean; data?: DbBranch; error?: string }> {
+  const orgId = await getActiveOrgId();
+  const validId = (branch.id && isValidUuid(branch.id))
+    ? branch.id
+    : (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : 'a1b2c3d4-5555-4000-8000-' + Date.now().toString().slice(-12).padStart(12, '0');
+
+  const payload: any = {
+    ...branch,
+    id: validId,
+    organization_id: orgId || branch.organization_id || '00000000-0000-0000-0000-000000000001',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  // 1. Intentar creación vía API backend (proxy a Supabase)
+  try {
+    const res = await authenticatedFetch('/api/branches', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.data) {
+        syncBranchToLocalStorage(json.data);
+        return { success: true, data: json.data };
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  // 2. Intentar cliente directo Supabase
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('branches')
+        .insert([payload])
+        .select()
+        .single();
+      if (!error && data) {
+        syncBranchToLocalStorage(data);
+        return { success: true, data };
+      } else if (error) {
+        console.warn('Aviso insertando sede en Supabase:', error);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // Persistir registro para disponibilidad inmediata
+  syncBranchToLocalStorage(payload);
+  return { success: true, data: payload };
+}
+
+export async function updateBranchInSupabase(id: string, updates: Partial<DbBranch>): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await authenticatedFetch(`/api/branches/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) {
+        updateBranchInLocalStorage(id, updates);
+        return { success: true };
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  if (isSupabaseConfigured) {
+    try {
+      const { error } = await supabase
+        .from('branches')
+        .update(updates)
+        .eq('id', id);
+      if (!error) {
+        updateBranchInLocalStorage(id, updates);
+        return { success: true };
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  updateBranchInLocalStorage(id, updates);
+  return { success: true };
+}
+
+export async function deleteBranchFromSupabase(id: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await authenticatedFetch(`/api/branches/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) {
+        deleteBranchFromLocalStorage(id);
+        return { success: true };
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  if (isSupabaseConfigured) {
+    try {
+      const { error } = await supabase
+        .from('branches')
+        .delete()
+        .eq('id', id);
+      if (!error) {
+        deleteBranchFromLocalStorage(id);
+        return { success: true };
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  deleteBranchFromLocalStorage(id);
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// 14. GESTIÓN FINANCIERA DE GASTOS FIJOS Y VARIABLES (EXPENSES)
+// ---------------------------------------------------------------------------
+
+export type ExpenseType = 'FIJO' | 'VARIABLE';
+export type ExpenseFrequency =
+  | 'SEMANAL'
+  | 'QUINCENAL'
+  | 'MENSUAL'
+  | 'BIMESTRAL'
+  | 'TRIMESTRAL'
+  | 'SEMESTRAL'
+  | 'ANUAL';
+export type ExpenseStatus = 'PENDIENTE' | 'PAGADO' | 'VENCIDO';
+
+export interface DbExpenseCategory {
+  id: string;
+  organization_id?: string;
+  name: string;
+  is_default?: boolean;
+  created_at?: string;
+}
+
+export interface DbExpense {
+  id: string;
+  organization_id?: string;
+  branch_id?: string;
+  name: string;
+  description: string;
+  category: string;
+  type: ExpenseType;
+  amount: number;
+  currency: 'USD' | 'VES';
+  exchange_rate: number;
+  due_date: string;
+  last_payment_date?: string | null;
+  frequency?: ExpenseFrequency | null;
+  status: ExpenseStatus;
+  notes?: string | null;
+  payment_account_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface DbExpensePayment {
+  id: string;
+  expense_id: string;
+  organization_id?: string;
+  amount: number;
+  currency: 'USD' | 'VES';
+  exchange_rate: number;
+  paid_at: string;
+  payment_method: string;
+  bank_account_id?: string | null;
+  reference?: string | null;
+  notes?: string | null;
+  created_at?: string;
+}
+
+export const DEFAULT_INITIAL_EXPENSE_CATEGORIES: string[] = [
+  'Alquiler',
+  'Gas',
+  'Electricidad / luz',
+  'Agua',
+  'Internet / teléfono',
+  'Patente y permisos',
+  'Sueldos y salarios',
+  'Cotizaciones o cargas sociales',
+  'Compra de mercadería / productos',
+  'Materiales e insumos',
+  'Limpieza',
+  'Otros gastos'
+];
+
+function syncExpenseToLocalStorage(expense: DbExpense) {
+  if (typeof window === 'undefined') return;
+  const list: DbExpense[] = JSON.parse(localStorage.getItem('frenyer_local_expenses') || 'null') || [];
+  const idx = list.findIndex(e => e.id === expense.id);
+  if (idx >= 0) {
+    list[idx] = { ...list[idx], ...expense };
+  } else {
+    list.unshift(expense);
+  }
+  localStorage.setItem('frenyer_local_expenses', JSON.stringify(list));
+}
+
+function updateExpenseInLocalStorage(id: string, updates: Partial<DbExpense>) {
+  if (typeof window === 'undefined') return;
+  const list: DbExpense[] = JSON.parse(localStorage.getItem('frenyer_local_expenses') || 'null') || [];
+  const updated = list.map(e => e.id === id ? { ...e, ...updates } : e);
+  localStorage.setItem('frenyer_local_expenses', JSON.stringify(updated));
+}
+
+function deleteExpenseFromLocalStorage(id: string) {
+  if (typeof window === 'undefined') return;
+  const list: DbExpense[] = JSON.parse(localStorage.getItem('frenyer_local_expenses') || 'null') || [];
+  const updated = list.filter(e => e.id !== id);
+  localStorage.setItem('frenyer_local_expenses', JSON.stringify(updated));
+}
+
+export async function fetchExpenseCategoriesFromSupabase(): Promise<string[]> {
+  const localCats: string[] = typeof window !== 'undefined'
+    ? JSON.parse(localStorage.getItem('frenyer_expense_categories') || 'null') || DEFAULT_INITIAL_EXPENSE_CATEGORIES
+    : DEFAULT_INITIAL_EXPENSE_CATEGORIES;
+
+  try {
+    const res = await authenticatedFetch('/api/expense-categories');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        const names = Array.from(new Set([...DEFAULT_INITIAL_EXPENSE_CATEGORIES, ...json.data.map((c: any) => c.name)]));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('frenyer_expense_categories', JSON.stringify(names));
+        }
+        return names;
+      }
+    }
+  } catch {
+    // fallback
+  }
+
+  if (isSupabaseConfigured) {
+    try {
+      const orgId = await getActiveOrgId();
+      if (orgId) {
+        const { data, error } = await supabase
+          .from('expense_categories')
+          .select('name')
+          .eq('organization_id', orgId);
+        if (!error && data && data.length > 0) {
+          const names = Array.from(new Set([...DEFAULT_INITIAL_EXPENSE_CATEGORIES, ...data.map((c: any) => c.name)]));
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('frenyer_expense_categories', JSON.stringify(names));
+          }
+          return names;
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return localCats;
+}
+
+export async function createExpenseCategoryInSupabase(name: string): Promise<{ success: boolean; name?: string; error?: string }> {
+  const cleanName = name.trim();
+  if (!cleanName) return { success: false, error: 'Nombre de categoría inválido' };
+
+  try {
+    const res = await authenticatedFetch('/api/expense-categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: cleanName })
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) {
+        const current: string[] = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('frenyer_expense_categories') || 'null') || DEFAULT_INITIAL_EXPENSE_CATEGORIES
+          : DEFAULT_INITIAL_EXPENSE_CATEGORIES;
+        if (!current.includes(cleanName)) {
+          current.push(cleanName);
+          localStorage.setItem('frenyer_expense_categories', JSON.stringify(current));
+        }
+        return { success: true, name: cleanName };
+      }
+    }
+  } catch {
+    // fallback
+  }
+
+  if (isSupabaseConfigured) {
+    try {
+      const orgId = await getActiveOrgId();
+      if (orgId) {
+        const { error } = await supabase
+          .from('expense_categories')
+          .insert([{ organization_id: orgId, name: cleanName }]);
+        if (!error) {
+          return { success: true, name: cleanName };
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // Local storage fallback
+  if (typeof window !== 'undefined') {
+    const current: string[] = JSON.parse(localStorage.getItem('frenyer_expense_categories') || 'null') || [...DEFAULT_INITIAL_EXPENSE_CATEGORIES];
+    if (!current.includes(cleanName)) {
+      current.push(cleanName);
+      localStorage.setItem('frenyer_expense_categories', JSON.stringify(current));
+    }
+  }
+
+  return { success: true, name: cleanName };
+}
+
+export async function fetchExpensesFromSupabase(): Promise<DbExpense[]> {
+  try {
+    const res = await authenticatedFetch('/api/expenses');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        return json.data;
+      }
+    }
+  } catch (err) {
+    console.warn('Aviso consultando /api/expenses:', err);
+  }
+
+  // Cero simulación: solo datos reales registrados en Supabase
+  return [];
+}
+
+export async function createExpenseInSupabase(expense: Partial<DbExpense>): Promise<{ success: boolean; data?: DbExpense; error?: string }> {
+  const orgId = await getActiveOrgId();
+  const payload: any = {
+    ...expense,
+    organization_id: orgId || expense.organization_id,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  try {
+    const res = await authenticatedFetch('/api/expenses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.data) {
+        return { success: true, data: json.data };
+      }
+      if (json.error) {
+        return { success: false, error: json.error };
+      }
+    }
+  } catch (err: any) {
+    console.warn('Error en /api/expenses POST:', err);
+  }
+
+  if (isSupabaseConfigured && orgId) {
+    try {
+      const { data, error } = await supabase
+        .from('expenses')
+        .insert([payload])
+        .select()
+        .single();
+      if (!error && data) {
+        return { success: true, data };
+      }
+      if (error) {
+        if (/row-level security|RLS/i.test(error.message)) {
+          return {
+            success: false,
+            error: 'Error RLS en Supabase: La política de seguridad (Row Level Security) de la tabla "expenses" bloqueó la inserción. Ejecuta el script SQL en el Editor de Supabase para otorgar permisos a anon y authenticated.'
+          };
+        }
+        return { success: false, error: error.message };
+      }
+    } catch (err: any) {
+      const msg = err?.message || '';
+      if (/row-level security|RLS/i.test(msg)) {
+        return {
+          success: false,
+          error: 'Error RLS en Supabase: La política de seguridad de la tabla "expenses" bloqueó la inserción.'
+        };
+      }
+      return { success: false, error: msg || 'Error guardando gasto en Supabase' };
+    }
+  }
+
+  return { success: false, error: 'No se pudo guardar el gasto en Supabase. Comprueba que la tabla expenses exista y la conexión esté activa.' };
+}
+
+export async function updateExpenseInSupabase(id: string, updates: Partial<DbExpense>): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await authenticatedFetch(`/api/expenses/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...updates, updated_at: new Date().toISOString() })
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) {
+        return { success: true };
+      }
+      if (json.error) {
+        return { success: false, error: json.error };
+      }
+    }
+  } catch (err) {
+    console.warn('Error en /api/expenses PATCH:', err);
+  }
+
+  if (isSupabaseConfigured) {
+    try {
+      const { error } = await supabase
+        .from('expenses')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (!error) {
+        return { success: true };
+      }
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    } catch (err: any) {
+      return { success: false, error: err?.message };
+    }
+  }
+
+  return { success: false, error: 'No se pudo actualizar el gasto en Supabase.' };
+}
+
+export async function deleteExpenseFromSupabase(id: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await authenticatedFetch(`/api/expenses/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) {
+        return { success: true };
+      }
+      if (json.error) {
+        return { success: false, error: json.error };
+      }
+    }
+  } catch (err) {
+    console.warn('Error en /api/expenses DELETE:', err);
+  }
+
+  if (isSupabaseConfigured) {
+    try {
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', id);
+      if (!error) {
+        return { success: true };
+      }
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    } catch (err: any) {
+      return { success: false, error: err?.message };
+    }
+  }
+
+  return { success: false, error: 'No se pudo eliminar el gasto de Supabase.' };
+}
+
+export async function recordExpensePaymentInSupabase(
+  id: string,
+  paymentData: {
+    amount: number;
+    currency: 'USD' | 'VES';
+    exchangeRate: number;
+    paidAt?: string;
+    paymentMethod?: string;
+    bankAccountId?: string;
+    reference?: string;
+    notes?: string;
+    nextDueDate?: string;
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await authenticatedFetch(`/api/expenses/${encodeURIComponent(id)}/pay`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(paymentData)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) {
+        return { success: true };
+      }
+      if (json.error) {
+        return { success: false, error: json.error };
+      }
+    }
+  } catch (err) {
+    console.warn('Error en /api/expenses/:id/pay:', err);
+  }
+
+  if (isSupabaseConfigured) {
+    try {
+      const orgId = await getActiveOrgId();
+      const payDate = paymentData.paidAt || new Date().toISOString().slice(0, 10);
+      const updates: any = {
+        last_payment_date: payDate,
+        updated_at: new Date().toISOString()
+      };
+      if (paymentData.nextDueDate) {
+        updates.due_date = paymentData.nextDueDate;
+        updates.status = 'PENDIENTE';
+      } else {
+        updates.status = 'PAGADO';
+      }
+
+      const { error: expError } = await supabase
+        .from('expenses')
+        .update(updates)
+        .eq('id', id);
+
+      if (expError) {
+        return { success: false, error: expError.message };
+      }
+
+      if (orgId) {
+        await supabase.from('expense_payments').insert([{
+          expense_id: id,
+          organization_id: orgId,
+          amount: paymentData.amount,
+          currency: paymentData.currency,
+          exchange_rate: paymentData.exchangeRate,
+          paid_at: new Date().toISOString(),
+          payment_method: paymentData.paymentMethod || 'Transferencia bancaria',
+          bank_account_id: paymentData.bankAccountId || null,
+          reference: paymentData.reference || null,
+          notes: paymentData.notes || null
+        }]);
+        
+        // --- ADDED DEFENSIVE DEDUCTION ---
+        if (paymentData.bankAccountId) {
+            const { data: bAcc } = await supabase
+                .from('bank_accounts')
+                .select('id, balance, currency')
+                .eq('id', paymentData.bankAccountId)
+                .maybeSingle();
+            
+            if (bAcc) {
+                let deductionAmount = paymentData.amount;
+                if (paymentData.currency && bAcc.currency && paymentData.currency !== bAcc.currency) {
+                    deductionAmount = (paymentData.currency === 'USD' && bAcc.currency === 'VES')
+                        ? paymentData.amount * paymentData.exchangeRate
+                        : paymentData.amount / paymentData.exchangeRate;
+                }
+                
+                await supabase
+                    .from('bank_accounts')
+                    .update({ balance: Math.round((Number(bAcc.balance) - deductionAmount) * 100) / 100 })
+                    .eq('id', paymentData.bankAccountId);
+            }
+        }
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message };
+    }
+  }
+
+  return { success: false, error: 'No se pudo registrar el pago en Supabase.' };
+}
+
+// ---------------------------------------------------------------------------
+// INVENTORY MOVEMENTS AND ADJUSTMENTS
+// ---------------------------------------------------------------------------
+
+export async function fetchInventoryMovementsFromSupabase(): Promise<DbInventoryMovement[]> {
+  const localAdjustments: DbInventoryMovement[] = typeof window !== 'undefined'
+    ? JSON.parse(localStorage.getItem('frenyer_local_adjustments') || '[]')
+    : [];
+  const localPurchases: any[] = typeof window !== 'undefined'
+    ? JSON.parse(localStorage.getItem('frenyer_local_purchases') || '[]')
+    : [];
+
+  // 1. Intentar endpoint proxy del servidor (unifica inventory_movements, sales y purchases reales)
+  try {
+    const res = await authenticatedFetch('/api/inventory/movements');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        const loggedKeys = new Set(json.data.map((m: any) => `${m.doc_number}-${m.sku}`));
+        const missingAdjustments = localAdjustments.filter(a => !loggedKeys.has(`${a.doc_number}-${a.sku}`));
+        const merged = [...json.data, ...missingAdjustments].sort((a, b) => {
+          const tA = new Date(a.created_at).getTime() || 0;
+          const tB = new Date(b.created_at).getTime() || 0;
+          return tB - tA;
+        });
+        return merged;
+      }
+    }
+  } catch (err) {
+    console.warn('Aviso en /api/inventory/movements proxy:', err);
+  }
+
+  // 2. Cliente directo de Supabase con reconstrucción automática
+  if (!isSupabaseConfigured) {
+    return localAdjustments;
+  }
+
+  try {
+    const orgId = await getActiveOrgId();
+
+    // 2.A: Movimientos registrados en tabla inventory_movements (si existe)
+    let directMovements: DbInventoryMovement[] = [];
+    try {
+      const { data: movData, error: movErr } = await supabase
+        .from('inventory_movements')
+        .select('*')
+        .eq('organization_id', orgId)
+        .order('created_at', { ascending: false });
+
+      if (!movErr && Array.isArray(movData)) {
+        directMovements = movData as DbInventoryMovement[];
+      }
+    } catch {
+      directMovements = [];
+    }
+
+    const loggedKeys = new Set(directMovements.map(m => `${m.doc_number}-${m.sku}`));
+
+    // 2.B: Ventas reales (status = COMPLETADA)
+    const salesMovements: DbInventoryMovement[] = [];
+    try {
+      const { data: salesData, error: salesErr } = await supabase
+        .from('sales')
+        .select('id, doc_number, doc_type, created_at, exchange_rate, customers(id, name), sale_items(*)')
+        .eq('organization_id', orgId)
+        .eq('status', 'COMPLETADA')
+        .order('created_at', { ascending: false })
+        .limit(250);
+
+      if (!salesErr && Array.isArray(salesData)) {
+        for (const sale of salesData) {
+          const items = Array.isArray(sale.sale_items) ? sale.sale_items : [];
+          const clientName = (sale as any).customers?.name || 'Cliente Mostrador';
+          for (const item of items) {
+            const docKey = `${sale.doc_number}-${item.sku}`;
+            if (loggedKeys.has(docKey)) continue;
+
+            salesMovements.push({
+              id: `sale-${item.id || item.sku}-${sale.id}`,
+              organization_id: orgId,
+              sku: item.sku,
+              product_name: item.name,
+              movement_type: 'VENTA',
+              doc_type: sale.doc_type || 'FACTURA',
+              doc_number: sale.doc_number,
+              entity_type: 'CLIENTE',
+              entity_name: clientName,
+              quantity: -Math.abs(Number(item.quantity) || 1),
+              unit_price_usd: Number(item.unit_price_usd) || 0,
+              unit_cost_usd: 0,
+              exchange_rate: Number(sale.exchange_rate) || 1,
+              total_usd: Number(item.total_usd) || 0,
+              total_ves: Number(item.total_ves) || (Number(item.total_usd) * Number(sale.exchange_rate)),
+              previous_stock: 0,
+              new_stock: 0,
+              reason: `Venta POS (${sale.doc_type || 'Factura'} #${sale.doc_number})`,
+              notes: null,
+              created_at: sale.created_at
+            });
+          }
+        }
+      }
+    } catch (salesErr) {
+      console.warn('Aviso consultando ventas para kárdex:', salesErr);
+    }
+
+    // 2.C: Compras reales
+    const purchasesMovements: DbInventoryMovement[] = [];
+    try {
+      const { data: purData, error: purErr } = await supabase
+        .from('purchases')
+        .select('id, doc_number, invoice_number, purchase_date, created_at, exchange_rate, suppliers(id, name), purchase_items(*)')
+        .eq('organization_id', orgId)
+        .order('created_at', { ascending: false })
+        .limit(250);
+
+      const dbPurchases = (!purErr && Array.isArray(purData)) ? purData : [];
+      const dbIds = new Set(dbPurchases.map((p: any) => p.id));
+      const extraLocalPurchases = localPurchases.filter(lp => !dbIds.has(lp.id));
+      const allPurchases = [...dbPurchases, ...extraLocalPurchases];
+
+      for (const pur of allPurchases) {
+        const items = Array.isArray(pur.purchase_items) ? pur.purchase_items : (pur.items || []);
+        const suppName = (pur as any).suppliers?.name || (pur as any).supplier_name || 'Proveedor';
+        for (const item of items) {
+          const docNum = pur.invoice_number || pur.doc_number;
+          const docKey = `${docNum}-${item.sku}`;
+          if (loggedKeys.has(docKey)) continue;
+
+          purchasesMovements.push({
+            id: `pur-${item.id || item.sku}-${pur.id}`,
+            organization_id: orgId,
+            sku: item.sku,
+            product_name: item.name,
+            movement_type: 'COMPRA',
+            doc_type: 'COMPRA',
+            doc_number: docNum,
+            entity_type: 'PROVEEDOR',
+            entity_name: suppName,
+            quantity: Math.abs(Number(item.quantity) || 1),
+            unit_price_usd: 0,
+            unit_cost_usd: Number(item.unit_cost_usd || item.unitCostUSD) || 0,
+            exchange_rate: Number(pur.exchange_rate || pur.exchangeRate) || 1,
+            total_usd: Number(item.total_usd || (item.quantity * (item.unitCostUSD || item.unit_cost_usd))) || 0,
+            total_ves: Number(item.total_ves) || (Number(item.total_usd || 0) * Number(pur.exchange_rate || 1)),
+            previous_stock: 0,
+            new_stock: 0,
+            reason: `Compra interna (${docNum})`,
+            notes: null,
+            created_at: pur.created_at || pur.purchase_date
+          });
+        }
+      }
+    } catch (purErr) {
+      console.warn('Aviso consultando compras para kárdex:', purErr);
+    }
+
+    // 2.D: Unificar todas las fuentes
+    const missingAdjustments = localAdjustments.filter(a => !loggedKeys.has(`${a.doc_number}-${a.sku}`));
+    const combined = [
+      ...directMovements,
+      ...salesMovements,
+      ...purchasesMovements,
+      ...missingAdjustments
+    ].sort((a, b) => {
+      const tA = new Date(a.created_at).getTime() || 0;
+      const tB = new Date(b.created_at).getTime() || 0;
+      return tB - tA;
+    });
+
+    return combined;
+  } catch (err) {
+    console.warn('Aviso consultando kárdex directo:', err);
+  }
+
+  return localAdjustments;
+}
+
+export async function recordInventoryAdjustmentInSupabase(adjustment: {
+  sku: string;
+  product_name?: string;
+  adjustment_type: 'ENTRADA' | 'SALIDA' | 'CORRECCION';
+  quantity: number;
+  reason: string;
+  notes?: string;
+  doc_number?: string;
+  unit_cost_usd?: number;
+  unit_price_usd?: number;
+  exchange_rate?: number;
+}): Promise<{ success: boolean; data?: DbInventoryMovement; error?: string }> {
+  // 1. Intentar endpoint proxy del servidor
+  try {
+    const res = await authenticatedFetch('/api/inventory/adjustments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(adjustment)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.data) {
+        if (typeof window !== 'undefined') {
+          const currentLocal = JSON.parse(localStorage.getItem('frenyer_local_adjustments') || '[]');
+          currentLocal.unshift(json.data);
+          localStorage.setItem('frenyer_local_adjustments', JSON.stringify(currentLocal.slice(0, 300)));
+        }
+        return { success: true, data: json.data };
+      }
+    }
+  } catch (err: any) {
+    console.warn('Aviso en /api/inventory/adjustments proxy:', err);
+  }
+
+  // 2. Cliente directo Supabase
+  if (isSupabaseConfigured) {
+    try {
+      const orgId = (await getActiveOrgId()) || '00000000-0000-0000-0000-000000000001';
+      
+      // Obtener producto
+      const { data: prodList, error: prodErr } = await supabase
+        .from('products')
+        .select('*')
+        .eq('sku', adjustment.sku)
+        .limit(1);
+
+      const prodData = prodList && prodList.length > 0 ? prodList[0] : null;
+
+      if (prodErr || !prodData) {
+        return { success: false, error: `Producto ${adjustment.sku} no encontrado en base de datos.` };
+      }
+
+      const prevStock = Number(prodData.stock) || 0;
+      const numQty = Math.abs(Number(adjustment.quantity) || 0);
+      let nextStock = prevStock;
+      let netDelta = 0;
+      let movType = 'AJUSTE_ENTRADA';
+
+      if (adjustment.adjustment_type === 'ENTRADA') {
+        nextStock = prevStock + numQty;
+        netDelta = numQty;
+        movType = 'AJUSTE_ENTRADA';
+      } else if (adjustment.adjustment_type === 'SALIDA') {
+        nextStock = Math.max(0, prevStock - numQty);
+        netDelta = -numQty;
+        movType = 'AJUSTE_SALIDA';
+      } else {
+        nextStock = Math.max(0, Number(adjustment.quantity) || 0);
+        netDelta = nextStock - prevStock;
+        movType = 'AJUSTE_CORRECCION';
+      }
+
+      // Actualizar stock
+      const { error: updErr } = await supabase
+        .from('products')
+        .update({ stock: nextStock })
+        .eq('sku', adjustment.sku);
+
+      if (updErr) {
+        return { success: false, error: `Error actualizando stock: ${updErr.message}` };
+      }
+
+      const rate = Number(adjustment.exchange_rate) || 1;
+      const unitVal = Number(adjustment.unit_cost_usd) || Number(prodData.cost_usd) || Number(prodData.price_usd) || 0;
+      const totalUsd = Math.round(Math.abs(netDelta) * unitVal * 100) / 100;
+      const totalVes = Math.round(totalUsd * rate * 100) / 100;
+      const docNum = adjustment.doc_number || `AJU-${String(Math.floor(1000 + Math.random() * 9000))}`;
+
+      const movPayload = {
+        id: `adj-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        organization_id: orgId,
+        branch_id: prodData.branch_id || null,
+        product_id: prodData.id || null,
+        sku: prodData.sku,
+        product_name: prodData.name,
+        movement_type: movType,
+        doc_type: 'AJUSTE',
+        doc_number: docNum,
+        entity_type: 'INTERNO',
+        entity_name: 'Ajuste manual de stock',
+        quantity: netDelta,
+        unit_cost_usd: Number(prodData.cost_usd) || 0,
+        unit_price_usd: Number(prodData.price_usd) || 0,
+        exchange_rate: rate,
+        total_usd: totalUsd,
+        total_ves: totalVes,
+        previous_stock: prevStock,
+        new_stock: nextStock,
+        reason: adjustment.reason || 'Ajuste manual de stock',
+        notes: adjustment.notes || null,
+        created_at: new Date().toISOString()
+      };
+
+      if (typeof window !== 'undefined') {
+        const currentLocal = JSON.parse(localStorage.getItem('frenyer_local_adjustments') || '[]');
+        currentLocal.unshift(movPayload);
+        localStorage.setItem('frenyer_local_adjustments', JSON.stringify(currentLocal.slice(0, 300)));
+      }
+
+      try {
+        const { data: insertedRows, error: insErr } = await supabase
+          .from('inventory_movements')
+          .insert([movPayload])
+          .select();
+
+        const insertedData = Array.isArray(insertedRows) ? insertedRows[0] : insertedRows;
+
+        if (!insErr && insertedData) {
+          return { success: true, data: insertedData as DbInventoryMovement };
+        }
+      } catch {
+        // ignore
+      }
+
+      return {
+        success: true,
+        data: movPayload as DbInventoryMovement
+      };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Error en ajuste de inventario.' };
+    }
+  }
+
+  return { success: false, error: 'Supabase no está configurado.' };
+}
+
+// ---------------------------------------------------------------------------
+// ORDERS & PUBLIC COMMERCE API METHODS
+// ---------------------------------------------------------------------------
+
+export async function fetchOrdersFromApi(): Promise<any[]> {
+  try {
+    const res = await fetch('/api/orders');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        return json.data;
+      }
+    }
+  } catch (err) {
+    console.warn('Aviso cargando pedidos desde API:', err);
+  }
+
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('frenyer_local_orders');
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch {
+        // ignore
+      }
+    }
+  }
+  return [];
+}
+
+export async function createOrderInApi(payload: any): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    const res = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+    if (res.ok && json.success) {
+      if (typeof window !== 'undefined') {
+        const stored = JSON.parse(localStorage.getItem('frenyer_local_orders') || '[]');
+        stored.unshift(json.data);
+        localStorage.setItem('frenyer_local_orders', JSON.stringify(stored.slice(0, 100)));
+      }
+      return { success: true, data: json.data };
+    }
+    return { success: false, error: json.error || 'No se pudo crear el pedido.' };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Error de conexión creando el pedido.' };
+  }
+}
+
+export async function updateOrderDeliveryStatusInApi(
+  id: string,
+  status: string,
+  user: string = 'Operador',
+  notes?: string
+): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    const res = await fetch(`/api/orders/${encodeURIComponent(id)}/delivery-status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, user, notes })
+    });
+    const json = await res.json();
+    if (res.ok && json.success) {
+      return { success: true, data: json.data };
+    }
+    return { success: false, error: json.error || 'No se pudo actualizar el estado de entrega.' };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Error de conexión.' };
+  }
+}
+
+export async function updateOrderPaymentStatusInApi(
+  id: string,
+  status: string,
+  user: string = 'Operador',
+  reference?: string
+): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    const res = await fetch(`/api/orders/${encodeURIComponent(id)}/payment-status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, user, reference })
+    });
+    const json = await res.json();
+    if (res.ok && json.success) {
+      return { success: true, data: json.data };
+    }
+    return { success: false, error: json.error || 'No se pudo actualizar el estado de pago.' };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Error de conexión.' };
+  }
+}
+
+export async function fetchPublicConfigFromApi(): Promise<any> {
+  try {
+    const res = await fetch('/api/public/config');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.data) {
+        return json.data;
+      }
+    }
+  } catch (err) {
+    console.warn('Aviso cargando configuración pública:', err);
+  }
+  return null;
+}
+
+
+

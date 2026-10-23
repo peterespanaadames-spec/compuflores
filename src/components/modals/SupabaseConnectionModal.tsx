@@ -1,0 +1,373 @@
+import { useState, useEffect } from 'react';
+import { Database, CheckCircle, AlertCircle, RefreshCw, Copy, Check, X, ShieldCheck } from 'lucide-react';
+import { Button } from '../ui/Button';
+import { Card } from '../ui/Card';
+import { refreshSupabaseStatus, type SupabaseServerStatus } from '../../lib/supabase/client';
+
+interface SupabaseConnectionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConnected?: () => void;
+}
+
+/**
+ * Panel de estado de la conexion con Supabase.
+ * Es de solo lectura: las credenciales viven unicamente en el servidor y
+ * esta pantalla nunca las solicita ni las expone.
+ */
+export function SupabaseConnectionModal({ isOpen, onClose }: SupabaseConnectionModalProps) {
+  const [activeTab, setActiveTab] = useState<'conexion' | 'migraciones'>('conexion');
+  const [status, setStatus] = useState<SupabaseServerStatus | null>(null);
+  const [migrationSql, setMigrationSql] = useState('');
+  const [isCopied, setIsCopied] = useState(false);
+  const [isLoadingSql, setIsLoadingSql] = useState(false);
+
+  const checkStatus = async () => {
+    const serverStatus = await refreshSupabaseStatus();
+    setStatus(serverStatus);
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      void checkStatus();
+    }
+  }, [isOpen]);
+
+  const loadMigrationSql = async () => {
+    if (migrationSql) return;
+    setIsLoadingSql(true);
+    try {
+      const res = await fetch('/api/supabase/migrations-bundle');
+      if (res.ok) {
+        const text = await res.text();
+        setMigrationSql(text);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setIsLoadingSql(false);
+    }
+  };
+
+  const handleCopySql = () => {
+    if (!migrationSql) return;
+    navigator.clipboard.writeText(migrationSql);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2500);
+  };
+
+  if (!isOpen) return null;
+
+  const isConnectedNow = Boolean(status?.supabaseConfigured && status?.supabaseConnected);
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(15, 23, 42, 0.6)',
+        backdropFilter: 'blur(4px)',
+        zIndex: 2500,
+        display: 'grid',
+        placeItems: 'center',
+        padding: 16
+      }}
+    >
+      <div
+        className="modal-container"
+        style={{
+          width: '100%',
+          maxWidth: 620,
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: 0,
+          overflow: 'hidden',
+          borderRadius: 24,
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.12)',
+          background: '#FFFFFF',
+          position: 'relative'
+        }}
+      >
+        {/* Cashea Top Yellow Progress Indicator Bar */}
+        <div className="modal-progress-bar" />
+
+        {/* Header */}
+        <div
+          style={{
+            padding: '20px 24px',
+            borderBottom: '1px solid var(--border)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: '#2D2E32',
+            color: '#FFFFFF'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 9999,
+                background: isConnectedNow ? '#DCFCE7' : '#FFF275',
+                color: isConnectedNow ? '#15803D' : '#1F2937',
+                display: 'grid',
+                placeItems: 'center',
+                border: `1px solid ${isConnectedNow ? '#86EFAC' : '#FDF06F'}`
+              }}
+            >
+              <Database size={20} />
+            </div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#FFFFFF' }}>
+                Estado de la base de datos
+              </h2>
+              <span style={{ fontSize: 12, color: '#9CA3AF' }}>
+                Conexión administrada desde el servidor
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#9CA3AF',
+              cursor: 'pointer',
+              padding: 4,
+              borderRadius: 9999
+            }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Cashea Segmented Tabs */}
+        <div style={{ display: 'flex', padding: '12px 24px 0 24px', gap: 8, background: '#F8F9FA', borderBottom: '1px solid var(--border)' }}>
+          <button
+            type="button"
+            onClick={() => setActiveTab('conexion')}
+            style={{
+              padding: '10px 20px',
+              border: 'none',
+              borderRadius: '9999px 9999px 0 0',
+              background: activeTab === 'conexion' ? '#FFFFFF' : 'transparent',
+              fontWeight: activeTab === 'conexion' ? 800 : 600,
+              color: activeTab === 'conexion' ? '#111827' : '#6B7280',
+              fontSize: 13,
+              cursor: 'pointer',
+              boxShadow: activeTab === 'conexion' ? '0 -2px 6px rgba(0,0,0,0.03)' : 'none'
+            }}
+          >
+            Estado de la conexión
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('migraciones');
+              loadMigrationSql();
+            }}
+            style={{
+              padding: '10px 20px',
+              border: 'none',
+              borderRadius: '9999px 9999px 0 0',
+              background: activeTab === 'migraciones' ? '#FFFFFF' : 'transparent',
+              fontWeight: activeTab === 'migraciones' ? 800 : 600,
+              color: activeTab === 'migraciones' ? '#111827' : '#6B7280',
+              fontSize: 13,
+              cursor: 'pointer',
+              boxShadow: activeTab === 'migraciones' ? '0 -2px 6px rgba(0,0,0,0.03)' : 'none'
+            }}
+          >
+            Esquema SQL de Migraciones
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: 24, overflowY: 'auto', flex: 1 }}>
+          {activeTab === 'conexion' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              {/* Status Banner */}
+              <div
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: 10,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  background: isConnectedNow ? '#f0fdf4' : '#fffbeb',
+                  border: `1px solid ${isConnectedNow ? '#bbf7d0' : '#fde68a'}`
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {isConnectedNow ? (
+                    <CheckCircle size={18} style={{ color: '#15803D', flexShrink: 0 }} />
+                  ) : (
+                    <AlertCircle size={18} style={{ color: '#d97706', flexShrink: 0 }} />
+                  )}
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: isConnectedNow ? '#15803d' : '#b45309' }}>
+                      {isConnectedNow ? 'Base de datos conectada' : 'Conexion a Supabase pendiente'}
+                    </div>
+                    <div style={{ fontSize: 11, color: isConnectedNow ? '#166534' : '#92400e', marginTop: 2 }}>
+                      {isConnectedNow
+                        ? `Servidor conectado a ${status?.supabaseUrl}`
+                        : 'El administrador debe configurar la conexion en el servidor.'}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={checkStatus}
+                  title="Comprobar conexión"
+                  style={{
+                    background: '#fff',
+                    border: '1px solid var(--border)',
+                    borderRadius: 7,
+                    padding: '5px 10px',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: '#475569',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5
+                  }}
+                >
+                  <RefreshCw size={12} /> Comprobar
+                </button>
+              </div>
+
+              {/* Detalle */}
+              <div
+                style={{
+                  background: '#f8fafc',
+                  padding: '16px 18px',
+                  borderRadius: 10,
+                  border: '1px solid var(--border)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12.5 }}>
+                  <span style={{ color: '#64748b' }}>Proyecto</span>
+                  <span style={{ fontWeight: 600, color: '#0f172a', textAlign: 'right' }}>
+                    {status?.supabaseUrl || 'No configurado'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12.5 }}>
+                  <span style={{ color: '#64748b' }}>Origen de las credenciales</span>
+                  <span style={{ fontWeight: 600, color: '#0f172a', textAlign: 'right' }}>
+                    {status?.credentialsSource || 'No configurada'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12.5 }}>
+                  <span style={{ color: '#64748b' }}>Acceso directo con clave</span>
+                  <span style={{ fontWeight: 600, color: '#0f172a' }}>
+                    {status?.localAccessEnabled ? 'Habilitado' : 'Deshabilitado'}
+                  </span>
+                </div>
+                {status && status.missingTables.length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12.5 }}>
+                    <span style={{ color: '#64748b' }}>Tablas sin permisos</span>
+                    <span style={{ fontWeight: 600, color: '#b45309', textAlign: 'right' }}>
+                      {status.missingTables.join(', ')}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div
+                style={{
+                  padding: '14px 18px',
+                  borderRadius: 10,
+                  background: '#FFFDEB',
+                  border: '1px solid #E5E7EB',
+                  display: 'flex',
+                  gap: 12
+                }}
+              >
+                <ShieldCheck size={18} style={{ color: '#2D2E32', flexShrink: 0, marginTop: 2 }} />
+                <div>
+                  <h4 style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
+                    Las claves nunca salen del servidor
+                  </h4>
+                  <p style={{ margin: 0, fontSize: 12, color: '#475569', lineHeight: 1.6 }}>
+                    La credencial de Supabase se configura una unica vez en el servidor, en{' '}
+                    <b>data/supabase-credentials.json</b> o en las variables{' '}
+                    <b>SUPABASE_URL</b> y <b>SUPABASE_ANON_KEY</b> (sin prefijo <b>VITE_</b>). El
+                    navegador no recibe la clave: todas las consultas pasan por la API del servidor,
+                    que valida la sesion y aplica las politicas RLS.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button type="button" variant="secondary" onClick={onClose} style={{ height: 40, fontSize: 13 }}>
+                  Cerrar
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'migraciones' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ background: '#f8fafc', padding: '14px 18px', borderRadius: 10, border: '1px solid var(--border)' }}>
+                <h4 style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
+                  Inicializar tablas en Supabase
+                </h4>
+                <p style={{ margin: 0, fontSize: 12, color: '#475569', lineHeight: 1.5 }}>
+                  Si tu proyecto de Supabase es nuevo, copia este script SQL unificado y pégalo en{' '}
+                  <b>SQL Editor</b> en tu consola de Supabase. Creará las tablas de Organizaciones, Clientes, Inventarios, Ventas Flash, Cuentas Bancarias, Cotizaciones y sus políticas RLS bimonetarias.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>
+                  Script SQL unificado (0001 - 0012)
+                </span>
+                <Button
+                  onClick={handleCopySql}
+                  disabled={!migrationSql || isLoadingSql}
+                  variant="secondary"
+                  style={{ height: 32, fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  {isCopied ? <Check size={13} style={{ color: '#15803D' }} /> : <Copy size={13} />}
+                  {isCopied ? '¡Copiado!' : 'Copiar todo el SQL'}
+                </Button>
+              </div>
+
+              <div
+                style={{
+                  background: '#0f172a',
+                  color: '#e2e8f0',
+                  borderRadius: 10,
+                  padding: 14,
+                  fontSize: 11,
+                  fontFamily: 'monospace',
+                  maxHeight: 280,
+                  overflowY: 'auto',
+                  lineHeight: 1.5,
+                  whiteSpace: 'pre-wrap'
+                }}
+              >
+                {isLoadingSql ? (
+                  <div style={{ textAlign: 'center', padding: 20, color: '#94a3b8' }}>
+                    Cargando esquema de migraciones...
+                  </div>
+                ) : migrationSql ? (
+                  migrationSql.slice(0, 3000) + (migrationSql.length > 3000 ? '\n\n-- ... [Haz clic en "Copiar todo el SQL" para obtener el script completo]' : '')
+                ) : (
+                  'No se pudo cargar el script de migraciones.'
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
