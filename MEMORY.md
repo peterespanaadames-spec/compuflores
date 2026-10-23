@@ -65,6 +65,13 @@
 - Clases nuevas del design system: `.invoice-sheet`, `.iv-label`, `.iv-row`, `.iv-row-strong`, `table.iv-table` (mismo lenguaje visual, tokens/bordes existentes, ~860px en pantalla).
 - Build y ESLint limpios; cambio solo de front (HMR; Ctrl+F5 si el usuario verá la vista vieja).
 
+## Login simplificado (2026-10-23)
+- `LoginPage.tsx`: eliminados el bloque «Acceso rápido de Administrador» (mostraba credenciales en pantalla — riesgo), el botón «Continuar con Google» (a petición; `signInWithGoogle` sigue disponible en AuthContext para reactivarlo) y la pestaña «Clave de Administrador» (queda solo correo/contraseña; el login local por clave sigue existiendo en el backend `/api/auth/local-login` y en AuthContext `signInWithAccessKey`). Estado/tipos/handlers no usados removidos (`activeTab`, `accessKey`, `googleLoading`, `handleGoogleSignIn`, `handleAccessKeySubmit`, `handleUseAdminCredentials`, `handleUseQuickKey`).
+- Si se pide reactivar el acceso por clave o Google: restaurar pestañas o botón; los helpers del contexto ya existen.
+
+## Publicación en GitHub (2026-10-23)
+- Repo: https://github.com/peterespanaadames-spec/compuflores (branch `main`, commit inicial `c2a0763`, 146 archivos). `.gitignore` cubre `.env*` (solo sube `.env.example` vacío), `node_modules/`, `dist/`, `data/` y `workspace/` — NUNCA quitar esas entradas.
+
 ## Errores a evitar
 - Instancias Node/zombie de sesiones anteriores pueden quedar escuchando en el puerto 3000 y 24678 (WebSocket de Vite), devolviendo HTTP 500 aunque el servidor "arranque". Ante este síntoma: verificar con `netstat -ano | findstr ":3000"` y eliminar los procesos obsoletos antes de reiniciar `npm run dev`.
 - El puerto 3000 también fue ocupado por el proyecto hermano `app compu a1` (Next.js en IPv6 `::`:3000), que causaba respuestas cruzadas (404 de "App Compu A1" o error "Supabase no está configurado" desde la app equivocada). Solo debe quedar Frenyer listo en el 3000.
