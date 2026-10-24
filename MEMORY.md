@@ -8,7 +8,8 @@
   - Botón «Tienda Online» del topbar oscurecido (texto e icono `#111827`, `fontWeight: 800`).
   - Eliminados el chip del usuario activo (topbar) y el texto «Sucursal Principal».
   - Limpieza resultante: estado `activeUser`/`isDbReady`/`isSupabaseModalOpen` eliminados del layout; guard de rol ahora usa `isInternalRole` (`src/lib/auth/roles.ts`) en vez de lista duplicada.
-- **Compras internas 2026-10-24**: botón «NUEVO PROVEEDOR» dentro del modal de registro de compra nueva (`NewPurchaseModal.tsx`, paso 1) ahora amarillo con letras negras: fondo `var(--brand-accent)` (#FFF275), hover `#FDF06F`, texto `#111827`.
+- **Compras internas 2026-10-24**: botón «NUEVO PROVEEDOR» dentro del modal de registro de compra nueva (`NewPurchaseModal.tsx`, paso 1) ahora amarillo con letras negras: fondo `var(--brand-accent)` (#FFF275), hover `#FDF06F`, texto `#111827`. Cabecera de la página renombrada «Recargar Inventarios» (antes «COMPRAS DE DE PRODUCTOS») con icono de carrito sobre fondo amarillo y título en negro.
+- **Gastos 2026-10-24**: modal «Nuevo Gasto» (`Expenses.tsx`) con amarillo `var(--brand-accent)` en vez de marfil (`--brand-50` #FFFDEB): caja del icono de cabecera, selección Gasto Fijo/Variable, panel «Nueva categoría» y chips de categoría seleccionada. El resto de la página conserva sus tonos.
 - **Gestión de Usuarios Asociados y Permisos**:
   - Creada migración `0024_add_profile_extensions.sql` que deshabilita el RLS globalmente en todas las tablas, otorga permisos completos a `anon`, `authenticated` y `service_role`, y extiende `public.profiles` con columnas de permisos (`permissions`), cargo (`title`) y estatus (`active`).
   - Sincronización completa y resiliente en el backend (`/api/users`) y frontend (**Configuración -> Usuarios asociados**): creación y actualización de usuarios asociados y permisos sin restricciones 401/403 ni bloqueos RLS.

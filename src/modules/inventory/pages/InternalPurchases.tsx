@@ -228,17 +228,17 @@ export function InternalPurchasesPage() {
             width: 44,
             height: 44,
             borderRadius: 14,
-            background: 'var(--brand-50)',
-            color: 'var(--brand-600)',
+            background: 'var(--brand-accent)',
+            color: '#111827',
             display: 'grid',
             placeItems: 'center',
-            boxShadow: '0 2px 8px rgba(109, 40, 217, 0.12)'
+            boxShadow: '0 2px 8px rgba(161, 132, 0, 0.18)'
           }}>
             <ShoppingCart size={24} />
           </div>
           <div>
-            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: 'var(--brand-900)', letterSpacing: '-0.4px' }}>
-              COMPRAS DE DE PRODUCTOS
+            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: '#111827', letterSpacing: '-0.4px' }}>
+              Recargar Inventarios
             </h1>
           </div>
         </div>

@@ -1253,8 +1253,8 @@ grant all on table public.expense_payments to anon, authenticated;
                     width: 36,
                     height: 36,
                     borderRadius: 10,
-                    background: 'var(--brand-50)',
-                    color: 'var(--brand-600)',
+                    background: 'var(--brand-accent)',
+                    color: '#111827',
                     display: 'grid',
                     placeItems: 'center'
                   }}
@@ -1300,7 +1300,7 @@ grant all on table public.expense_payments to anon, authenticated;
                       padding: '10px 14px',
                       borderRadius: 10,
                       border: formType === 'FIJO' ? '2px solid var(--brand-500)' : '1px solid var(--border)',
-                      background: formType === 'FIJO' ? 'var(--brand-50)' : 'transparent',
+                      background: formType === 'FIJO' ? 'var(--brand-accent)' : 'transparent',
                       color: formType === 'FIJO' ? 'var(--brand-700)' : 'var(--text-secondary)',
                       fontWeight: 700,
                       fontSize: 13,
@@ -1321,7 +1321,7 @@ grant all on table public.expense_payments to anon, authenticated;
                       padding: '10px 14px',
                       borderRadius: 10,
                       border: formType === 'VARIABLE' ? '2px solid var(--brand-500)' : '1px solid var(--border)',
-                      background: formType === 'VARIABLE' ? 'var(--brand-50)' : 'transparent',
+                      background: formType === 'VARIABLE' ? 'var(--brand-accent)' : 'transparent',
                       color: formType === 'VARIABLE' ? 'var(--brand-700)' : 'var(--text-secondary)',
                       fontWeight: 700,
                       fontSize: 13,
@@ -1367,8 +1367,8 @@ grant all on table public.expense_payments to anon, authenticated;
                     style={{
                       padding: 10,
                       borderRadius: 8,
-                      background: 'var(--brand-50)',
-                      border: '1px solid var(--border)',
+                      background: 'var(--brand-accent)',
+                      border: '1px solid #FDF06F',
                       marginBottom: 10,
                       display: 'flex',
                       gap: 8
@@ -1415,8 +1415,8 @@ grant all on table public.expense_payments to anon, authenticated;
                       style={{
                         padding: '3px 8px',
                         borderRadius: 6,
-                        border: formCategory === catName ? '1px solid var(--brand-500)' : '1px solid var(--border)',
-                        background: formCategory === catName ? 'var(--brand-50)' : 'var(--bg-card)',
+                        border: formCategory === catName ? '1px solid #FDF06F' : '1px solid var(--border)',
+                        background: formCategory === catName ? 'var(--brand-accent)' : 'var(--bg-card)',
                         color: formCategory === catName ? 'var(--brand-700)' : 'var(--text-secondary)',
                         fontSize: 11,
                         cursor: 'pointer'
