@@ -2625,7 +2625,7 @@ export function ShopPage() {
 
             <div className="cr-banner-image-wrap">
               <img
-                src="/src/assets/images/compufuturo_banner_1792208865686.jpg"
+                src="/images/compufuturo_banner_1792208865686.jpg"
                 alt="Flores Inversiones CompuFuturo"
                 loading="lazy"
               />
@@ -2659,7 +2659,7 @@ export function ShopPage() {
 
             <div className="cr-banner-image-wrap">
               <img
-                src="/src/assets/images/acelera_moto_banner_1792208844530.jpg"
+                src="/images/acelera_moto_banner_1792208844530.jpg"
                 alt="Acelera Motor Partes Alta Rendimiento"
                 loading="lazy"
               />
