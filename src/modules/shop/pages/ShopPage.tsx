@@ -380,7 +380,7 @@ export function ShopPage() {
             navigate('/dashboard');
           }, 400);
         } else {
-          showToast(`¡Bienvenido(a), ${activeConfig.name}! Rol: ${activeConfig.role}.`);
+          // Regreso a la tienda sin aviso de bienvenida (el usuario ya está en sesión)
           setIsTrackerOpen(false);
         }
 
@@ -3415,29 +3415,6 @@ export function ShopPage() {
                   </button>
                 ))}
               </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  navigate('/ventas-flash/pedidos');
-                  setIsMobileMenuOpen(false);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '10px 14px',
-                  borderRadius: 10,
-                  border: 'none',
-                  background: 'transparent',
-                  color: '#64748b',
-                  fontSize: 12,
-                  cursor: 'pointer'
-                }}
-              >
-                <FileText size={14} />
-                <span>Mis Pedidos</span>
-              </button>
 
             </div>
           </div>
