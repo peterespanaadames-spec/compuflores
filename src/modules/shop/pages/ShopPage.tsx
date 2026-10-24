@@ -2028,8 +2028,8 @@ export function ShopPage() {
                   padding: currentUserRole ? '4px 10px 4px 4px' : '6px 12px',
                   borderRadius: 24,
                   border: currentUserRole === 'asociado' ? '1.5px solid #FDF06F' : currentUserRole === 'cliente' ? '1.5px solid #a7f3d0' : '1px solid #e2e8f0',
-                  background: currentUserRole === 'asociado' ? '#FFFDEB' : currentUserRole === 'cliente' ? '#f0fdf4' : '#ffffff',
-                  color: currentUserRole === 'asociado' ? '#6b21a8' : currentUserRole === 'cliente' ? '#065f46' : '#334155',
+                  background: currentUserRole === 'asociado' ? 'var(--brand-accent)' : currentUserRole === 'cliente' ? '#f0fdf4' : '#ffffff',
+                  color: currentUserRole === 'asociado' ? '#111827' : currentUserRole === 'cliente' ? '#065f46' : '#334155',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease'
                 }}
@@ -2039,8 +2039,8 @@ export function ShopPage() {
                     width: 30,
                     height: 30,
                     borderRadius: '50%',
-                    background: currentUserRole === 'asociado' ? '#2D2E32' : currentUserRole === 'cliente' ? '#15803D' : '#f1f5f9',
-                    color: currentUserRole ? '#ffffff' : '#475569',
+                    background: currentUserRole === 'asociado' ? 'var(--brand-accent)' : currentUserRole === 'cliente' ? '#15803D' : '#f1f5f9',
+                    color: currentUserRole === 'asociado' ? '#111827' : currentUserRole === 'cliente' ? '#ffffff' : '#475569',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -2135,7 +2135,7 @@ export function ShopPage() {
                           width: 44,
                           height: 44,
                           borderRadius: '50%',
-                          background: currentUserRole === 'asociado' ? '#FFFDEB' : '#ecfdf5',
+                          background: currentUserRole === 'asociado' ? 'var(--brand-accent)' : '#ecfdf5',
                           color: currentUserRole === 'asociado' ? '#111827' : '#047857',
                           border: `2px solid ${currentUserRole === 'asociado' ? '#FDF06F' : '#a7f3d0'}`,
                           display: 'flex',
@@ -2157,7 +2157,7 @@ export function ShopPage() {
                         </div>
                         <div style={{ marginTop: 4 }}>
                           {currentUserRole === 'asociado' ? (
-                            <span style={{ fontSize: 10, fontWeight: 700, background: '#FFFDEB', color: '#111827', padding: '2px 8px', borderRadius: 99, textTransform: 'uppercase' }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, background: 'var(--brand-accent)', color: '#111827', padding: '2px 8px', borderRadius: 99, textTransform: 'uppercase' }}>
                               Usuario Asociado · {associatedUserData?.role || 'Admin'}
                             </span>
                           ) : (
@@ -2190,17 +2190,17 @@ export function ShopPage() {
                               gap: 10,
                               padding: '12px 14px',
                               borderRadius: 12,
-                              border: '1.5px solid #c084fc',
-                              background: 'linear-gradient(135deg, #FFFDEB 0%, #FFFDEB 100%)',
-                              color: '#6b21a8',
+                              border: '1.5px solid #FDF06F',
+                              background: 'var(--brand-accent)',
+                              color: '#111827',
                               fontSize: 13,
                               fontWeight: 800,
                               cursor: 'pointer',
                               textAlign: 'left',
-                              boxShadow: '0 2px 8px rgba(168, 85, 247, 0.12)'
+                              boxShadow: '0 2px 8px rgba(161, 132, 0, 0.18)'
                             }}
                           >
-                            <LayoutDashboard size={18} color="#2D2E32" />
+                            <LayoutDashboard size={18} color="#111827" />
                             <span>Ir al Panel Administrativo ERP ({associatedUserData?.role || 'Admin'})</span>
                           </button>
                           <button
@@ -3235,7 +3235,7 @@ export function ShopPage() {
             <span
               className="cr-bottom-badge"
               style={{
-                background: currentUserRole === 'asociado' ? '#2D2E32' : '#15803D',
+                background: currentUserRole === 'asociado' ? 'var(--brand-accent)' : '#15803D',
                 width: 8,
                 height: 8,
                 minWidth: 8,
