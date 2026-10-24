@@ -2291,7 +2291,7 @@ GRANT ALL ON TABLE public.branches TO anon;`}</pre>
               <div style={{ display: 'flex', gap: 8, flex: 1, minWidth: 280 }}>
                 <Button
                   variant="primary"
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 11, letterSpacing: '0.04em', background: '#111827', borderColor: '#6b21a8' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: 11, letterSpacing: '0.04em', background: 'var(--brand-accent)', color: '#111827', borderColor: '#FDF06F' }}
                   onClick={handleOpenAddUser}
                 >
                   <Plus size={15} /> Agregar Usuario
@@ -2782,16 +2782,16 @@ GRANT ALL ON TABLE public.branches TO anon;`}</pre>
                     style={{
                       padding: '8px 18px',
                       borderRadius: 8,
-                      border: '1px solid #2D2E32',
-                      background: auditFolder === 'activas' ? '#2D2E32' : '#fff',
-                      color: auditFolder === 'activas' ? '#fff' : '#2D2E32',
+                      border: auditFolder === 'activas' ? '1px solid #FDF06F' : '1px solid #2D2E32',
+                      background: auditFolder === 'activas' ? 'var(--brand-accent)' : '#fff',
+                      color: auditFolder === 'activas' ? '#111827' : '#2D2E32',
                       fontSize: 12,
                       fontWeight: 800,
                       display: 'flex',
                       alignItems: 'center',
                       gap: 6,
                       cursor: 'pointer',
-                      boxShadow: auditFolder === 'activas' ? '0 2px 8px rgba(45, 46, 50,0.3)' : 'none',
+                      boxShadow: auditFolder === 'activas' ? '0 2px 8px rgba(161, 132, 0, 0.28)' : 'none',
                       transition: 'all 0.15s ease'
                     }}
                   >
