@@ -2924,6 +2924,28 @@ GRANT ALL ON TABLE public.branches TO anon;`}</pre>
                     <CreditCard size={14} />
                     <span>Incluir método de pago</span>
                   </button>
+
+                  <button
+                    onClick={() => setIsDbModalOpen(true)}
+                    title="Estado de la conexión con la base de datos. Haga clic para detalles."
+                    style={{
+                      height: 36,
+                      padding: '0 14px',
+                      borderRadius: 8,
+                      border: '1px solid #2D2E32',
+                      background: '#fff',
+                      color: '#2D2E32',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Database size={14} />
+                    <span>Conexión</span>
+                  </button>
                 </div>
               </div>
             </Card>

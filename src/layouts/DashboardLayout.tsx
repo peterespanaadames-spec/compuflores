@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
-import { Menu, Sparkles, RefreshCw, Edit3, AlertCircle, ArrowUpRight, Check, X, Database, Store, LogOut } from 'lucide-react';
+import { Menu, Sparkles, RefreshCw, Edit3, AlertCircle, ArrowUpRight, Check, X, Store, LogOut } from 'lucide-react';
 import { Sidebar } from '../components/ui/Sidebar';
 import { ManualBcvRateModal } from '../components/modals/ManualBcvRateModal';
-import { SupabaseConnectionModal } from '../components/modals/SupabaseConnectionModal';
 import { getActiveExchangeRate, setActiveExchangeRate, isFutureExchangeRate } from '../lib/currency';
-import { isSupabaseConfigured, refreshSupabaseStatus } from '../lib/supabase/client';
-import { getActiveOrgId } from '../lib/supabase/db';
 import { getBusinessProfile, BusinessProfile } from '../lib/businessProfile';
 import { useAuth } from '../context/AuthContext';
+import { isInternalRole } from '../lib/auth/roles';
 
 export function DashboardLayout() {
   const navigate = useNavigate();
@@ -17,31 +15,9 @@ export function DashboardLayout() {
   const [rateSource, setRateSource] = useState(() => localStorage.getItem('frenyer_bcv_rate_source') || 'BCV');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
-  const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDbReady, setIsDbReady] = useState(() => isSupabaseConfigured);
 
   const { signOut, profile: authProfile } = useAuth();
-
-  // Active User Profile State (RBAC)
-  const [activeUser, setActiveUser] = useState<any>(() => {
-    try {
-      const stored = localStorage.getItem('frenyer_active_user');
-      if (stored) return JSON.parse(stored);
-    } catch {}
-    return {
-      name: 'Administrador Principal',
-      role: 'Admin',
-      initials: 'AP',
-      permissions: ['ventas', 'inventario', 'finanzas', 'reportes', 'usuarios']
-    };
-  });
-
-  useEffect(() => {
-    if (authProfile) {
-      setActiveUser(authProfile);
-    }
-  }, [authProfile]);
 
   // Business Profile State (Nombre del negocio, RIF, etc.)
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile>(() => getBusinessProfile());
@@ -58,52 +34,11 @@ export function DashboardLayout() {
     };
   }, []);
 
-  useEffect(() => {
-    const handleUserChange = () => {
-      try {
-        const stored = localStorage.getItem('frenyer_active_user');
-        if (stored) {
-          setActiveUser(JSON.parse(stored));
-        }
-      } catch {}
-    };
-    window.addEventListener('frenyer:active-user-changed', handleUserChange);
-    return () => window.removeEventListener('frenyer:active-user-changed', handleUserChange);
-  }, []);
-
-  // Estado de la conexion reportado por el servidor
-  useEffect(() => {
-    const syncStatus = async () => {
-      const status = await refreshSupabaseStatus();
-      setIsDbReady(Boolean(status.supabaseConfigured && status.supabaseConnected));
-    };
-    void syncStatus();
-    window.addEventListener('frenyer:supabase-status', syncStatus);
-    return () => window.removeEventListener('frenyer:supabase-status', syncStatus);
-  }, []);
-
-  // Guard de rol: Clientes solo se quedan en la tienda e-commerce
+  // Estado de la sesion activa: solo se usa para el guard de rol
   useEffect(() => {
     const guardRole = async () => {
-      const internalRoles = [
-        'gerente',
-        'administrador',
-        'admin',
-        'cajero',
-        'ventas',
-        'inventario',
-        'almacenista',
-        'contador',
-        'superadmin',
-        'soporte',
-        'director',
-        'propietario',
-        'asociado',
-        'personal'
-      ];
-
       // Si el perfil de autenticación en contexto ya es un rol interno, conceder paso y sincronizar
-      if (authProfile?.role && internalRoles.includes(authProfile.role.toLowerCase())) {
+      if (authProfile?.role && isInternalRole(authProfile.role)) {
         localStorage.setItem('frenyer_user_role', authProfile.role);
         return;
       }
@@ -122,7 +57,7 @@ export function DashboardLayout() {
         return;
       }
 
-      if (sessionRole && internalRoles.includes(sessionRole)) {
+      if (sessionRole && isInternalRole(sessionRole)) {
         localStorage.setItem('frenyer_user_role', sessionRole);
       } else if (sessionRole === 'cliente') {
         localStorage.setItem('frenyer_user_role', 'cliente');
@@ -133,7 +68,7 @@ export function DashboardLayout() {
       if (sessionUser) {
         const metaRole = (sessionUser.user_metadata?.role || '').toLowerCase();
         if (metaRole === 'cliente' || metaRole === 'customer') {
-          if (!internalRoles.includes(sessionRole)) {
+          if (!isInternalRole(sessionRole)) {
             localStorage.setItem('frenyer_user_role', 'cliente');
             navigate('/', { replace: true });
             return;
@@ -169,7 +104,6 @@ export function DashboardLayout() {
                 localStorage.setItem('frenyer_active_user', JSON.stringify(config));
                 localStorage.setItem('frenyer_user_permissions', JSON.stringify(config.permissions));
                 localStorage.setItem('frenyer_user_role', config.role);
-                setActiveUser(config);
               }
             }
           }
@@ -310,30 +244,6 @@ export function DashboardLayout() {
 
           {/* Right Header Area with BCV Pill & Actions */}
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            
-            {/* Supabase Status Pill */}
-            <button
-              type="button"
-              onClick={() => setIsSupabaseModalOpen(true)}
-              title={isDbReady ? 'Base de datos Supabase conectada. Haga clic para detalles.' : 'Base de datos sin conexión en el servidor. Haga clic para detalles.'}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                background: isDbReady ? '#DCFCE7' : '#FEF3C7',
-                border: isDbReady ? '1px solid #86EFAC' : '1px solid #FDE68A',
-                borderRadius: 9999,
-                padding: '6px 14px',
-                fontSize: 12,
-                fontWeight: 700,
-                color: isDbReady ? '#15803D' : '#B45309',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <Database size={14} style={{ color: isDbReady ? '#16A34A' : '#D97706' }} />
-              <span>{isDbReady ? 'Supabase' : 'Sin BD'}</span>
-            </button>
 
             {/* Live BCV Exchange Rate Pill (Cashea Yellow Highlight Pill) */}
             <div
@@ -372,61 +282,18 @@ export function DashboardLayout() {
                 gap: 6,
                 padding: '6px 14px',
                 borderRadius: 9999,
-                border: '1px solid #E2E8F0',
+                border: '1px solid #CBD5E1',
                 background: '#FFFFFF',
-                color: '#1F2937',
-                fontSize: 12,
-                fontWeight: 700,
+                color: '#111827',
+                fontSize: 12.5,
+                fontWeight: 800,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease'
               }}
               title="Abrir Tienda Online (Catálogo público)"
             >
-              <Store size={14} color="#1F2937" /> Tienda Online
+              <Store size={14} color="#111827" strokeWidth={2.4} /> Tienda Online
             </button>
-
-            <span className="muted" style={{ fontSize: 12, fontWeight: 500 }}>
-              Sucursal Principal
-            </span>
-            <div
-              onClick={() => navigate('/configuracion')}
-              title={`Usuario activo: ${activeUser?.name || 'Administrador'} (${activeUser?.role || 'Admin'})`}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '4px 12px 4px 6px',
-                borderRadius: 9999,
-                border: '1px solid #E2E8F0',
-                background: '#FFFFFF',
-                cursor: 'pointer',
-                transition: 'border-color 0.15s ease'
-              }}
-            >
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: '50%',
-                  fontSize: 11,
-                  fontWeight: 800,
-                  background: '#2D2E32',
-                  color: '#FFFFFF',
-                  display: 'grid',
-                  placeItems: 'center'
-                }}
-              >
-                {activeUser?.initials || 'AP'}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#111827' }}>
-                  {activeUser?.name?.split(' ')[0] || 'Admin'}
-                </span>
-                <span style={{ fontSize: 9, fontWeight: 800, color: '#6B7280', textTransform: 'uppercase' }}>
-                  {activeUser?.role || 'Admin'}
-                </span>
-              </div>
-            </div>
 
             {/* Botón Cerrar Sesión */}
             <button
@@ -590,12 +457,6 @@ export function DashboardLayout() {
           setIsFuture(future);
           setRateSource(src);
         }}
-      />
-
-      {/* Estado de la conexión con Supabase */}
-      <SupabaseConnectionModal
-        isOpen={isSupabaseModalOpen}
-        onClose={() => setIsSupabaseModalOpen(false)}
       />
     </div>
   );

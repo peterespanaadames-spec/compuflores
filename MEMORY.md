@@ -3,6 +3,11 @@
 ## Estado actual
 - **Base del Sistema**: Frenyer ERP bimonetario (React 19, Vite, Express 5, TypeScript, Supabase PostgreSQL).
 - **Servidor Activo**: Express + Vite en `http://0.0.0.0:3000`.
+- **Dashboard 2026-10-24 (ajustes topbar)**:
+  - Botón «Supabase» del topbar eliminado de `DashboardLayout.tsx`; renombrado «Conexión» y movido a Configuración → pestaña Auditoría, junto a «Incluir método de pago» (abre `SupabaseConnectionModal` con `isDbModalOpen`, que ya existía en `Config.tsx` sin gatillo).
+  - Botón «Tienda Online» del topbar oscurecido (texto e icono `#111827`, `fontWeight: 800`).
+  - Eliminados el chip del usuario activo (topbar) y el texto «Sucursal Principal».
+  - Limpieza resultante: estado `activeUser`/`isDbReady`/`isSupabaseModalOpen` eliminados del layout; guard de rol ahora usa `isInternalRole` (`src/lib/auth/roles.ts`) en vez de lista duplicada.
 - **Gestión de Usuarios Asociados y Permisos**:
   - Creada migración `0024_add_profile_extensions.sql` que deshabilita el RLS globalmente en todas las tablas, otorga permisos completos a `anon`, `authenticated` y `service_role`, y extiende `public.profiles` con columnas de permisos (`permissions`), cargo (`title`) y estatus (`active`).
   - Sincronización completa y resiliente en el backend (`/api/users`) y frontend (**Configuración -> Usuarios asociados**): creación y actualización de usuarios asociados y permisos sin restricciones 401/403 ni bloqueos RLS.
