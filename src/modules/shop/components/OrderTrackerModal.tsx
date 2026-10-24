@@ -411,8 +411,8 @@ export function OrderTrackerModal({
             rel="noopener noreferrer"
             className="tracker-btn-whatsapp"
           >
-            <MessageCircle size={18} />
-            <span>PREGUNTAR POR WHATSAPP</span>
+            <MessageCircle size={16} />
+            <span>Preguntar por WhatsApp</span>
           </a>
 
           <button type="button" className="tracker-btn-close" onClick={onClose}>
@@ -917,19 +917,20 @@ export function OrderTrackerModal({
         .tracker-btn-whatsapp {
           display: inline-flex;
           align-items: center;
-          gap: 8px;
-          background: #2D2E32;
-          color: #ffffff;
+          gap: 7px;
+          background: transparent;
+          color: #15803D;
+          border: 1px solid #BBF7D0;
           text-decoration: none;
           border-radius: 9px;
-          padding: 10px 18px;
-          font-size: 13px;
-          font-weight: 800;
-          letter-spacing: 0.02em;
+          padding: 9px 14px;
+          font-size: 12.5px;
+          font-weight: 600;
           transition: all 0.15s ease;
         }
         .tracker-btn-whatsapp:hover {
-          background: #1F2023;
+          background: #F0FDF4;
+          border-color: #86EFAC;
         }
         .tracker-btn-close {
           background: var(--brand-accent);
