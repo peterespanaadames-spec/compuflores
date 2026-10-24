@@ -38,6 +38,15 @@
 - **RBAC y Accesibilidad**: Acceso fluido sin bloqueos RLS, soporte completo para todos los roles con permisos granulares activados correctamente.
 - **Carga de Datos**: Uso exclusivo del proxy de servidor (`authenticatedFetch`) para todas las consultas con fusión inteligente Supabase + Local.
 
+## Despliegue adaptado a Vercel serverless (2026-10-24, commit 5536f49)
+- **Opción A elegida por el usuario**: adaptar el despliegue a Vercel sin cambiar de proveedor.
+- `api/index.ts` (nuevo): punto de entrada serverless que importa la app Express completa (`export default app`); Vercel enruta `/api/*` vía rewrites, conservando la URL original.
+- `vercel.json` (nuevo): build `npm run build`, salida estática `dist/`, rewrite `/api/(.*)` → `/api` y catch-all a `index.html` (SPA, excluido por orden el `/api`).
+- `server.ts`: `DATA_DIR` — en Vercel (`process.env.VERCEL`) apunta a `/tmp/frenyer-data` porque el disco del proyecto es read-only; 17 rutas de `data/` migradas a `path.resolve(DATA_DIR, …)` y `mkdirSync` al inicio. Import de `vite` eliminado del nivel superior: `loadEnv` sustituido por parser propio (`readEnvDotFile` sobre `.env`/`.env.local`/`.env.development`/`.env.production`) y `createServer` de Vite via `import('vite')` dinámica SOLO en el arranque local dev. `startLocalServer()` no se ejecuta en Vercel; al final se exporta `export default app`.
+- **Limitación establecida**: en Vercel el respaldo local `data/*.json` es EFÍMERO (/tmp se borra entre invocaciones); la fuente de verdad es Supabase vía variables de entorno.
+- Verificado localmente: `npm run build` + `npm run lint` limpios; `npm run dev` arranca, `/api/auth/mode` responde `supabaseConfigured:true` con `credentialsSource:".env.local"` (el parser propio funciona).
+- **Pendiente del usuario**: en el dashboard de Vercel crear las 5 variables de entorno (valores desde `.env.local`, nunca commitearlos): `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `FRENYER_ACCESS_KEY`, `FRENYER_SESSION_SECRET` → y hacer Redeploy.
+
 ## Ventas y Reporte de Cuentas vía servidor (2026-10-22)
 - `SalesReport.tsx`, `SaleDetailPage.tsx`, `recordSaleInSupabase` (`db.ts`) y `AccountsReport.tsx` consultaban Supabase directo → "Invalid API key". Reenrutados a `GET /api/sales/report` y `POST /api/sales` (emisión completa en servidor: stock, ítems, pagos, bancos, kárdex, CxC; redondeo 2 decimales). Paleta POS: "+ Nuevo Cliente" y "+ Abonar a cuenta" son PRINCIPALES (antracita/blanco/pill).
 
