@@ -1449,26 +1449,7 @@ export function ConfigPage() {
                   <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.01em' }}>
                     SEDES Y TERMINALES (PUNTOS DE VENTA)
                   </h2>
-                  <span
-                    style={{
-                      background: '#ecfdf5',
-                      color: '#15803D',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      padding: '2px 8px',
-                      borderRadius: 6,
-                      border: '1px solid #a7f3d0',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4
-                    }}
-                  >
-                    <Database size={11} /> Supabase Real-Time
-                  </span>
                 </div>
-                <p style={{ margin: '3px 0 0 0', color: '#64748b', fontSize: 13 }}>
-                  Gestión y persistencia de sucursales físicas y almacenes en tiempo real en la tabla <code>branches</code>
-                </p>
               </div>
             </div>
 
@@ -1493,27 +1474,6 @@ export function ConfigPage() {
                 title="Sincronizar sedes en tiempo real desde Supabase"
               >
                 <RefreshCw size={14} className={isBranchesLoading ? 'animate-spin' : ''} /> Sincronizar
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsBranchSqlModalOpen(true)}
-                style={{
-                  background: '#f8fafc',
-                  color: '#0284c7',
-                  border: '1px solid #bae6fd',
-                  borderRadius: 8,
-                  padding: '8px 14px',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  cursor: 'pointer'
-                }}
-                title="Ver script SQL de permisos RLS para la tabla branches en Supabase"
-              >
-                <Database size={14} /> Permisos SQL
               </button>
 
               <button
