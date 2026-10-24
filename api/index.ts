@@ -10,7 +10,9 @@ let app: any = null;
 let initError: string | null = null;
 
 try {
-  const mod: any = await import('./server');
+  // Extensión explícita: en Vercel el builder compila los .ts a .js sin
+  // reescribir los specifiers relativos, y Node ESM exige la extensión real.
+  const mod: any = await import('./server.js');
   app = mod.default;
 } catch (err: any) {
   initError = err?.stack ? String(err.stack) : String(err);
