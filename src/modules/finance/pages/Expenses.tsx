@@ -1323,16 +1323,21 @@ grant all on table public.expense_payments to anon, authenticated;
                     type="button"
                     onClick={() => setIsNewCategoryOpen(true)}
                     style={{
-                      background: 'none',
+                      background: 'var(--brand-dark)',
                       border: 'none',
-                      color: 'var(--brand-600)',
+                      borderRadius: 8,
+                      padding: '5px 12px',
+                      color: '#FFFFFF',
                       fontSize: 12,
                       fontWeight: 700,
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: 4
+                      gap: 4,
+                      transition: 'background 0.15s ease'
                     }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = '#1F2023'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--brand-dark)'; }}
                   >
                     <Plus size={13} /> Nueva categoría
                   </button>
