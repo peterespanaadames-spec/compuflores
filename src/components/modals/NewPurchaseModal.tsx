@@ -585,16 +585,21 @@ export function NewPurchaseModal({ isOpen, onClose, onSuccess }: NewPurchaseModa
                       type="button"
                       onClick={() => setIsNewSupplierModalOpen(true)}
                       style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: 'var(--brand-600)',
+                        background: 'var(--brand-accent)',
+                        border: '1px solid #FDF06F',
+                        borderRadius: 8,
+                        padding: '5px 12px',
+                        color: '#111827',
                         fontSize: 12,
-                        fontWeight: 700,
+                        fontWeight: 800,
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: 4
+                        gap: 4,
+                        transition: 'background 0.15s ease'
                       }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = '#FDF06F'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--brand-accent)'; }}
                     >
                       <Plus size={13} /> NUEVO PROVEEDOR
                     </button>
