@@ -65,6 +65,12 @@
 - Clases nuevas del design system: `.invoice-sheet`, `.iv-label`, `.iv-row`, `.iv-row-strong`, `table.iv-table` (mismo lenguaje visual, tokens/bordes existentes, ~860px en pantalla).
 - Build y ESLint limpios; cambio solo de front (HMR; Ctrl+F5 si el usuario verá la vista vieja).
 
+## Arnés rsc-harness instalado (2026-10-23)
+- Onboarding de `@ericrisco/rsc` v3.3.0 aceptado (plan `c1944e22…`): lenguaje técnico, software en crecimiento, flujo directo en `main`, objetivo OpenCode, goal = ERP/POS bimonetario CompuRepuesto Flores Inversiones.
+- Crea: `02-DOCS/` (memoria/wiki), `01-TOOLS/` (conexiones de herramientas, plantilla), `.rsc.json`, bloque `rsc-suggest` en `AGENTS.md`, bloque en `.gitignore` (conserva .env*/data/node_modules/dist/workspace). `.rsc/`, `.opencode/rsc/*` y sesiones de memoria son locales (ignorados).
+- `doctor`: healthy; pendiente completar `02-DOCS/wiki/sdd/constitution.md` antes del primer feature SDD (decir "constitution").
+- Flujo de 3 carriles: Answer (solo lectura) / FTD (cambio simple, documento en 02-DOCS) / SDD (cadena de 10 fases con especificación aprobada). trampas: no usar `@latest` en clones (`sync` con la versión de `.rsc.json`).
+
 ## Roles de usuario: cliente vs interno (2026-10-23)
 - Regla simple: **cliente por defecto**; solo es usuario interno quien está en la base de usuarios del ERP (`/api/users`) o trae un rol interno en metadata. Cliente → portal propio en la tienda (Mis Pedidos, Mis Compras, Lista de Deseo, Mi Perfil vía `CustomerPortal`); interno → Panel Administrativo ERP (`/dashboard`, protegido por `ProtectedRoute`, que redirige clientes a `/`).
 - Nuevo helper único `src/lib/auth/roles.ts` (`INTERNAL_ROLES`, `isInternalRole`); reemplaza las 3 listas duplicadas en `ShopPage` (ya no exige role=cliente explícito en metadata para ser cliente), `ProtectedRoute` y `LoginPage` (redirige internos a `/dashboard`, clientes a `/`).
