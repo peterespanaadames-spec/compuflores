@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, AlertTriangle, CheckCircle, ShieldAlert } from 'lucide-react';
+import { X, CheckCircle, ShieldAlert } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { setActiveExchangeRate } from '../../lib/currency';
 import { authenticatedFetch } from '../../lib/supabase/api';
@@ -168,24 +168,25 @@ export function ManualBcvRateModal({
         {/* Header */}
         <div
           style={{
-            background: '#2D2E32',
-            color: '#FFFFFF',
-            padding: '20px 24px',
+            background: 'var(--brand-accent)',
+            color: '#111827',
+            padding: '18px 24px',
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center'
+            alignItems: 'center',
+            borderBottom: '1px solid #FDF06F'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <ShieldAlert size={20} style={{ color: '#FFF275' }} />
-            <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#FFFFFF' }}>
-              Intervención Manual de Tasa BCV
+            <ShieldAlert size={20} style={{ color: '#111827' }} />
+            <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#111827' }}>
+              Tasa BCV
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: '#9CA3AF', cursor: 'pointer', padding: 4 }}
+            style={{ background: 'transparent', border: 'none', color: '#111827', cursor: 'pointer', padding: 4 }}
           >
             <X size={20} />
           </button>
@@ -193,27 +194,6 @@ export function ManualBcvRateModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          
-          {/* Audit Warning */}
-          <div
-            style={{
-              background: '#fffbeb',
-              border: '1px solid #fde68a',
-              borderRadius: 8,
-              padding: '12px 14px',
-              fontSize: 12,
-              color: '#92400e',
-              display: 'flex',
-              gap: 10
-            }}
-          >
-            <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: 2, color: '#d97706' }} />
-            <div>
-              <b style={{ display: 'block', marginBottom: 2 }}>Protocolo de Auditoría y Trazabilidad</b>
-              Toda transacción realizada bajo esta tasa quedará vinculada permanentemente con la traza <code>tasa_manual</code> para la auditoría de costos y márgenes de rentabilidad.
-            </div>
-          </div>
-
           {errorMsg && (
             <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: 10, borderRadius: 8, fontSize: 12 }}>
               {errorMsg}
