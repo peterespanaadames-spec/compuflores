@@ -21,10 +21,10 @@ try {
 
 export default async function handler(req: any, res: any) {
   if (!app) {
+    console.error('[Frenyer ERP] servidor no inicializado en la función');
     return res.status(500).json({
       success: false,
-      error: 'Fallo al inicializar el servidor en la función serverless',
-      detail: initError
+      error: 'Fallo al inicializar el servidor en la función serverless'
     });
   }
   return app(req, res);
