@@ -1010,13 +1010,18 @@ export function BankAccountsPage() {
         <>
           {/* Header - Complete Actions */}
           <div className="page-head" style={{ marginBottom: 16 }}>
-            <div>
-              <h1 style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 22, fontWeight: 900, textTransform: 'uppercase', color: '#0f172a', letterSpacing: '0.02em', margin: 0 }}>
-                <Building size={24} style={{ color: '#2D2E32' }} /> CUENTAS BANCARIAS
-              </h1>
-              <p className="muted small" style={{ margin: '4px 0 0 0', fontSize: 13 }}>
-                Gestión de saldos, transferencias entre cuentas, ingresos y egresos de fondos
-              </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 14, background: 'var(--brand-accent)', color: '#111827', border: '1px solid #FDF06F', display: 'grid', placeItems: 'center' }}>
+                <Building size={24} />
+              </div>
+              <div>
+                <h1 style={{ fontSize: 22, fontWeight: 900, textTransform: 'uppercase', color: '#0f172a', letterSpacing: '0.02em', margin: 0 }}>
+                  CUENTAS BANCARIAS
+                </h1>
+                <p className="muted small" style={{ margin: '4px 0 0 0', fontSize: 13 }}>
+                  Gestión de saldos, transferencias entre cuentas, ingresos y egresos de fondos
+                </p>
+              </div>
             </div>
             
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -1238,7 +1243,7 @@ export function BankAccountsPage() {
                       {/* Top Header */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <div style={{ width: 34, height: 34, borderRadius: 8, background: isInactive ? '#f1f5f9' : '#FFFDEB', color: isInactive ? '#64748b' : '#2D2E32', display: 'grid', placeItems: 'center' }}>
+                          <div style={{ width: 34, height: 34, borderRadius: 8, background: isInactive ? '#f1f5f9' : 'var(--brand-accent)', color: isInactive ? '#64748b' : '#111827', border: isInactive ? 'none' : '1px solid #FDF06F', display: 'grid', placeItems: 'center' }}>
                             <Building size={16} />
                           </div>
                           <div>
@@ -1453,7 +1458,7 @@ export function BankAccountsPage() {
           {/* Account Detail Header */}
           <div className="card" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <div style={{ width: 44, height: 44, borderRadius: 10, background: '#FFFDEB', color: '#2D2E32', display: 'grid', placeItems: 'center' }}>
+              <div style={{ width: 44, height: 44, borderRadius: 10, background: 'var(--brand-accent)', color: '#111827', border: '1px solid #FDF06F', display: 'grid', placeItems: 'center' }}>
                 <Building size={20} />
               </div>
               <div>
