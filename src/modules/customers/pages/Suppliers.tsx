@@ -322,7 +322,10 @@ export function SuppliersPage() {
       <div className="page-head">
         <div>
           <h1 style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Truck size={28} style={{ color: 'var(--brand-500)' }} /> Directorio de Proveedores
+            <span style={{ width: 44, height: 44, borderRadius: 14, background: 'var(--brand-accent)', color: '#111827', border: '1px solid #FDF06F', display: 'grid', placeItems: 'center' }}>
+              <Truck size={24} />
+            </span>
+            Directorio de Proveedores
           </h1>
           <p>Directorio unificado de proveedores, cuentas por pagar, facturas y auditoría de compras.</p>
         </div>

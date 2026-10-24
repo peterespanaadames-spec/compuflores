@@ -951,7 +951,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
       <div className="page-head">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--brand-50)', color: 'var(--brand-600)', display: 'grid', placeItems: 'center' }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--brand-accent)', color: '#111827', border: '1px solid #FDF06F', display: 'grid', placeItems: 'center' }}>
               <FileText size={22} />
             </div>
             <div>

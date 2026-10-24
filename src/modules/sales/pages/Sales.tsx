@@ -1122,16 +1122,17 @@ export function Sales() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div
                 style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 8,
-                  background: 'var(--brand-500)',
-                  color: 'white',
+                  width: 44,
+                  height: 44,
+                  borderRadius: 14,
+                  background: 'var(--brand-accent)',
+                  color: '#111827',
+                  border: '1px solid #FDF06F',
                   display: 'grid',
                   placeItems: 'center'
                 }}
               >
-                <ShoppingCart size={18} />
+                <ShoppingCart size={22} />
               </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

@@ -1148,7 +1148,7 @@ export function ConfigPage() {
                       <Button
                         type="button"
                         variant="primary"
-                        style={{ background: '#fff', color: '#5f6572', borderColor: '#d1d5db', height: 34, fontSize: 11 }}
+                        style={{ background: 'var(--brand-accent)', color: '#111827', borderColor: '#FDF06F', height: 34, fontSize: 11, fontWeight: 800 }}
                         onClick={() => document.getElementById('logo-upload-input')?.click()}
                       >
                         <Upload size={12} /> {logo ? 'Cambiar imagen' : 'Subir imagen'}
@@ -1191,7 +1191,7 @@ export function ConfigPage() {
                       <Button
                         type="button"
                         variant="primary"
-                        style={{ background: '#fff', color: '#5f6572', borderColor: '#d1d5db', height: 34, fontSize: 11 }}
+                        style={{ background: 'var(--brand-accent)', color: '#111827', borderColor: '#FDF06F', height: 34, fontSize: 11, fontWeight: 800 }}
                         onClick={() => document.getElementById('favicon-upload-input')?.click()}
                       >
                         <Upload size={12} /> {favicon ? 'Cambiar ícono' : 'Subir ícono'}

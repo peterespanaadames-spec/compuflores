@@ -994,12 +994,12 @@ export function MovementsPage() {
               width: 42,
               height: 42,
               borderRadius: 'var(--radius-md)',
-              background: 'var(--brand-50)',
-              color: 'var(--brand-500)',
+              background: 'var(--brand-accent)',
+              color: '#111827',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: '1px solid var(--border)'
+              border: '1px solid #FDF06F'
             }}
           >
             <History size={22} />
