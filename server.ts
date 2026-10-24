@@ -4,7 +4,6 @@ dns.setDefaultResultOrder('ipv4first');
 import crypto from 'node:crypto';
 import express from 'express';
 import cors from 'cors';
-import { createServer as createViteServer, loadEnv } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import https from 'node:https';
@@ -21,6 +20,25 @@ app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
 const PORT = 3000;
+
+/**
+ * Carpeta de respaldo local.
+ * En Vercel el disco del proyecto es de solo lectura: se usa /tmp (efímero)
+ * y la fuente de verdad pasa a ser Supabase vía variables de entorno.
+ */
+const DATA_DIR = process.env.VERCEL
+  ? path.join('/tmp', 'frenyer-data')
+  : path.resolve(process.cwd(), 'data');
+try {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+} catch (err) {
+  console.warn('No se pudo preparar la carpeta de datos locales:', err);
+}
+
+/** Resuelve las rutas del respaldo local respetando DATA_DIR. */
+function dataPath(...parts: Array<string>): string {
+  return path.resolve(DATA_DIR, ...parts);
+}
 
 // Helper to determine if a value is a valid Supabase URL / Key
 function isRealSupabaseUrl(url?: string): boolean {
@@ -45,8 +63,8 @@ function isRealSupabaseKey(key?: string): boolean {
 }
 
 // Read local .env.local if present
-function readEnvLocalFile(): Record<string, string> {
-  const envPath = path.resolve(process.cwd(), '.env.local');
+function readEnvDotFile(fileName: string): Record<string, string> {
+  const envPath = path.resolve(process.cwd(), fileName);
   if (!fs.existsSync(envPath)) return {};
   try {
     const content = fs.readFileSync(envPath, 'utf-8');
@@ -68,8 +86,14 @@ function readEnvLocalFile(): Record<string, string> {
   }
 }
 
-const loadedEnv = loadEnv(process.env.NODE_ENV || 'development', process.cwd(), '');
-const localEnvFile = readEnvLocalFile();
+// Sustituye a loadEnv (evita depender de vite en producción/serverless)
+const loadedEnv = {
+  ...readEnvDotFile('.env'),
+  ...readEnvDotFile('.env.local'),
+  ...readEnvDotFile('.env.development'),
+  ...readEnvDotFile('.env.production')
+};
+const localEnvFile = readEnvDotFile('.env.local');
 
 const DEFAULT_SUPABASE_URL = 'https://knyqrwpaksawuxoqcayu.supabase.co';
 
@@ -84,7 +108,7 @@ interface SupabaseCredentials {
 }
 
 function readCredentialsFile(): Partial<SupabaseCredentials> | null {
-  const filePath = path.resolve(process.cwd(), 'data', 'supabase-credentials.json');
+  const filePath = path.resolve(DATA_DIR, 'supabase-credentials.json');
   if (!fs.existsSync(filePath)) return null;
   try {
     const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
@@ -276,7 +300,7 @@ function resolveSessionSecret(): string {
     loadedEnv.FRENYER_SESSION_SECRET;
   if (fromEnv && fromEnv.trim().length >= 16) return fromEnv.trim();
 
-  const secretPath = path.resolve(process.cwd(), 'data', '.session-secret');
+  const secretPath = path.resolve(DATA_DIR, '.session-secret');
   try {
     if (fs.existsSync(secretPath)) {
       const stored = fs.readFileSync(secretPath, 'utf-8').trim();
@@ -357,7 +381,7 @@ function logAuthEvent(event: string, ip: string, detail: string): void {
   const line = `${new Date().toISOString()} [${event}] ip=${ip} ${detail}\n`;
   console.log(`[AUTH] ${event} ip=${ip} ${detail}`);
   try {
-    const logPath = path.resolve(process.cwd(), 'data', 'auth-audit.log');
+    const logPath = path.resolve(DATA_DIR, 'auth-audit.log');
     fs.mkdirSync(path.dirname(logPath), { recursive: true });
     fs.appendFileSync(logPath, line, 'utf-8');
   } catch {
@@ -1527,7 +1551,7 @@ app.patch('/api/products/:sku/stock', authenticateSupabaseRequest, async (req, r
 // ---------------------------------------------------------------------------
 // 4.B INVENTORY MOVEMENTS AND ADJUSTMENTS PROXY
 // ---------------------------------------------------------------------------
-const INVENTORY_ADJUSTMENTS_FILE = path.resolve(process.cwd(), 'data', 'inventory_adjustments.json');
+const INVENTORY_ADJUSTMENTS_FILE = path.resolve(DATA_DIR, 'inventory_adjustments.json');
 
 function loadPersistedAdjustments(orgId?: string): any[] {
   try {
@@ -1912,7 +1936,7 @@ app.post('/api/inventory/adjustments', async (req, res) => {
 // ---------------------------------------------------------------------------
 // 4.C ORDERS & COMMERCE PROXY (PUBLIC STORE & CONTROL DE PEDIDOS)
 // ---------------------------------------------------------------------------
-const ORDERS_FILE = path.resolve(process.cwd(), 'data', 'orders.json');
+const ORDERS_FILE = path.resolve(DATA_DIR, 'orders.json');
 
 function loadPersistedOrders(orgId?: string): any[] {
   try {
@@ -2428,7 +2452,7 @@ interface LocalCollection {
 }
 
 function createLocalCollection(fileName: string): LocalCollection {
-  const file = path.resolve(process.cwd(), 'data', fileName);
+  const file = path.resolve(DATA_DIR, fileName);
 
   const readAll = (): any[] => {
     try {
@@ -3382,7 +3406,7 @@ app.delete('/api/quotes/:id', async (req, res: AuthenticatedResponse) => {
 
 // 6.1 BANK ACCOUNTS
 // 6.1 BANK ACCOUNTS (RESILIENT DUAL PERSISTENCE)
-const BANK_ACCOUNTS_FILE = path.resolve(process.cwd(), 'data', 'bank_accounts.json');
+const BANK_ACCOUNTS_FILE = path.resolve(DATA_DIR, 'bank_accounts.json');
 
 function loadPersistedBankAccounts(): any[] {
   try {
@@ -3536,8 +3560,8 @@ app.delete('/api/bank-accounts/:id', async (req, res) => {
 });
 
 // 6.2 PAYMENT METHODS & PERSISTENCIA RESILIENTE
-const BANK_MOVEMENTS_FILE = path.resolve(process.cwd(), 'data', 'bank_movements.json');
-const PAYMENT_METHODS_FILE = path.resolve(process.cwd(), 'data', 'payment_methods.json');
+const BANK_MOVEMENTS_FILE = path.resolve(DATA_DIR, 'bank_movements.json');
+const PAYMENT_METHODS_FILE = path.resolve(DATA_DIR, 'payment_methods.json');
 
 function loadPersistedBankMovements(bankAccountId?: string): any[] {
   try {
@@ -4112,7 +4136,7 @@ app.post('/api/bank-transfers', async (req, res: AuthenticatedResponse) => {
 // ---------------------------------------------------------------------------
 // 7. PROVEEDORES (SUPPLIERS) BACKEND PROXY CON PERSISTENCIA RESILIENTE
 // ---------------------------------------------------------------------------
-const SUPPLIERS_FILE = path.resolve(process.cwd(), 'data', 'suppliers.json');
+const SUPPLIERS_FILE = path.resolve(DATA_DIR, 'suppliers.json');
 
 function normalizeSupplierDoc(doc?: string | null): string {
   if (!doc || typeof doc !== 'string') return '';
@@ -4312,7 +4336,7 @@ function autoReconcileSuppliers(orgId: string): any[] {
 
   // 2. Conciliar pagos bancarios
   try {
-    const bankMovFile = path.resolve(process.cwd(), 'data', 'bank_movements.json');
+    const bankMovFile = path.resolve(DATA_DIR, 'bank_movements.json');
     if (fs.existsSync(bankMovFile)) {
       const movs = JSON.parse(fs.readFileSync(bankMovFile, 'utf-8'));
       if (Array.isArray(movs)) {
@@ -4563,7 +4587,7 @@ app.delete('/api/suppliers/:id', async (req, res: AuthenticatedResponse) => {
 // ---------------------------------------------------------------------------
 // 7.B SEDES Y ALMACENES (BRANCHES) PROXY
 // ---------------------------------------------------------------------------
-const BRANCHES_FILE = path.resolve(process.cwd(), 'data', 'branches.json');
+const BRANCHES_FILE = path.resolve(DATA_DIR, 'branches.json');
 
 function loadPersistedBranches(orgId?: string): any[] {
   try {
@@ -4745,7 +4769,7 @@ app.delete('/api/branches/:id', async (req, res: AuthenticatedResponse) => {
 // ---------------------------------------------------------------------------
 // 7.B.2 GESTIÃ“N DE USUARIOS ASOCIADOS Y CONTROL RBAC PROXY
 // ---------------------------------------------------------------------------
-const USERS_FILE = path.resolve(process.cwd(), 'data', 'users.json');
+const USERS_FILE = path.resolve(DATA_DIR, 'users.json');
 
 function loadPersistedUsers(): any[] {
   try {
@@ -6005,9 +6029,9 @@ app.post('/api/sales', async (req, res: AuthenticatedResponse) => {
   }
 });
 
-const ACCOUNTS_RECEIVABLE_FILE = path.resolve(process.cwd(), 'data', 'accounts_receivable.json');
-const ACCOUNTS_PAYABLE_FILE = path.resolve(process.cwd(), 'data', 'accounts_payable.json');
-const PURCHASES_FILE = path.resolve(process.cwd(), 'data', 'purchases.json');
+const ACCOUNTS_RECEIVABLE_FILE = path.resolve(DATA_DIR, 'accounts_receivable.json');
+const ACCOUNTS_PAYABLE_FILE = path.resolve(DATA_DIR, 'accounts_payable.json');
+const PURCHASES_FILE = path.resolve(DATA_DIR, 'purchases.json');
 
 function loadPersistedReceivables(orgId?: string): any[] {
   try {
@@ -6472,7 +6496,7 @@ app.post('/api/accounts-receivable/:id/payments', async (req, res: Authenticated
 });
 
 // --- Perfil de negocio (Configuración -> Negocio): persiste en la tabla organizations ---
-const ORGANIZATIONS_MIRROR_FILE = path.resolve(process.cwd(), 'data', 'organizations.json');
+const ORGANIZATIONS_MIRROR_FILE = path.resolve(DATA_DIR, 'organizations.json');
 
 function loadPersistedOrganizations(): any[] {
   try {
@@ -7878,10 +7902,11 @@ app.patch('/api/admin/users/:id', authenticateSupabaseRequest, async (req, res) 
 });
 
 // ---------------------------------------------------------------------------
-// VITE DEV / STATIC SERVING
+// ARRANQUE LOCAL / EXPORT PARA VERCEL
 // ---------------------------------------------------------------------------
-async function startServer() {
+async function startLocalServer() {
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa'
@@ -7899,4 +7924,11 @@ async function startServer() {
   });
 }
 
-startServer();
+if (process.env.VERCEL) {
+  // Serverless: Vercel importa `app` desde /api/index.ts; los archivos estáticos los sirve el CDN.
+  console.log('[Frenyer ERP] Modo Vercel: la app queda lista como función serverless.');
+} else {
+  startLocalServer();
+}
+
+export default app;
