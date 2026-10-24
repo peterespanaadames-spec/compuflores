@@ -537,7 +537,7 @@ export function OrderTrackerModal({
           background: transparent;
         }
         .tracker-search-btn {
-          background: #0284c7;
+          background: #2D2E32;
           color: #ffffff;
           border: none;
           border-radius: 8px;
@@ -547,7 +547,7 @@ export function OrderTrackerModal({
           cursor: pointer;
         }
         .tracker-search-btn:hover {
-          background: #0369a1;
+          background: #1F2023;
         }
         .tracker-error-alert {
           background: #fef2f2;
@@ -722,9 +722,9 @@ export function OrderTrackerModal({
         .tracker-push-btn {
           align-self: flex-start;
           margin-top: 4px;
-          background: #0e7490;
-          color: #ffffff;
-          border: none;
+          background: var(--brand-accent);
+          color: #111827;
+          border: 1px solid #FDF06F;
           border-radius: 8px;
           padding: 8px 14px;
           font-size: 11.5px;
@@ -734,10 +734,12 @@ export function OrderTrackerModal({
           transition: all 0.15s ease;
         }
         .tracker-push-btn:hover {
-          background: #155e75;
+          background: #FDF06F;
         }
         .tracker-push-btn.active {
-          background: #047857;
+          background: #2D2E32;
+          color: #ffffff;
+          border-color: #2D2E32;
         }
         .tracker-stepper-wrap {
           padding: 10px 0;
@@ -916,7 +918,7 @@ export function OrderTrackerModal({
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          background: #15803D;
+          background: #2D2E32;
           color: #ffffff;
           text-decoration: none;
           border-radius: 9px;
@@ -927,12 +929,12 @@ export function OrderTrackerModal({
           transition: all 0.15s ease;
         }
         .tracker-btn-whatsapp:hover {
-          background: #047857;
+          background: #1F2023;
         }
         .tracker-btn-close {
-          background: #f1f5f9;
-          border: 1px solid #cbd5e1;
-          color: #334155;
+          background: var(--brand-accent);
+          border: 1px solid #FDF06F;
+          color: #111827;
           border-radius: 9px;
           padding: 10px 18px;
           font-size: 13px;
@@ -941,8 +943,8 @@ export function OrderTrackerModal({
           transition: all 0.15s ease;
         }
         .tracker-btn-close:hover {
-          background: #e2e8f0;
-          color: #0f172a;
+          background: #FDF06F;
+          color: #111827;
         }
         @media (max-width: 640px) {
           .tracker-panel {
