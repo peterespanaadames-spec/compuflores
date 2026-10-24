@@ -2104,7 +2104,7 @@ export function ShopPage() {
                   >
                     {/* Barra superior del menú */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid #f1f5f9' }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b' }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#111827' }}>
                         Mi Cuenta
                       </span>
                       <button
@@ -2152,7 +2152,7 @@ export function ShopPage() {
                         <div style={{ fontSize: 14.5, fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {associatedUserData?.name || currentAuthUser?.user_metadata?.full_name || (currentAuthUser?.email ? currentAuthUser.email.split('@')[0] : 'Usuario')}
                         </div>
-                        <div style={{ fontSize: 11.5, color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div style={{ fontSize: 11.5, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {currentAuthUser?.email || associatedUserData?.email || 'Sin correo asociado'}
                         </div>
                         <div style={{ marginTop: 4 }}>
