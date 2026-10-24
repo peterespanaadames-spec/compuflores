@@ -437,14 +437,16 @@ export function DashboardLayout() {
 
         <Outlet />
 
-        {/* Alma Floating AI Copilot Bubble */}
-        <button
-          className="alma-fab"
-          onClick={() => navigate('/alma')}
-          title="Preguntar a Alma AI"
-        >
-          <Sparkles size={24} />
-        </button>
+        {/* Alma Copilot: oculto temporalmente (el módulo y la ruta /alma siguen disponibles) */}
+        {false && (
+          <button
+            className="alma-fab"
+            onClick={() => navigate('/alma')}
+            title="Preguntar a Alma AI"
+          >
+            <Sparkles size={24} />
+          </button>
+        )}
       </main>
 
       {/* Manual BCV Rate Modal */}
