@@ -20,8 +20,7 @@ import {
   FileText,
   Copy,
   Check,
-  ChevronRight,
-  Filter
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
@@ -612,11 +611,11 @@ grant all on table public.expense_payments to anon, authenticated;
               width: 44,
               height: 44,
               borderRadius: 14,
-              background: 'var(--brand-50)',
-              color: 'var(--brand-600)',
+              background: 'var(--brand-accent)',
+              color: '#111827',
               display: 'grid',
               placeItems: 'center',
-              border: '1px solid var(--border)'
+              border: '1px solid #FDF06F'
             }}
           >
             <WalletCards size={24} />
@@ -629,29 +628,6 @@ grant all on table public.expense_payments to anon, authenticated;
         </div>
 
         <div className="actions" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setActiveTab('TODOS');
-              setCategoryFilter('Todas');
-              setStatusFilter('TODOS');
-              setSearchTerm('');
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}
-            title="Restablecer filtros y ver todos los registros"
-          >
-            <Filter size={14} /> Todos los registros
-          </Button>
-
-          <Button
-            variant="secondary"
-            onClick={loadData}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}
-            disabled={isLoading}
-          >
-            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} /> Actualizar
-          </Button>
-
           <Button
             variant="primary"
             onClick={() => handleOpenCreateModal()}
