@@ -71,6 +71,9 @@
 - `doctor`: healthy; pendiente completar `02-DOCS/wiki/sdd/constitution.md` antes del primer feature SDD (decir "constitution").
 - Flujo de 3 carriles: Answer (solo lectura) / FTD (cambio simple, documento en 02-DOCS) / SDD (cadena de 10 fases con especificación aprobada). trampas: no usar `@latest` en clones (`sync` con la versión de `.rsc.json`).
 
+## Documentación del proyecto (2026-10-23)
+- Wiki completa en `02-DOCS/wiki/` (fuente viva para el asistente): `index.md` (mapa), `arquitectura.md` (stack/carpetas/flujo de datos), `api-endpoints.md` (catálogo verificado de ~95 rutas), `base-de-datos.md` (migraciones 0001–0027), `roles-y-acceso.md`, `portal-del-cliente.md`, `operacion.md` (comandos, verificaón, trampas). La doc histórica de `docs/` se referencia, no se duplica.
+
 ## Portal de cliente con secciones individuales (2026-10-23)
 - `GET /api/customer/portal` admite `?section=orders|purchases|wishlist|profile`; responde `{ customer, <sección> }`. Sin sección sigue devolviendo todo (la tienda usa la llamada completa para sincronizar corazones). El bloque `customer` siempre va porque la cabecera lo necesita (una lectura a `profiles`).
 - `CustomerPortal.tsx`: state por sección (`orders/purchases/wishlist` con `null` = sin cargar), `loadCustomerMeta` (cabecera) y `loadSection(tab, force)` bajo demanda con caché por apertura; spinner/error/reintento por pestaña; botones de refresco recargan **solo** su sección. BUGS corregidos: teléfono fijo `0412571444` y dirección "demo" inventada que se mostraban como si fueran del cliente → ahora «No registrado» / mensaje de vacío.
