@@ -71,6 +71,11 @@
 - `doctor`: healthy; pendiente completar `02-DOCS/wiki/sdd/constitution.md` antes del primer feature SDD (decir "constitution").
 - Flujo de 3 carriles: Answer (solo lectura) / FTD (cambio simple, documento en 02-DOCS) / SDD (cadena de 10 fases con especificación aprobada). trampas: no usar `@latest` en clones (`sync` con la versión de `.rsc.json`).
 
+## Portal de cliente con secciones individuales (2026-10-23)
+- `GET /api/customer/portal` admite `?section=orders|purchases|wishlist|profile`; responde `{ customer, <sección> }`. Sin sección sigue devolviendo todo (la tienda usa la llamada completa para sincronizar corazones). El bloque `customer` siempre va porque la cabecera lo necesita (una lectura a `profiles`).
+- `CustomerPortal.tsx`: state por sección (`orders/purchases/wishlist` con `null` = sin cargar), `loadCustomerMeta` (cabecera) y `loadSection(tab, force)` bajo demanda con caché por apertura; spinner/error/reintento por pestaña; botones de refresco recargan **solo** su sección. BUGS corregidos: teléfono fijo `0412571444` y dirección "demo" inventada que se mostraban como si fueran del cliente → ahora «No registrado» / mensaje de vacío.
+- Verificado: build+ESLint limpios; endpoint con sesión responde por secciones; sin sesión 401 correcto.
+
 ## Roles de usuario: cliente vs interno (2026-10-23)
 - Regla simple: **cliente por defecto**; solo es usuario interno quien está en la base de usuarios del ERP (`/api/users`) o trae un rol interno en metadata. Cliente → portal propio en la tienda (Mis Pedidos, Mis Compras, Lista de Deseo, Mi Perfil vía `CustomerPortal`); interno → Panel Administrativo ERP (`/dashboard`, protegido por `ProtectedRoute`, que redirige clientes a `/`).
 - Nuevo helper único `src/lib/auth/roles.ts` (`INTERNAL_ROLES`, `isInternalRole`); reemplaza las 3 listas duplicadas en `ShopPage` (ya no exige role=cliente explícito en metadata para ser cliente), `ProtectedRoute` y `LoginPage` (redirige internos a `/dashboard`, clientes a `/`).

@@ -151,9 +151,26 @@ export function CustomerPortal({
   onOpenTracker
 }: CustomerPortalProps) {
   const [activeTab, setActiveTab] = useState<PortalTab>(initialTab);
-  const [payload, setPayload] = useState<CustomerPortalPayload | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+
+  // Datos por secciones: cada pantalla se carga sola cuando el usuario la abre.
+  const [customer, setCustomer] = useState<CustomerPortalPayload['customer'] | null>(null);
+  const [orders, setOrders] = useState<CustomerPortalOrder[] | null>(null);
+  const [purchases, setPurchases] = useState<CustomerPortalPurchase[] | null>(null);
+  const [wishlist, setWishlist] = useState<CustomerPortalWishlistItem[] | null>(null);
+  const [isLoadingMeta, setIsLoadingMeta] = useState(false);
+  const [metaError, setMetaError] = useState('');
+  const [sectionLoading, setSectionLoading] = useState<Record<PortalTab, boolean>>({
+    pedidos: false,
+    compras: false,
+    deseo: false,
+    perfil: false
+  });
+  const [sectionError, setSectionError] = useState<Record<PortalTab, string>>({
+    pedidos: '',
+    compras: '',
+    deseo: '',
+    perfil: ''
+  });
 
   useEffect(() => {
     if (initialTab) {
@@ -184,34 +201,71 @@ export function CustomerPortal({
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [isSavingPassword, setIsSavingPassword] = useState(false);
 
-  const loadPortal = useCallback(async () => {
-    setIsLoading(true);
-    setErrorMessage('');
+  // Carga de la ficha del cliente (cabecera + datos del perfil).
+  const loadCustomerMeta = useCallback(async (): Promise<void> => {
+    setIsLoadingMeta(true);
+    setMetaError('');
     try {
-      const res = await fetch('/api/customer/portal', { credentials: 'include' });
+      const res = await fetch('/api/customer/portal?section=profile', { credentials: 'include' });
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.success) {
-        setErrorMessage(json?.error || 'No se pudo cargar tu portal de cliente.');
+        setMetaError(json?.error || 'No se pudo cargar tu cuenta de cliente.');
         return;
       }
-      setPayload(json.data);
+      setCustomer(json.data?.customer || null);
       if (json.data?.customer) {
         setEditFullName(json.data.customer.full_name || '');
         setEditDocId(json.data.customer.document_id || 'V-');
         setEditPhone(json.data.customer.phone || '');
       }
     } catch {
-      setErrorMessage('No se pudo conectar con el servidor.');
+      setMetaError('No se pudo conectar con el servidor.');
     } finally {
-      setIsLoading(false);
+      setIsLoadingMeta(false);
     }
   }, []);
 
+  // Carga individual de una sección (pedidos / compras / deseo), con caché por apertura.
+  const loadSection = useCallback(
+    async (section: PortalTab, force = false) => {
+      if (section === 'perfil') return; // El perfil viaja con la cabecera.
+
+      const alreadyLoaded =
+        section === 'pedidos' ? orders !== null : section === 'compras' ? purchases !== null : wishlist !== null;
+      if (!force && alreadyLoaded) return;
+
+      setSectionLoading(prev => ({ ...prev, [section]: true }));
+      setSectionError(prev => ({ ...prev, [section]: '' }));
+      try {
+        const res = await fetch(`/api/customer/portal?section=${section}`, { credentials: 'include' });
+        const json = await res.json().catch(() => null);
+        if (!res.ok || !json?.success) {
+          setSectionError(prev => ({ ...prev, [section]: json?.error || 'No se pudieron cargar tus datos.' }));
+          return;
+        }
+        if (section === 'pedidos') setOrders(Array.isArray(json.data?.orders) ? json.data.orders : []);
+        if (section === 'compras') setPurchases(Array.isArray(json.data?.purchases) ? json.data.purchases : []);
+        if (section === 'deseo') setWishlist(Array.isArray(json.data?.wishlist) ? json.data.wishlist : []);
+      } catch {
+        setSectionError(prev => ({ ...prev, [section]: 'No se pudo conectar con el servidor.' }));
+      } finally {
+        setSectionLoading(prev => ({ ...prev, [section]: false }));
+      }
+    },
+    [orders, purchases, wishlist]
+  );
+
   useEffect(() => {
     if (isOpen) {
-      loadPortal();
+      void loadCustomerMeta();
     }
-  }, [isOpen, loadPortal]);
+  }, [isOpen, loadCustomerMeta]);
+
+  useEffect(() => {
+    if (isOpen) {
+      void loadSection(activeTab);
+    }
+  }, [isOpen, activeTab, loadSection]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -240,10 +294,10 @@ export function CustomerPortal({
         });
         const json = await res.json().catch(() => null);
         if (res.ok && json?.success) {
-          setPayload(prev => (prev ? { ...prev, wishlist: json.data.wishlist } : prev));
+          setWishlist(json.data.wishlist || []);
         }
       } catch {
-        setErrorMessage('No se pudo actualizar tu lista de deseos.');
+        setSectionError(prev => ({ ...prev, deseo: 'No se pudo actualizar tu lista de deseos.' }));
       }
     },
     []
@@ -266,16 +320,13 @@ export function CustomerPortal({
       });
       const json = await res.json().catch(() => null);
       if (res.ok && json?.success) {
-        setPayload(prev =>
+        setCustomer(prev =>
           prev
             ? {
                 ...prev,
-                customer: {
-                  ...prev.customer,
-                  full_name: editFullName,
-                  document_id: editDocId,
-                  phone: editPhone
-                }
+                full_name: editFullName,
+                document_id: editDocId,
+                phone: editPhone
               }
             : prev
         );
@@ -283,10 +334,10 @@ export function CustomerPortal({
         setProfileSuccessMsg('¡Perfil actualizado con éxito!');
         setTimeout(() => setProfileSuccessMsg(''), 4000);
       } else {
-        setErrorMessage(json?.error || 'No se pudo actualizar el perfil.');
+        setSectionError(prev => ({ ...prev, perfil: json?.error || 'No se pudo actualizar el perfil.' }));
       }
     } catch {
-      setErrorMessage('Error de conexión al guardar perfil.');
+      setSectionError(prev => ({ ...prev, perfil: 'Error de conexión al guardar perfil.' }));
     } finally {
       setIsSavingProfile(false);
     }
@@ -305,14 +356,11 @@ export function CustomerPortal({
       });
       const json = await res.json().catch(() => null);
       if (res.ok && json?.success) {
-        setPayload(prev =>
+        setCustomer(prev =>
           prev
             ? {
                 ...prev,
-                customer: {
-                  ...prev.customer,
-                  addresses: json.data.addresses
-                }
+                addresses: json.data.addresses
               }
             : prev
         );
@@ -320,7 +368,7 @@ export function CustomerPortal({
         setIsAddingAddress(false);
       }
     } catch {
-      setErrorMessage('Error guardando la dirección.');
+      setSectionError(prev => ({ ...prev, perfil: 'Error guardando la dirección.' }));
     } finally {
       setIsSavingAddress(false);
     }
@@ -336,20 +384,17 @@ export function CustomerPortal({
       });
       const json = await res.json().catch(() => null);
       if (res.ok && json?.success) {
-        setPayload(prev =>
+        setCustomer(prev =>
           prev
             ? {
                 ...prev,
-                customer: {
-                  ...prev.customer,
-                  addresses: json.data.addresses
-                }
+                addresses: json.data.addresses
               }
             : prev
         );
       }
     } catch {
-      setErrorMessage('Error eliminando la dirección.');
+      setSectionError(prev => ({ ...prev, perfil: 'Error eliminando la dirección.' }));
     }
   };
 
@@ -389,30 +434,39 @@ export function CustomerPortal({
     }
   };
 
-  const orders = payload?.orders || [];
-  const purchases = payload?.purchases || [];
-  const wishlist = payload?.wishlist || [];
+  const ordersList = orders || [];
+  const purchasesList = purchases || [];
+  const wishlistList = wishlist || [];
 
   // Filter orders by date if specified
   const filteredOrders = useMemo(() => {
-    if (!orderDateFilter) return orders;
-    return orders.filter(o => {
+    if (!orderDateFilter) return ordersList;
+    return ordersList.filter(o => {
       if (!o.created_at) return false;
       const d = new Date(o.created_at).toISOString().split('T')[0];
       return d === orderDateFilter;
     });
-  }, [orders, orderDateFilter]);
+  }, [ordersList, orderDateFilter]);
 
   if (!isOpen) return null;
 
+  // Conteos solo cuando la sección ya se cargó (los datos llegan bajo demanda).
   const tabs: { id: PortalTab; icon: React.ReactNode; count?: number }[] = [
-    { id: 'pedidos', icon: <Package size={15} />, count: orders.length },
+    {
+      id: 'pedidos',
+      icon: <Package size={15} />,
+      count: orders !== null && orders.length > 0 ? orders.length : undefined
+    },
     { id: 'compras', icon: <FileText size={15} /> },
-    { id: 'deseo', icon: <Heart size={15} />, count: wishlist.length },
+    {
+      id: 'deseo',
+      icon: <Heart size={15} />,
+      count: wishlist !== null && wishlist.length > 0 ? wishlist.length : undefined
+    },
     { id: 'perfil', icon: <User size={15} /> }
   ];
 
-  const customerName = payload?.customer.full_name || displayName || email.split('@')[0];
+  const customerName = customer?.full_name || displayName || email.split('@')[0];
   const userInitial = customerName.slice(0, 1).toUpperCase();
 
   return (
@@ -472,24 +526,42 @@ export function CustomerPortal({
 
         {/* Tab Contents */}
         <div className="cp-content">
-          {isLoading && (
+          {isLoadingMeta && (
             <div className="cp-state">
               <RefreshCw size={26} className="cp-spin" />
-              <p>Cargando información de tu cuenta...</p>
+              <p>Cargando tu cuenta de cliente...</p>
             </div>
           )}
 
-          {!isLoading && errorMessage && (
+          {!isLoadingMeta && metaError && (
             <div className="cp-state cp-state-error">
-              <p>{errorMessage}</p>
-              <button type="button" className="cp-retry" onClick={loadPortal}>
+              <p>{metaError}</p>
+              <button type="button" className="cp-retry" onClick={() => void loadCustomerMeta()}>
                 <RefreshCw size={14} /> Reintentar
               </button>
             </div>
           )}
 
-          {/* TAB 1: MIS PEDIDOS (Image 4 Reference) */}
-          {!isLoading && !errorMessage && activeTab === 'pedidos' && (
+          {!isLoadingMeta && !metaError && (
+            <>
+            {/* Cabezal de estado de la pestaña: carga o error por sección */}
+            {sectionLoading[activeTab] && (
+              <div className="cp-state">
+                <RefreshCw size={24} className="cp-spin" />
+                <p>Cargando {TAB_LABELS[activeTab].toLowerCase()}...</p>
+              </div>
+            )}
+
+            {!sectionLoading[activeTab] && sectionError[activeTab] && (
+              <div className="cp-state cp-state-error">
+                <p>{sectionError[activeTab]}</p>
+                <button type="button" className="cp-retry" onClick={() => void loadSection(activeTab, true)}>
+                  <RefreshCw size={14} /> Reintentar
+                </button>
+              </div>
+            )}
+
+            {!sectionLoading[activeTab] && !sectionError[activeTab] && activeTab === 'pedidos' && (
             <section className="cp-section">
               <div className="cp-section-head">
                 <div>
@@ -506,7 +578,7 @@ export function CustomerPortal({
                       title="Filtrar por fecha"
                     />
                   </div>
-                  <button type="button" className="cp-refresh" onClick={loadPortal} aria-label="Actualizar pedidos">
+                  <button type="button" className="cp-refresh" onClick={() => void loadSection('pedidos', true)} aria-label="Actualizar pedidos">
                     <RefreshCw size={15} />
                   </button>
                 </div>
@@ -573,20 +645,20 @@ export function CustomerPortal({
             </section>
           )}
 
-          {/* TAB 2: MIS COMPRAS (Image 1 Reference: FACTURACIÓN ELECTRÓNICA) */}
-          {!isLoading && !errorMessage && activeTab === 'compras' && (
+          {/* TAB 2: MIS COMPRAS (FACTURACIÓN ELECTRÓNICA) */}
+          {!sectionLoading[activeTab] && !sectionError[activeTab] && activeTab === 'compras' && (
             <section className="cp-section">
               <div className="cp-section-head">
                 <div>
                   <h3>FACTURACIÓN ELECTRÓNICA</h3>
                   <p>Facturas digitales asociadas a tus compras con tu RIF/Cédula.</p>
                 </div>
-                <button type="button" className="cp-refresh" onClick={loadPortal} aria-label="Actualizar compras">
+                <button type="button" className="cp-refresh" onClick={() => void loadSection('compras', true)} aria-label="Actualizar compras">
                   <RefreshCw size={15} />
                 </button>
               </div>
 
-              {purchases.length === 0 ? (
+              {purchasesList.length === 0 ? (
                 <div className="cp-empty-box">
                   <FileText size={40} className="text-slate-300" />
                   <h4>Sin facturas digitales registradas</h4>
@@ -594,7 +666,7 @@ export function CustomerPortal({
                 </div>
               ) : (
                 <div className="cp-invoices-list">
-                  {purchases.map(purchase => {
+                  {purchasesList.map(purchase => {
                     const docNum = purchase.doc_number || `FAC-2026-${String(purchase.id || '1').slice(0, 3)}`;
                     const orderRefNum = purchase.order_number || String(purchase.id || '').slice(0, 4);
 
@@ -628,20 +700,20 @@ export function CustomerPortal({
             </section>
           )}
 
-          {/* TAB 3: LISTA DE DESEO (Image 3 Reference) */}
-          {!isLoading && !errorMessage && activeTab === 'deseo' && (
+          {/* TAB 3: LISTA DE DESEO */}
+          {!sectionLoading[activeTab] && !sectionError[activeTab] && activeTab === 'deseo' && (
             <section className="cp-section">
               <div className="cp-section-head">
                 <div>
                   <h3>MI LISTA DE DESEOS</h3>
                   <p>Guarda los artículos que deseas adquirir. Se eliminarán automáticamente al comprarlos.</p>
                 </div>
-                <button type="button" className="cp-refresh" onClick={loadPortal} aria-label="Actualizar lista de deseo">
+                <button type="button" className="cp-refresh" onClick={() => void loadSection('deseo', true)} aria-label="Actualizar lista de deseo">
                   <RefreshCw size={15} />
                 </button>
               </div>
 
-              {wishlist.length === 0 ? (
+              {wishlistList.length === 0 ? (
                 /* Exact Match to Image 3 empty state */
                 <div className="cp-wishlist-empty-card">
                   <div className="cp-wishlist-heart-wrap">
@@ -652,7 +724,7 @@ export function CustomerPortal({
                 </div>
               ) : (
                 <div className="cp-wishlist-grid">
-                  {wishlist.map(item => (
+                  {wishlistList.map(item => (
                     <article key={item.product_id || item.id} className="cp-wishlist-card">
                       <div className="cp-wishlist-thumb">
                         {item.image_url ? (
@@ -692,8 +764,8 @@ export function CustomerPortal({
             </section>
           )}
 
-          {/* TAB 4: MI PERFIL (Image 2 Reference) */}
-          {!isLoading && !errorMessage && activeTab === 'perfil' && (
+          {/* TAB 4: MI PERFIL */}
+          {activeTab === 'perfil' && (
             <section className="cp-section cp-profile-flow">
               {/* SECTION 1: INFORMACIÓN DE LA CUENTA */}
               <div className="cp-profile-card">
@@ -765,7 +837,7 @@ export function CustomerPortal({
                     <div className="cp-profile-display-grid">
                       <div className="cp-field-display">
                         <span className="cp-display-label">NOMBRE REGISTRADO:</span>
-                        <span className="cp-display-val">{payload?.customer.full_name || displayName || 'No registrado'}</span>
+                        <span className="cp-display-val">{customer?.full_name || displayName || 'No registrado'}</span>
                       </div>
                       <div className="cp-field-display">
                         <span className="cp-display-label">CORREO ELECTRÓNICO:</span>
@@ -773,11 +845,11 @@ export function CustomerPortal({
                       </div>
                       <div className="cp-field-display">
                         <span className="cp-display-label">TIPO DE DOCUMENTO / RIF:</span>
-                        <span className="cp-display-val">{payload?.customer.document_id || 'V-'}</span>
+                        <span className="cp-display-val">{customer?.document_id || 'V-'}</span>
                       </div>
                       <div className="cp-field-display">
                         <span className="cp-display-label">TELÉFONO DE CONTACTO:</span>
-                        <span className="cp-display-val">{payload?.customer.phone || '0412571444'}</span>
+                        <span className="cp-display-val">{customer?.phone || 'No registrado'}</span>
                       </div>
                     </div>
 
@@ -835,8 +907,8 @@ export function CustomerPortal({
                 )}
 
                 <div className="cp-addresses-list">
-                  {(payload?.customer.addresses && payload.customer.addresses.length > 0) ? (
-                    payload.customer.addresses.map((addr, idx) => (
+                  {customer?.addresses && customer.addresses.length > 0 ? (
+                    customer.addresses.map((addr, idx) => (
                       <div key={idx} className="cp-address-row-box">
                         <div className="cp-address-text">
                           <MapPin size={15} className="text-slate-400 flex-shrink-0" />
@@ -853,20 +925,12 @@ export function CustomerPortal({
                       </div>
                     ))
                   ) : (
-                    /* Default demo address if none registered */
+                    /* Estado vacío honesto: sin direcciones inventadas */
                     <div className="cp-address-row-box">
                       <div className="cp-address-text">
                         <MapPin size={15} className="text-slate-400 flex-shrink-0" />
-                        <span>carreca 6 entre calle 19 y 20, casa s/n barinitas edo. barinas</span>
+                        <span>Aún no tienes direcciones registradas. Agrega una con el botón «Nueva Dirección».</span>
                       </div>
-                      <button
-                        type="button"
-                        className="cp-btn-del-addr"
-                        onClick={() => handleRemoveAddress('carreca 6 entre calle 19 y 20, casa s/n barinitas edo. barinas')}
-                        title="Eliminar dirección"
-                      >
-                        <Trash2 size={15} />
-                      </button>
                     </div>
                   )}
                 </div>
@@ -924,6 +988,8 @@ export function CustomerPortal({
                 </form>
               </div>
             </section>
+          )}
+            </>
           )}
         </div>
       </div>

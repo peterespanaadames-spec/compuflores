@@ -2657,20 +2657,14 @@ function loadCustomerWishlist(email: string, organizationId: string): any[] {
     .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
 }
 
-app.get('/api/customer/portal', async (_req, res: AuthenticatedResponse) => {
+app.get('/api/customer/portal', async (req, res: AuthenticatedResponse) => {
   try {
     const customer = resolveCustomerSession(res);
     if (!customer) {
       return res.status(401).json({ success: false, error: 'Debes iniciar sesion para ver tu portal de cliente.' });
     }
 
-    const accessToken = res.locals.supabaseContext?.accessToken;
-    const [orders, purchases, wishlist] = await Promise.all([
-      loadCustomerOrders(customer.email, customer.organizationId, accessToken),
-      loadCustomerPurchases(customer.email, customer.organizationId),
-      Promise.resolve(loadCustomerWishlist(customer.email, customer.organizationId))
-    ]);
-
+    // Guarda la ficha del cliente: la cabecera siempre la necesita y es una lectura barata.
     let profile: any = null;
     try {
       const profilesRes = await supabaseRestRequest(
@@ -2688,18 +2682,49 @@ app.get('/api/customer/portal', async (_req, res: AuthenticatedResponse) => {
       (row: any) => String(row.email || '').trim().toLowerCase() === customer.email
     );
 
+    const customerBlock = {
+      email: customer.email,
+      full_name: localCust?.full_name || profile?.full_name || customer.email.split('@')[0],
+      document_id: localCust?.document_id || localCust?.rif || 'V-',
+      phone: localCust?.phone || '',
+      addresses: Array.isArray(localCust?.addresses) ? localCust.addresses : (localCust?.address ? [localCust.address] : []),
+      role: profile?.role || 'cliente',
+      organization_id: customer.organizationId
+    };
+
+    // Modo por secciones: el cliente pide una pantalla y solo esa viaja en la respuesta.
+    const section = String(req.query?.section || '').trim().toLowerCase();
+
+    if (section === 'profile') {
+      return res.json({ success: true, data: { customer: customerBlock } });
+    }
+
+    if (section === 'orders') {
+      const orders = await loadCustomerOrders(customer.email, customer.organizationId, res.locals.supabaseContext?.accessToken);
+      return res.json({ success: true, data: { customer: customerBlock, orders } });
+    }
+
+    if (section === 'purchases') {
+      const purchases = await loadCustomerPurchases(customer.email, customer.organizationId);
+      return res.json({ success: true, data: { customer: customerBlock, purchases } });
+    }
+
+    if (section === 'wishlist') {
+      return res.json({ success: true, data: { customer: customerBlock, wishlist: loadCustomerWishlist(customer.email, customer.organizationId) } });
+    }
+
+    // Sin sección: carga completa (retrocompatibilidad con la tienda).
+    const accessToken = res.locals.supabaseContext?.accessToken;
+    const [orders, purchases, wishlist] = await Promise.all([
+      loadCustomerOrders(customer.email, customer.organizationId, accessToken),
+      loadCustomerPurchases(customer.email, customer.organizationId),
+      Promise.resolve(loadCustomerWishlist(customer.email, customer.organizationId))
+    ]);
+
     return res.json({
       success: true,
       data: {
-        customer: {
-          email: customer.email,
-          full_name: localCust?.full_name || profile?.full_name || customer.email.split('@')[0],
-          document_id: localCust?.document_id || localCust?.rif || 'V-',
-          phone: localCust?.phone || '',
-          addresses: Array.isArray(localCust?.addresses) ? localCust.addresses : (localCust?.address ? [localCust.address] : []),
-          role: profile?.role || 'cliente',
-          organization_id: customer.organizationId
-        },
+        customer: customerBlock,
         orders,
         purchases,
         wishlist
