@@ -10,7 +10,7 @@ let app: any = null;
 let initError: string | null = null;
 
 try {
-  const mod: any = await import('../server');
+  const mod: any = await import('./server');
   app = mod.default;
 } catch (err: any) {
   initError = err?.stack ? String(err.stack) : String(err);
