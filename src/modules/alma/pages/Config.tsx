@@ -33,7 +33,7 @@ import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { getActiveExchangeRate, setActiveExchangeRate, formatUSD, formatVES } from '../../../lib/currency';
 import { authenticatedFetch } from '../../../lib/supabase/api';
-import { SupabaseConnectionModal } from '../../../components/modals/SupabaseConnectionModal';
+import { refreshSupabaseStatus } from '../../../lib/supabase/client';
 import { getBusinessProfile, saveBusinessProfile } from '../../../lib/businessProfile';
 import {
   DbBranch,
@@ -97,8 +97,6 @@ interface PaymentMethodRecord {
 
 export function ConfigPage() {
   const [activeTab, setActiveTab] = useState<'negocio' | 'almacen' | 'usuarios' | 'auditoria'>('negocio');
-  const [isDbModalOpen, setIsDbModalOpen] = useState(false);
-
   // --- SEDES Y ALMACENES (BRANCHES) STATE ---
   const [branches, setBranches] = useState<DbBranch[]>([]);
   const [isBranchesLoading, setIsBranchesLoading] = useState(false);
@@ -2822,27 +2820,6 @@ GRANT ALL ON TABLE public.branches TO anon;`}</pre>
                   </button>
 
                   <button
-                    onClick={loadAuditAccounts}
-                    style={{
-                      height: 36,
-                      padding: '0 14px',
-                      borderRadius: 8,
-                      border: '1px solid #2D2E32',
-                      background: '#fff',
-                      color: '#2D2E32',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <RefreshCw size={13} className={isAuditLoading ? 'animate-spin' : ''} />
-                    <span>Sincronizar</span>
-                  </button>
-
-                  <button
                     onClick={() => setIsCreateAccountModalOpen(true)}
                     style={{
                       height: 36,
@@ -2886,8 +2863,19 @@ GRANT ALL ON TABLE public.branches TO anon;`}</pre>
                   </button>
 
                   <button
-                    onClick={() => setIsDbModalOpen(true)}
-                    title="Estado de la conexión con la base de datos. Haga clic para detalles."
+                    onClick={async () => {
+                      try {
+                        const status = await refreshSupabaseStatus();
+                        if (status.supabaseConnected) {
+                          showNotification('Conexión con la base de datos verificada.', 'success');
+                        } else {
+                          showNotification('La base de datos no responde en este momento.', 'info');
+                        }
+                      } catch {
+                        showNotification('No se pudo verificar la conexión.', 'info');
+                      }
+                    }}
+                    title="Sincronizar el estado de la conexión con la base de datos"
                     style={{
                       height: 36,
                       padding: '0 14px',
@@ -3463,11 +3451,6 @@ GRANT ALL ON TABLE public.branches TO anon;`}</pre>
           </div>
         );
       })()}
-
-      <SupabaseConnectionModal
-        isOpen={isDbModalOpen}
-        onClose={() => setIsDbModalOpen(false)}
-      />
     </div>
   );
 }
