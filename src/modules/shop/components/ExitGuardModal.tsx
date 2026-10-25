@@ -157,8 +157,8 @@ export function ExitGuardModal({ isOpen, onStay, onAbandon }: ExitGuardModalProp
           <div>
             <p id="eg-title" className="eg-title">Cuidado: puedes perder tu carrito</p>
             <p className="eg-message">
-              Tienes artículos en tu carrito y una sesión activa. Si sales ahora podrías
-              perder tu selección y tu acceso.
+              Tienes artículos en tu carrito. Si sales o recargas ahora podrías perder
+              tu selección.
             </p>
           </div>
           <button type="button" className="eg-close" onClick={onStay} aria-label="Cerrar aviso">

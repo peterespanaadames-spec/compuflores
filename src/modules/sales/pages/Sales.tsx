@@ -36,10 +36,48 @@ import {
   recordSaleInSupabase,
   fetchBankAccountsFromSupabase,
   createProductInSupabase,
-  fetchTopSellingRotationFromSupabase
+  getActiveOrgId
 } from '../../../lib/supabase/db';
 import { authenticatedFetch } from '../../../lib/supabase/api';
+import { supabase } from '../../../lib/supabase/client';
 import { getBusinessProfile } from '../../../lib/businessProfile';
+
+/**
+ * Rotación real por SKU: unidades vendidas en las últimas 300 ventas
+ * COMPLETADAS del inquilino activo (tablas core 'sales' + 'sale_items').
+ * Vive inline en este módulo para que el empaquetador nunca la trate
+ * como código muerto; alimenta el catálogo destacado del POS en móvil.
+ */
+async function fetchPosProductRotation(): Promise<Record<string, number>> {
+  try {
+    const orgId = await getActiveOrgId();
+    if (!orgId) return {};
+    const { data, error } = await supabase
+      .from('sales')
+      .select('id, sale_items(sku, quantity)')
+      .eq('organization_id', orgId)
+      .eq('status', 'COMPLETADA')
+      .order('created_at', { ascending: false })
+      .limit(300);
+    if (error) {
+      console.warn('Error consultando rotación de ventas en Supabase:', error.message);
+      return {};
+    }
+    const rotation: Record<string, number> = {};
+    for (const sale of (data || []) as any[]) {
+      const items = Array.isArray(sale?.sale_items) ? sale.sale_items : [];
+      for (const item of items) {
+        const key = String(item?.sku || '').trim();
+        if (!key) continue;
+        rotation[key] = (rotation[key] || 0) + (Number(item?.quantity) || 0);
+      }
+    }
+    return rotation;
+  } catch (err) {
+    console.warn('Rotación de ventas no disponible por error de red:', err);
+    return {};
+  }
+}
 
 // Paleta corporativa del flujo de venta (antracita + acento amarillo)
 const PAYMENT_PALETTE = {
@@ -293,7 +331,7 @@ export function Sales() {
   // Fetch real products, customers, bank accounts, BCV rate, and next correlative from Supabase
   const loadSupabaseData = async () => {
     // Rotación de ventas en segundo plano (no bloquea la apertura del POS)
-    fetchTopSellingRotationFromSupabase()
+    fetchPosProductRotation()
       .then(rotationMap => setProductRotation(rotationMap))
       .catch(() => {});
 

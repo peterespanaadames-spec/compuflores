@@ -63,8 +63,6 @@ import {
 } from '../../../types/domain';
 import { CustomerPortal, type PortalTab } from '../components/CustomerPortal';
 import { OrderTrackerModal } from '../components/OrderTrackerModal';
-import { ExitGuardModal } from '../components/ExitGuardModal';
-import { useExitGuard } from '../hooks/useExitGuard';
 
 // --- LOGO SVG COMPONENT (Exact Match to CompuRepuestos CR Logo) ---
 function CompuRepuestosLogo({ className = '', size = 44 }: { className?: string; size?: number }) {
@@ -511,10 +509,11 @@ export function ShopPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // Sync cart to storage
+  // Sync cart to storage (avisa al guardia global de salida vía evento)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('frenyer_shop_cart', JSON.stringify(cart));
+      window.dispatchEvent(new Event('frenyer:cart-changed'));
     }
   }, [cart]);
 
@@ -788,10 +787,6 @@ export function ShopPage() {
 
   // Cart operations
   const totalCartUnits = useMemo(() => cart.reduce((acc, item) => acc + item.quantity, 0), [cart]);
-
-  // Guardia de salida: se activa solo con carrito con contenido o sesión activa de cliente
-  const isExitGuardEnabled = totalCartUnits > 0 || currentUserRole !== null;
-  const exitGuard = useExitGuard({ enabled: isExitGuardEnabled });
 
   const totalCartUSD = useMemo(() => {
     const raw = cart.reduce((acc, item) => acc + item.product.priceUsd * item.quantity, 0);
@@ -3400,13 +3395,6 @@ export function ShopPage() {
       >
         <MessageCircle size={28} />
       </button>
-
-      {/* 7.b. Guardia de salida: modal interno de confirmación (Atrás / navegación SPA) */}
-      <ExitGuardModal
-        isOpen={exitGuard.isExitPromptOpen}
-        onStay={exitGuard.stay}
-        onAbandon={exitGuard.abandon}
-      />
 
       {/* 8. MOBILE BOTTOM NAVIGATION BAR */}
       <nav className="cr-mobile-bottom-bar">
