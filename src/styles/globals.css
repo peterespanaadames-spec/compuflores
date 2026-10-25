@@ -810,7 +810,32 @@ button {
   }
   /* POS y grillas de fichas: apareamiento más angosto para 2 columnas reales */
   [style*="minmax(180px, 1fr)"] {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+    grid-template-columns: repeat(auto-fill, minmax(122px, 1fr)) !important;
+  }
+  /* Fichas del catálogo POS: cuadros más pequeños */
+  [style*="min-height: 140px"] {
+    min-height: 0 !important;
+  }
+  /* Catálogo compacto: aviso solo en móvil */
+  .pos-catalog-hint {
+    display: block;
+  }
+  /* Métodos de pago: encajar en el ancho de la página */
+  .pos-payment-box {
+    padding: 12px !important;
+    gap: 10px !important;
+  }
+  .pos-method-line {
+    padding: 10px !important;
+    border-radius: 14px !important;
+  }
+  /* Tipos de comprobante apilables y contenedores más ajustados */
+  [style*="grid-template-columns: repeat(3, 1fr)"] {
+    grid-template-columns: 1fr !important;
+  }
+  .pos-issue-box {
+    padding: 12px !important;
+    gap: 10px !important;
   }
 }
 
@@ -821,6 +846,11 @@ button {
    (solo pantallas angostas; el escritorio conserva el panel lateral).
    ===================================================================== */
 .pos-mobile-cartbar {
+  display: none;
+}
+
+/* Aviso del catálogo compacto del POS: oculto en escritorio */
+.pos-catalog-hint {
   display: none;
 }
 

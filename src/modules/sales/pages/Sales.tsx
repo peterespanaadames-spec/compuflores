@@ -1088,6 +1088,18 @@ export function Sales() {
     return matchesSearch && matchesCategory;
   });
 
+  // Vista compacta móvil: el catálogo visible se limita a 10 fichas (el buscador cubre el resto)
+  const [isCompactViewport, setIsCompactViewport] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches
+  );
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 900px)');
+    const handleViewportChange = (event: MediaQueryListEvent) => setIsCompactViewport(event.matches);
+    mediaQuery.addEventListener('change', handleViewportChange);
+    return () => mediaQuery.removeEventListener('change', handleViewportChange);
+  }, []);
+  const visibleCatalog = isCompactViewport && searchTerm.trim() === '' ? filteredProducts.slice(0, 10) : filteredProducts;
+
   return (
     <div className="content" style={{ paddingBottom: 40 }}>
       {/* Toast */}
@@ -1244,6 +1256,11 @@ export function Sales() {
                 ))}
               </div>
 
+              {/* Aviso de catálogo compacto (solo se ve en móvil por CSS) */}
+              <p className="muted small pos-catalog-hint" style={{ margin: 0, fontSize: 11 }}>
+                Mostrando 10 destacados. Usa el buscador o el escáner para el resto del catálogo.
+              </p>
+
               {/* Product Grid */}
               <div
                 style={{
@@ -1279,7 +1296,7 @@ export function Sales() {
                   <span className="muted small" style={{ fontSize: 11 }}>Precio al momento</span>
                 </div>
 
-                {filteredProducts.map(product => {
+                {visibleCatalog.map(product => {
                   const priceVES = convertUSDtoVES(product.priceUSD, activeRate);
                   return (
                     <div
@@ -1875,7 +1892,7 @@ export function Sales() {
               </div>
 
               {/* Payments Configuration Right Box */}
-              <div className="card" style={{ width: '600px', maxWidth: '100%', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="card pos-payment-box" style={{ width: '600px', maxWidth: '100%', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
                 
                 {/* Contado vs Crédito Buttons */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -1915,7 +1932,7 @@ export function Sales() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     
                     {/* Add Payment Method Line */}
-                    <div style={{ border: `1px solid ${PAYMENT_PALETTE.border}`, padding: 14, borderRadius: 20, background: PAYMENT_PALETTE.card, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div className="pos-method-line" style={{ border: `1px solid ${PAYMENT_PALETTE.border}`, padding: 14, borderRadius: 20, background: PAYMENT_PALETTE.card, display: 'flex', flexDirection: 'column', gap: 10 }}>
                       <div className="form-grid">
                         <div className="field">
                           <label>Cuenta Bancaria / Forma de Pago *</label>
@@ -2673,7 +2690,7 @@ export function Sales() {
               </div>
 
               {/* RIGHT COLUMN: TIPO DE COMPROBANTE & FINANCIAL SUMMARY */}
-              <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="card pos-issue-box" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
                 
                 {/* Header & Badges */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
