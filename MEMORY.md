@@ -102,6 +102,17 @@
 - Pendiente menor: el menú de usuario (dropdown) queda anclado al chip del header (oculto); en móvil aparece al pie del cintillo, funcional pero podría querer anclarse abajo si el usuario lo reporta.
 - Verificado: bundle `index-BO2wUwId.js` contiene `cr-bottom-tracker`/`Rastrear`, `cr-bottom-chat`/`Chat`, reglas de ocultado del header y FAB. Build+lint limpios.
 
+## Responsive ERP móvil: Dashboard + Ventas (2026-10-25, commit 1674ec2)
+- CANVAS/Hallazgo clave: **Tailwind NO está instalado** — todas las clases tipo `grid-cols-1 md:grid-cols-3` del proyecto son «muertas» (SalesKPIs/SalesCharts/SalesFilters/SalesTransactionsTable ya usan ese patrón y quedan apiladas peladas). Decisión pendiente de usuario: instalar Tailwind o migrar esos 4 componentes al sistema `.card/.form-grid/.table-wrap`. No se tocó en esta ronda.
+- **global en `globals.css` (bloque «RESPONSIVE ERP MÓVIL»)**: técnica de selectores por ATRIBUTO `style*="grid-template-columns: ..."` con `!important` apila los paneles de columnas fijas (POS `1fr 380px`, checkouts `320px 1fr`, cotización `1fr 400px`) a ≤900px y las cuadrículas `1fr 1fr` inline a ≤640px; `[style*="position: sticky"]` desactiva los paneles pegajosos al apilar. Cero cambios de markup = cero riesgo para desktop. Los estilos inline los serializa el browser como kebab-case, así que el selector casa igual.
+- **Sidebar (641–900px)**: colapsa a solo iconos (etiquetas y chevrons ocultos); en drawer ≤640px se restauran por especificidad (reglas ya existentes) + añadido `justify-content: flex-start`.
+- **Topbar dashboard ≤480px**: botón «Tienda Online» solo icono (`.topbar-store-label`), píldora BCV compacta (`.topbar-bcv-pill`, con `!important` por estilos inline).
+- **Sales.tsx (POS)**: stepper con clases `pos-stepper`/`pos-stepper-connector` (gap 12px, conector 18px ≤640); ticket de impresión con `print-preview-panel` (padding 18/14) y `print-preview-actions` (wrap) en móvil. Carrito/checkout/cotización apilados por los selectores de atributo.
+- **SalesReport.tsx**: toolbars con `flexWrap:'wrap'` + `rowGap` (antes `flex-nowrap` de Tailwind muerto sin wrap); inputs de fecha `min(130px, 38vw)`; buscador `width:100%/maxWidth 420` (antes fijo 380px). Tablas ya estaban con `.table-wrap` scroll ✔.
+- Error cometido y corregido en vivo: al editar el toolbar de SalesReport incluí dos `<div className="search">` anidados (falta de tag de cierre) — TS17008 lo detectó y se resolvió.
+- Verificado en producción: CSS `/assets/index-ss7J1P_-.css` contiene los selectores de atributo y las clases nuevas. Build+lint limpios.
+- Pendiente menor: filas de acciones de pos finalizar venta (dos botones lado a lado con textos largos) podrían apretarse en 320px — no reportado aún.
+
 ## Configuración -> Negocio guarda en Supabase (2026-10-23)
 - **Antes**: el botón Guardar solo escribía `localStorage` (`frenyer_business_profile`); nada llegaba a la BD.
 - **Fix**: nuevos `GET`/`PUT /api/business-profile` en `server.ts` que leen/escriben la fila `organizations` del contexto (con espejo local `data/organizations.json`). `Config.tsx` sincroniza el perfil desde la BD al montar (la BD gana sobre el local) y el PUT persiste en Supabase; botón muestra "Guardando...". La 0026 no aplicada → retry automático con columnas base (name/rif/phone/address) + `warnings` en la respuesta.
