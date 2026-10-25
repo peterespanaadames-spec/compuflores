@@ -10,9 +10,9 @@ const data = [
 
 export function SalesCharts() {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div className="bg-white p-4 rounded-[16px] border">
-        <h3>Tendencia de Ventas</h3>
+    <div className="grid grid-2">
+      <div className="card">
+        <h3 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 800, color: '#111827' }}>Tendencia de Ventas</h3>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -23,8 +23,8 @@ export function SalesCharts() {
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <div className="bg-white p-4 rounded-[16px] border">
-        <h3>Mezcla por Canal</h3>
+      <div className="card">
+        <h3 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 800, color: '#111827' }}>Mezcla por Canal</h3>
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
             <Pie data={[{name: 'POS', value: 70}, {name: 'Web', value: 30}]} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="#8884d8">

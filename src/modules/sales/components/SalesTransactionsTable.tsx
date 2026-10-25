@@ -7,37 +7,58 @@ export function SalesTransactionsTable() {
   ];
 
   return (
-    <div className="bg-white p-4 rounded-[16px] border border-[var(--border)]">
-      <table className="w-full text-sm">
-        <thead className="text-gray-500">
-          <tr className="border-b">
-            <th className="text-left p-2">Fecha/Hora</th>
-            <th className="text-left p-2"># Doc</th>
-            <th className="text-left p-2">Cliente</th>
-            <th className="text-left p-2">Método</th>
-            <th className="text-left p-2">Tasa</th>
-            <th className="text-left p-2">USD</th>
-            <th className="text-left p-2">VES</th>
-            <th className="text-left p-2">Estado</th>
-            <th className="text-left p-2">Acción</th>
-          </tr>
-        </thead>
-        <tbody>
-          {transactions.map((t) => (
-            <tr key={t.id} className="border-b">
-              <td className="p-2">{t.date}</td>
-              <td className="p-2">{t.doc}</td>
-              <td className="p-2">{t.client}</td>
-              <td className="p-2">{t.method}</td>
-              <td className="p-2">{t.rate}</td>
-              <td className="p-2">{t.usd}</td>
-              <td className="p-2">{t.ves}</td>
-              <td className="p-2">{t.status}</td>
-              <td className="p-2"><button className="text-[var(--brand-500)]"><Eye className="w-4 h-4" /></button></td>
+    <div className="card" style={{ padding: 16 }}>
+      <div className="table-wrap">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Fecha/Hora</th>
+              <th># Doc</th>
+              <th>Cliente</th>
+              <th>Método</th>
+              <th className="num">Tasa</th>
+              <th className="num">USD</th>
+              <th className="num">VES</th>
+              <th>Estado</th>
+              <th>Acción</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {transactions.map((t) => (
+              <tr key={t.id}>
+                <td>{t.date}</td>
+                <td>{t.doc}</td>
+                <td>{t.client}</td>
+                <td>{t.method}</td>
+                <td className="num">{t.rate}</td>
+                <td className="num">{t.usd}</td>
+                <td className="num">{t.ves}</td>
+                <td>
+                  <span className={`badge ${t.status === 'Pagado' ? 'success' : 'warning'}`}>{t.status}</span>
+                </td>
+                <td style={{ whiteSpace: 'nowrap' }}>
+                  <button
+                    type="button"
+                    title="Ver detalle de la transacción"
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--brand-500)',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: 4,
+                      borderRadius: 8
+                    }}
+                  >
+                    <Eye size={16} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
