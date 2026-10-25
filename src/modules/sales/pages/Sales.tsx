@@ -1222,7 +1222,7 @@ export function Sales() {
               </div>
             </div>
 
-            <div className="actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="actions pos-toolbar-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {/* Facturas en espera button */}
               <Button
                 style={{
@@ -1232,12 +1232,13 @@ export function Sales() {
                   fontSize: 12,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6
+                  gap: 6,
+                  whiteSpace: 'nowrap'
                 }}
                 onClick={() => setIsParkedModalOpen(true)}
               >
                 <Clock size={14} style={{ color: 'var(--brand-500)' }} />
-                FACTURAS EN ESPERA
+                FACT. PEND.
                 <span
                   style={{
                     background: 'var(--brand-500)',
@@ -1274,7 +1275,7 @@ export function Sales() {
                   <Search size={18} style={{ color: '#94a3b8' }} />
                   <input
                     className="input"
-                    style={{ border: 'none', boxShadow: 'none', padding: 0, height: 'auto', fontSize: 14 }}
+                    style={{ border: 'none', boxShadow: 'none', padding: 0, height: 'auto', fontSize: 14, flex: 1, width: '100%', minWidth: 0 }}
                     placeholder="Buscar producto por SKU, Nombre o escanear Código de Barras..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -1752,7 +1753,7 @@ export function Sales() {
                       setIsCustomerDropdownOpen(true);
                     }}
                     onFocus={() => setIsCustomerDropdownOpen(true)}
-                    style={{ width: '100%' }}
+                    style={{ width: '100%', fontWeight: 700, fontSize: 13, color: '#111827' }}
                   />
                 </div>
               </div>
@@ -1970,9 +1971,9 @@ export function Sales() {
                     style={{
                       padding: 10,
                       borderRadius: PAYMENT_PALETTE.pill,
-                      border: paymentType === 'CONTADO' ? `2px solid ${PAYMENT_PALETTE.anthracite}` : `1px solid ${PAYMENT_PALETTE.secondaryBorder}`,
-                      background: '#fff',
-                      color: paymentType === 'CONTADO' ? PAYMENT_PALETTE.ink : PAYMENT_PALETTE.muted,
+                      border: paymentType === 'CONTADO' ? `2px solid ${PAYMENT_PALETTE.ink}` : `1px solid ${PAYMENT_PALETTE.secondaryBorder}`,
+                      background: PAYMENT_PALETTE.anthracite,
+                      color: '#ffffff',
                       fontSize: 13,
                       fontWeight: 700,
                       cursor: 'pointer'
@@ -1986,9 +1987,9 @@ export function Sales() {
                     style={{
                       padding: 10,
                       borderRadius: PAYMENT_PALETTE.pill,
-                      border: paymentType === 'CREDITO' ? `2px solid ${PAYMENT_PALETTE.anthracite}` : `1px solid ${PAYMENT_PALETTE.secondaryBorder}`,
-                      background: '#fff',
-                      color: paymentType === 'CREDITO' ? PAYMENT_PALETTE.ink : PAYMENT_PALETTE.muted,
+                      border: paymentType === 'CREDITO' ? `2px solid ${PAYMENT_PALETTE.ink}` : `1px solid ${PAYMENT_PALETTE.secondaryBorder}`,
+                      background: paymentType === 'CREDITO' ? PAYMENT_PALETTE.anthracite : '#E2E8F0',
+                      color: paymentType === 'CREDITO' ? '#ffffff' : PAYMENT_PALETTE.inkBody,
                       fontSize: 13,
                       fontWeight: 700,
                       cursor: 'pointer'
@@ -2254,7 +2255,7 @@ export function Sales() {
                           <div style={{ background: PAYMENT_PALETTE.canvas, padding: 16, borderRadius: 8, border: `1px solid ${PAYMENT_PALETTE.border}`, display: 'flex', flexDirection: 'column', gap: 10 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <b style={{ fontSize: 13, color: '#1e293b' }}>Autorización de Cuenta por Cobrar (CxC)</b>
-                              <Badge tone="brand">Crédito Comercial</Badge>
+                              <Badge tone="accent">Crédito Comercial</Badge>
                             </div>
                             <div style={{ fontSize: 12, color: '#334155', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, background: '#fff', padding: 12, borderRadius: 6, border: `1px solid ${PAYMENT_PALETTE.border}` }}>
                               <div>
@@ -2762,38 +2763,38 @@ export function Sales() {
               {/* RIGHT COLUMN: TIPO DE COMPROBANTE & FINANCIAL SUMMARY */}
               <div className="card pos-issue-box" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
                 
-                {/* Header & Badges */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                {/* Header */}
+                <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
                   <label style={{ fontSize: 11, fontWeight: 800, color: '#475569', textTransform: 'uppercase', margin: 0 }}>
-                    TIPO DE COMPROBANTE FISCAL / DOCUMENTO
+                    TIPO DE DOCUMENTO
                   </label>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--brand-700)', background: '#f4f8ff', padding: '3px 8px', borderRadius: 6 }}>
-                    {documentType === 'FACTURA' ? 'Emisión de Factura Fiscal' : documentType === 'NOTA' ? 'Emisión de Nota de Entrega' : 'Pausar en Espera'}
-                  </span>
                 </div>
 
                 {/* Option 3 buttons */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                <div className="pos-doctype-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                   <div
                     onClick={() => {
                       setDocumentType('FACTURA');
                       updateCorrelativeForDocType('FACTURA');
                     }}
+                    className="pos-doctype-btn"
                     style={{
                       border: documentType === 'FACTURA' ? '2px solid #0a2540' : '1px solid var(--border)',
-                      padding: 10,
+                      padding: 8,
                       borderRadius: 8,
                       cursor: 'pointer',
                       background: documentType === 'FACTURA' ? '#0a2540' : '#fff',
                       color: documentType === 'FACTURA' ? '#fff' : '#1e293b',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 8,
-                      transition: 'all 0.15s ease'
+                      justifyContent: 'center',
+                      gap: 6,
+                      transition: 'all 0.15s ease',
+                      whiteSpace: 'nowrap'
                     }}
                   >
-                    <FileText size={18} />
-                    <b style={{ fontSize: 12 }}>FACTURA</b>
+                    <FileText size={16} />
+                    <b style={{ fontSize: 11.5 }}>FACTURA</b>
                   </div>
 
                   <div
@@ -2801,54 +2802,61 @@ export function Sales() {
                       setDocumentType('NOTA');
                       updateCorrelativeForDocType('NOTA');
                     }}
+                    className="pos-doctype-btn"
                     style={{
                       border: documentType === 'NOTA' ? '2px solid #15803D' : '1px solid var(--border)',
-                      padding: 10,
+                      padding: 8,
                       borderRadius: 8,
                       cursor: 'pointer',
                       background: documentType === 'NOTA' ? '#15803D' : '#fff',
                       color: documentType === 'NOTA' ? '#fff' : '#1e293b',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 8,
-                      transition: 'all 0.15s ease'
+                      justifyContent: 'center',
+                      gap: 6,
+                      transition: 'all 0.15s ease',
+                      whiteSpace: 'nowrap'
                     }}
                   >
-                    <FileText size={18} />
-                    <b style={{ fontSize: 12 }}>NOTA</b>
+                    <FileText size={16} />
+                    <b style={{ fontSize: 11.5 }}>NOTA</b>
                   </div>
 
                   <div
                     onClick={() => setDocumentType('ESPERA')}
+                    className="pos-doctype-btn"
                     style={{
                       border: documentType === 'ESPERA' ? '2px solid #D97706' : '1px solid var(--border)',
-                      padding: 10,
+                      padding: 8,
                       borderRadius: 8,
                       cursor: 'pointer',
                       background: documentType === 'ESPERA' ? '#D97706' : '#fff',
                       color: documentType === 'ESPERA' ? '#fff' : '#1e293b',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 8,
-                      transition: 'all 0.15s ease'
+                      justifyContent: 'center',
+                      gap: 6,
+                      transition: 'all 0.15s ease',
+                      whiteSpace: 'nowrap'
                     }}
                   >
-                    <Clock size={18} />
-                    <b style={{ fontSize: 12 }}>ESPERA</b>
+                    <Clock size={16} />
+                    <b style={{ fontSize: 11.5 }}>ESPERA</b>
                   </div>
                 </div>
 
                 {/* Form fields: Fecha & Número */}
                 {documentType !== 'ESPERA' && (
-                  <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div className="form-grid pos-doc-fields" style={{ gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                     <div className="field">
-                      <label style={{ fontSize: 11, fontWeight: 600 }}>FECHA</label>
-                      <input className="input" value={new Date().toLocaleDateString('es-VE')} disabled />
+                      <label style={{ fontSize: 10, fontWeight: 700 }}>FECHA</label>
+                      <input className="input" style={{ fontSize: 12.5, padding: '8px 10px' }} value={new Date().toLocaleDateString('es-VE')} disabled />
                     </div>
                     <div className="field">
-                      <label style={{ fontSize: 11, fontWeight: 600 }}>{documentType === 'FACTURA' ? 'NÚMERO DE FACTURA' : 'NÚMERO DE NOTA'}</label>
+                      <label style={{ fontSize: 10, fontWeight: 700 }}>{documentType === 'FACTURA' ? 'NÚMERO DE FACTURA' : 'NÚMERO DE NOTA'}</label>
                       <input
                         className="input"
+                        style={{ fontSize: 12.5, padding: '8px 10px' }}
                         value={invoiceNumber}
                         onChange={(e) => setInvoiceNumber(e.target.value)}
                       />

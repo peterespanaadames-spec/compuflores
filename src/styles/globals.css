@@ -843,6 +843,38 @@ button {
     padding: 6px 4px !important;
     font-size: 11px !important;
   }
+  /* Resumen y emisión: tipos de documento SIEMPRE en una sola línea */
+  .pos-doctype-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+  .pos-doctype-btn {
+    padding: 6px 4px !important;
+  }
+  .pos-doctype-btn b {
+    font-size: 10.5px !important;
+  }
+  .pos-doctype-btn svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+  /* Fecha y número de comprobante compactos */
+  .pos-doc-fields {
+    gap: 6px !important;
+  }
+  /* Barra de acciones del POS: Fact. Pend. y Venta Libre alineados */
+  .pos-toolbar-actions {
+    width: 100%;
+    gap: 6px !important;
+  }
+  .pos-toolbar-actions > button {
+    flex: 1 1 0;
+    min-width: 0;
+    font-size: 11px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    justify-content: center;
+  }
   .pos-payment-box {
     padding: 8px !important;
     gap: 8px !important;
@@ -948,10 +980,11 @@ button {
   .topbar-store-label {
     display: none;
   }
-  /* Píldora BCV compacta */
+  /* Píldora BCV compacta (una sola línea) */
   .topbar-bcv-pill {
     padding: 5px 10px !important;
-    font-size: 12px !important;
+    font-size: 11px !important;
+    white-space: nowrap !important;
   }
 }
 
