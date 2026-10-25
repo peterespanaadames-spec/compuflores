@@ -118,6 +118,12 @@
 - **Hallazgo clave**: estos 4 componentes no están importados por ninguna página (código demo) — rollup les hace tree-shaking y el bundle de producción no cambió de hash tras migrarlos. La verificación real es build+lint sobre el código fuente.
 - **Condición** (2026-10-26): el bundle de producción no incluye estos componentes porque no están usuarios. Si se conectan a una vista futura, se necesitará pasarles datos reales por props (hoy muestran datos de ejemplo fijos).
 
+## KPI en parejas + POS conciliado (2026-10-25, commit c306914)
+- **Dashboard móvil**: KPI a 2 por fila en <640px con clase `kpi-duo` (`grid grid-4 kpi-duo`; `.grid.kpi-duo` gana a `.grid-4` por especificidad). Tarjetas informativas (Top 5 / bajo stock / CxC-CxP) siguen a 1 col. Pedidos así: ventas+utilidad, inventario+bajo mínimo, por cobrar+por pagar.
+- **POS conciliado**: nueva barra fija `.pos-mobile-cartbar` (≤900px) visible cuando hay artículo en carrito y POS en vista A: contador de artículos + total USD/Bs. + botón amarillo «COBRAR >» (= `startCheckout()` con validaciones). En checkout (pasos 1-3) se oculta (está dentro del fragmento de la vista A). Respiro inferior de 78px en el grid apilado para que no tape el carrito. Fichas de producto apretadas a `minmax(140px,1fr)` ≤640px (terminal 2 cols reales en 360px).
+- Estado nuevo: `cartUnitsCount` (reduce con `Number(item.quantity)`) junto a grandTotal en Sales.tsx; carrito con `id="pos-cart-panel"`.
+- Verificado en producción: CSS `index-CUPKmB91.css` contiene las 4 reglas; JS contiene `pos-mobile-cartbar` y `kpi-duo`. Build+lint limpios. Lección: al comprobar CSS minificado buscar textos sin espacios o usar regex — los checks literales con espacios dan falsos negativos.
+
 ## Configuración -> Negocio guarda en Supabase (2026-10-23)
 - **Antes**: el botón Guardar solo escribía `localStorage` (`frenyer_business_profile`); nada llegaba a la BD.
 - **Fix**: nuevos `GET`/`PUT /api/business-profile` en `server.ts` que leen/escriben la fila `organizations` del contexto (con espejo local `data/organizations.json`). `Config.tsx` sincroniza el perfil desde la BD al montar (la BD gana sobre el local) y el PUT persiste en Supabase; botón muestra "Guardando...". La 0026 no aplicada → retry automático con columnas base (name/rif/phone/address) + `warnings` en la respuesta.
