@@ -124,6 +124,13 @@
 - Estado nuevo: `cartUnitsCount` (reduce con `Number(item.quantity)`) junto a grandTotal en Sales.tsx; carrito con `id="pos-cart-panel"`.
 - Verificado en producción: CSS `index-CUPKmB91.css` contiene las 4 reglas; JS contiene `pos-mobile-cartbar` y `kpi-duo`. Build+lint limpios. Lección: al comprobar CSS minificado buscar textos sin espacios o usar regex — los checks literales con espacios dan falsos negativos.
 
+## POS móvil compactado (2026-10-25, commit 1ac3dcf)
+- **Catálogo a 10 fichas en móvil**: `isCompactViewport` (matchMedia ≤900px + listener) limita `visibleCatalog = filteredProducts.slice(0,10)` solo cuando el buscador está vacío (escribir busca en TODO el catálogo automáticamente). Aviso móvil `.pos-catalog-hint` («Mostrando 10 destacados…»; base `display:none`, visible ≤640). El orden real de «más vendidos» requeriría agregar historial de ventas a esta vista — pendiente si el usuario lo pide.
+- **Fichas más pequeñas**: attribute rule `minmax(180px, 1fr)` → 122px y `min-height: 140px` → 0 (≤640px); el minificador serializa los atributos SIN espacio en el selector — al verificar con fetch usar las variantes sin espacio.
+- **Métodos de pago**: `.pos-payment-box` (padding 12, gap 10) y `.pos-method-line` (padding 10, radius 14) ≤640.
+- **Resumen y emisión**: `.pos-issue-box` (padding 12, gap 10) y los 3 tipos de comprobante apilados (`repeat(3, 1fr)` → 1fr, única coincidencia en el módulo).
+- Verificado: CSS `index-C8OmASe9.css` y JS con slice/hint/matchMedia. Build+lint limpios.
+
 ## Configuración -> Negocio guarda en Supabase (2026-10-23)
 - **Antes**: el botón Guardar solo escribía `localStorage` (`frenyer_business_profile`); nada llegaba a la BD.
 - **Fix**: nuevos `GET`/`PUT /api/business-profile` en `server.ts` que leen/escriben la fila `organizations` del contexto (con espejo local `data/organizations.json`). `Config.tsx` sincroniza el perfil desde la BD al montar (la BD gana sobre el local) y el PUT persiste en Supabase; botón muestra "Guardando...". La 0026 no aplicada → retry automático con columnas base (name/rif/phone/address) + `warnings` en la respuesta.
