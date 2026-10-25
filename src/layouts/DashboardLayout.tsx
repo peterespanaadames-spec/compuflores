@@ -249,6 +249,7 @@ export function DashboardLayout() {
             <div
               onClick={() => setIsManualModalOpen(true)}
               title="Haga clic para modificar la tasa de cambio"
+              className="topbar-bcv-pill"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -292,7 +293,8 @@ export function DashboardLayout() {
               }}
               title="Abrir Tienda Online (Catálogo público)"
             >
-              <Store size={14} color="#111827" strokeWidth={2.4} /> Tienda Online
+              <Store size={14} color="#111827" strokeWidth={2.4} />{' '}
+              <span className="topbar-store-label">Tienda Online</span>
             </button>
 
             {/* Botón Cerrar Sesión */}

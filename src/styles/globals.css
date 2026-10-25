@@ -736,6 +736,84 @@ button {
   }
 }
 
+/* =====================================================================
+   RESPONSIVE ERP MÓVIL — módulos internos (Dashboard, Ventas, etc.)
+   Los anchos fijos definidos en estilos inline (paneles laterales del
+   POS, checkouts y cotizaciones) se neutralizan con selectores por
+   atributo para no duplicar clases en el JSX; el escritorio (>900px)
+   conserva su composición original.
+   ===================================================================== */
+@media (max-width: 900px) {
+  /* Paneles laterales fijos (carrito POS, checkouts, cotización) se apilan */
+  [style*="grid-template-columns: 1fr 380px"],
+  [style*="grid-template-columns: 320px 1fr"],
+  [style*="grid-template-columns: 1fr 400px"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Paneles pegajosos dejan de flotar cuando el contenido se apila */
+  [style*="position: sticky"] {
+    position: static !important;
+  }
+  /* Sidebar reducido a 72px: colapsa a solo iconos (sin etiquetas) */
+  .sidebar-parent-label > span,
+  .sidebar-child > span {
+    display: none;
+  }
+  .sidebar-chevron {
+    display: none;
+  }
+  .sidebar-parent-label,
+  .sidebar-child {
+    justify-content: center;
+  }
+  .sidebar-parent,
+  .sidebar-child {
+    padding: 10px 0;
+  }
+  .sidebar-children-container {
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Formularios/paneles con dos columnas fijas inline se apilan en móvil */
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Stepper del checkout: más compacto */
+  .pos-stepper {
+    gap: 12px !important;
+  }
+  .pos-stepper-connector {
+    width: 18px !important;
+  }
+  /* Drawer del menú: restaurar etiquetas y alineado a la izquierda */
+  .sidebar.mobile-open .sidebar-parent-label,
+  .sidebar.mobile-open .sidebar-child {
+    justify-content: flex-start;
+  }
+  /* Vista previa de impresión: compacta y con acciones apilables */
+  .print-preview-panel {
+    padding: 18px 14px !important;
+  }
+  .print-preview-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Topbar del dashboard: botón "Tienda Online" queda solo con icono */
+  .topbar-store-label {
+    display: none;
+  }
+  /* Píldora BCV compacta */
+  .topbar-bcv-pill {
+    padding: 5px 10px !important;
+    font-size: 12px !important;
+  }
+}
+
 
 .auth-page {
   min-height: 100vh;

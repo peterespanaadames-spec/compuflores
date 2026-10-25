@@ -834,7 +834,7 @@ export const SalesReportPage = () => {
       </div>
 
       {/* Toolbar / Filtros de Periodo con Búsqueda por Fechas */}
-      <div className="toolbar flex-nowrap gap-2 items-center bg-white p-3 rounded-xl border border-border shadow-xs mb-6 overflow-x-auto">
+      <div className="toolbar flex-nowrap gap-2 items-center bg-white p-3 rounded-xl border border-border shadow-xs mb-6 overflow-x-auto" style={{ flexWrap: 'wrap', rowGap: 8 }}>
         <span className="text-xs font-bold uppercase tracking-wider text-muted mr-2">Periodo:</span>
         {[
           { id: 'today', label: 'Hoy' },
@@ -858,7 +858,7 @@ export const SalesReportPage = () => {
         <div className="h-4 w-px bg-border mx-2 hidden sm:block"></div>
 
         {/* Búsqueda por fechas: Estilo unificado ERP (Desde [input] hasta [input]) */}
-        <div className="flex items-end gap-2 flex-nowrap" style={{ display: 'flex', alignItems: 'flex-end', flexWrap: 'nowrap' }}>
+        <div className="flex items-end gap-2 flex-nowrap" style={{ display: 'flex', alignItems: 'flex-end', flexWrap: 'wrap', rowGap: 8 }}>
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-bold uppercase tracking-wider text-muted whitespace-nowrap">Desde:</span>
             <input
@@ -869,7 +869,7 @@ export const SalesReportPage = () => {
                 setPeriod('custom');
               }}
               className="input text-xs"
-              style={{ width: '130px', height: '36px', padding: '0 8px' }}
+              style={{ width: 'min(130px, 38vw)', height: '36px', padding: '0 8px' }}
               title="Fecha inicial (Desde)"
             />
           </div>
@@ -884,7 +884,7 @@ export const SalesReportPage = () => {
                 setPeriod('custom');
               }}
               className="input text-xs"
-              style={{ width: '130px', height: '36px', padding: '0 8px' }}
+              style={{ width: 'min(130px, 38vw)', height: '36px', padding: '0 8px' }}
               title="Fecha final (Hasta)"
             />
           </div>
@@ -931,8 +931,8 @@ export const SalesReportPage = () => {
       </div>
 
       {/* Search Toolbar con texto 'Filtra por:' antes de metodos de pagos y desplegable de documentos */}
-      <div className="toolbar mb-4 flex-wrap gap-3 items-center">
-        <div className="search">
+      <div className="toolbar mb-4 flex-wrap gap-3 items-center" style={{ flexWrap: 'wrap', rowGap: 8 }}>
+        <div className="search" style={{ width: '100%', maxWidth: 420, minWidth: 0 }}>
           <Search className="w-4 h-4" />
           <input
             type="text"
@@ -946,7 +946,7 @@ export const SalesReportPage = () => {
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="input"
-            style={{ width: '380px' }}
+            style={{ width: '100%', minWidth: 0 }}
           />
         </div>
 

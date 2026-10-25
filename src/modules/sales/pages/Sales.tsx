@@ -1557,7 +1557,7 @@ export function Sales() {
           </div>
 
           {/* Stepper Progress Indicator */}
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 24, marginBottom: 24 }}>
+          <div className="pos-stepper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 24, marginBottom: 24 }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
               <div
                 style={{
@@ -1579,7 +1579,7 @@ export function Sales() {
               </span>
             </div>
 
-            <div style={{ width: 40, height: 2, background: checkoutStep >= 2 ? PAYMENT_PALETTE.anthracite : '#e2e8f0' }} />
+            <div className="pos-stepper-connector" style={{ width: 40, height: 2, background: checkoutStep >= 2 ? PAYMENT_PALETTE.anthracite : '#e2e8f0' }} />
 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
               <div
@@ -1602,7 +1602,7 @@ export function Sales() {
               </span>
             </div>
 
-            <div style={{ width: 40, height: 2, background: checkoutStep >= 3 ? PAYMENT_PALETTE.anthracite : '#e2e8f0' }} />
+            <div className="pos-stepper-connector" style={{ width: 40, height: 2, background: checkoutStep >= 3 ? PAYMENT_PALETTE.anthracite : '#e2e8f0' }} />
 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
               <div
@@ -3142,6 +3142,7 @@ export function Sales() {
           }}
         >
           <div
+            className="print-preview-panel"
             style={{
               background: '#fff',
               width: '100%',
@@ -3154,7 +3155,7 @@ export function Sales() {
             }}
           >
             {/* Action Bar */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 14, marginBottom: 20 }}>
+            <div className="print-preview-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 14, marginBottom: 20 }}>
               <span className="muted small" style={{ fontWeight: 700 }}>
                 VISTA PREVIA DE IMPRESIÓN
               </span>
