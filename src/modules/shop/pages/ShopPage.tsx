@@ -1913,11 +1913,83 @@ export function ShopPage() {
           color: #1e3a8a;
           box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
+
+        /* --- ADAPTACIÓN MÓVIL: tienda funcional en pantallas pequeñas --- */
+        .cr-mobile-simple-search {
+          display: none; /* el buscador del header (con sugerencias) reemplaza esta barra duplicada */
+        }
+        @media (max-width: 767px) {
+          .cr-topbar-inner {
+            padding: 10px 12px;
+            gap: 8px;
+          }
+          .cr-brand-title {
+            font-size: 15px;
+          }
+          /* El texto le la cabecera no cabe: en móvil queda el icono del camión */
+          .cr-tracker-label,
+          .cr-user-chip-name,
+          .cr-user-chip-chevron {
+            display: none;
+          }
+          .cr-currency-btn {
+            padding: 3px 6px;
+            font-size: 10px;
+          }
+          /* Banners apilados: a 2 columnas el contenido queda ilegible en 360px */
+          .cr-banners-grid {
+            grid-template-columns: 1fr;
+          }
+          .cr-banner-tech,
+          .cr-banner-moto {
+            min-height: 170px;
+          }
+          .cr-card-content {
+            padding: 10px;
+          }
+          .cr-card-action-btn {
+            font-size: 11px;
+            padding: 6px 8px;
+          }
+          .cr-express-delivery-card {
+            padding: 8px 12px;
+            bottom: 76px;
+            left: 12px;
+            gap: 8px;
+          }
+          .cr-truck-icon-wrap {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+          }
+          .cr-whatsapp-fab {
+            width: 48px;
+            height: 48px;
+            bottom: 76px;
+            right: 12px;
+          }
+          /* Con los banners apilados los puntos del carrusel pierden sentido */
+          .cr-carousel-dots {
+            display: none;
+          }
+          .cr-toast {
+            left: 16px;
+            right: 16px;
+            top: 12px;
+            max-width: calc(100vw - 32px);
+          }
+        }
+        @media (min-width: 768px) {
+          .cr-banners-grid {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
       `}</style>
 
       {/* TOAST NOTIFICATION */}
       {toast && (
         <div
+          className="cr-toast"
           style={{
             position: 'fixed',
             top: 20,
@@ -1999,7 +2071,7 @@ export function ShopPage() {
               className="btn-minimal-tracker"
               title="Seguimiento en tiempo real de tu pedido"
             >
-              <Truck size={12} /> Rastrear Pedido
+              <Truck size={12} /> <span className="cr-tracker-label">Rastrear Pedido</span>
             </button>
 
             <div style={{ position: 'relative' }}>
@@ -2056,6 +2128,7 @@ export function ShopPage() {
                   )}
                 </div>
                 <span
+                  className="cr-user-chip-name"
                   style={{
                     fontSize: 12.5,
                     fontWeight: 700,
@@ -2072,7 +2145,7 @@ export function ShopPage() {
                       : 'Ingresar'}
                 </span>
                 {currentUserRole ? (
-                  <ChevronDown size={14} style={{ opacity: 0.7 }} />
+                  <ChevronDown size={14} className="cr-user-chip-chevron" style={{ opacity: 0.7 }} />
                 ) : null}
               </button>
 
@@ -2861,7 +2934,7 @@ export function ShopPage() {
       {/* 4. PASTILLAS DE FILTRO: CATEGORÍAS ESTRICTAMENTE DEL SISTEMA */}
       <div className="cr-chips-container">
         {/* Mobile Search Bar */}
-        <div style={{ marginBottom: 14 }} className="md:hidden">
+        <div style={{ marginBottom: 14 }} className="cr-mobile-simple-search">
           <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: 99, background: '#ffffff', padding: '3px 3px 3px 16px' }}>
             <input
               type="text"
