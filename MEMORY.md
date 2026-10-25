@@ -112,6 +112,14 @@
 - **Métodos de pago / resumen-emisión**: `.pos-payment-box`, `.pos-method-line`, `.pos-issue-box` compactos ≤640.
 - Verificado: build+lint limpios (hashes de bundle cambian cada ronda; verificar el servido de turno).
 
+## POS móvil: textos, colores y una sola línea (2026-10-25, commit 38000f5)
+- **Botón «FACTURAS EN ESPERA» → «FACT. PEND.»** con contenedor `.pos-toolbar-actions` (móvil: ambos botones flex 1, centrados y alineados en fila con «+ Venta Libre»).
+- **Buscador de productos**: input con `flex:1/minWidth:0` (antes el texto del placeholder lo apretaba); **buscador de cliente** (Datos del Cliente) con texto en negrita (fontWeight 700).
+- **Modos de pago (TODAS las versiones, no solo móvil)**: «$ AL CONTADO» siempre negro/antracita con texto blanco; «CRÉDITO (CxC)» gris `#E2E8F0` y negro al seleccionar; badge «Crédito Comercial» → `tone="accent"` (fondo amarillo, texto oscuro).
+- **Resumen y Emisión**: etiqueta → «TIPO DE DOCUMENTO»; eliminado el badge «Emisión de Factura Fiscal/…»; botones FACTURA/NOTA/ESPERA en `.pos-doctype-btn` (padding 8, icono 16, texto 11.5, nowrap) y acortado el texto). CRÍTICO: el grid pasó de `repeat(3, 1fr)` a `'1fr 1fr 1fr'` + clase `.pos-doctype-grid` para NO caer en la regla genérica de móvil `[style*="repeat(3, 1fr)"] → 1fr` que apila (esa regla queda para Accounts/Customers/Movements); CSS móvil fuerza `repeat(3, minmax(0,1fr))` → una sola línea. Fecha y número en `.pos-doc-fields` compactos (labels 10px, inputs 12.5px, gap 6-8) también en una línea.
+- **Píldora BCV topbar** (≤480px): font 11px + `white-space: nowrap`.
+- Verificado en producción: JS `index-CqXT9J9Y.js` (FACT. PEND., TIPO DE DOCUMENTO, sin «Emisión…») y CSS con la regla de una línea. Build+lint limpios.
+
 ## Rotación real + guardia global (2026-10-25, commit 87b08dd)
 - **Bug del beforeunload encontrado**: el guardia estaba montado SOLO en ShopPage (ruta `/`); al navegar al ERP el componente se desmonta y nadie escuchaba `beforeunload` — por eso «no funciona» fuera de la tienda.
 - **Fix global**: nuevo `src/app/ExitGuard.tsx` (`AppExitGuard`) montado en `main.tsx` junto al `RouterProvider`: lee el carrito persistido `frenyer_shop_cart` (misma clave que ShopPage) y arma `useExitGuard({ enabled: cartUnits > 0 })` en TODO el sistema. ShopPage ya no usa el hook ni el modal (archivos siguen existiendo); su efecto de carrito dispara `window.dispatchEvent(new Event('frenyer:cart-changed'))` (y `storage` cubre otras pestañas) para sincronizar el estado. Modal re-textado sin «sesión activa» (el criterio es solo carrito).
