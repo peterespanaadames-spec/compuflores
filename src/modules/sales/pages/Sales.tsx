@@ -35,7 +35,8 @@ import {
   createCustomerInSupabase,
   recordSaleInSupabase,
   fetchBankAccountsFromSupabase,
-  createProductInSupabase
+  createProductInSupabase,
+  fetchTopSellingRotationFromSupabase
 } from '../../../lib/supabase/db';
 import { authenticatedFetch } from '../../../lib/supabase/api';
 import { getBusinessProfile } from '../../../lib/businessProfile';
@@ -165,6 +166,8 @@ export function Sales() {
   // Step 1: Customer Data
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [dbAccounts, setDbAccounts] = useState<any[]>([]);
+  // Rotación real por SKU (unidades vendidas en ventas COMPLETADAS)
+  const [productRotation, setProductRotation] = useState<Record<string, number>>({});
   const [customerSearch, setCustomerSearch] = useState('');
   const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
   const [clientRif, setClientRif] = useState('');
@@ -289,6 +292,11 @@ export function Sales() {
 
   // Fetch real products, customers, bank accounts, BCV rate, and next correlative from Supabase
   const loadSupabaseData = async () => {
+    // Rotación de ventas en segundo plano (no bloquea la apertura del POS)
+    fetchTopSellingRotationFromSupabase()
+      .then(rotationMap => setProductRotation(rotationMap))
+      .catch(() => {});
+
     const ts = Date.now();
     const [dbProds, dbCusts, accountsRes, bcvRes] = await Promise.all([
       fetchProductsFromSupabase(),
@@ -1088,7 +1096,7 @@ export function Sales() {
     return matchesSearch && matchesCategory;
   });
 
-  // Vista compacta móvil: el catálogo visible se limita a 10 fichas (el buscador cubre el resto)
+  // Vista compacta móvil: catálogo destacado = top 10 por rotación real de ventas
   const [isCompactViewport, setIsCompactViewport] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches
   );
@@ -1098,7 +1106,11 @@ export function Sales() {
     mediaQuery.addEventListener('change', handleViewportChange);
     return () => mediaQuery.removeEventListener('change', handleViewportChange);
   }, []);
-  const visibleCatalog = isCompactViewport && searchTerm.trim() === '' ? filteredProducts.slice(0, 10) : filteredProducts;
+  const sortedByRotation = [...filteredProducts].sort(
+    (a, b) => (productRotation[b.sku] || 0) - (productRotation[a.sku] || 0)
+  );
+  const visibleCatalog =
+    isCompactViewport && searchTerm.trim() === '' ? sortedByRotation.slice(0, 10) : filteredProducts;
 
   return (
     <div className="content" style={{ paddingBottom: 40 }}>
@@ -1219,7 +1231,7 @@ export function Sales() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               
               {/* Search Bar */}
-              <div className="card" style={{ padding: 12 }}>
+              <div className="card pos-search-card" style={{ padding: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Search size={18} style={{ color: '#94a3b8' }} />
                   <input
@@ -1237,6 +1249,7 @@ export function Sales() {
                 {categories.map(cat => (
                   <button
                     key={cat}
+                    className="pos-cat-pill"
                     onClick={() => setSelectedCategory(cat)}
                     style={{
                       padding: '6px 14px',
@@ -1258,7 +1271,7 @@ export function Sales() {
 
               {/* Aviso de catálogo compacto (solo se ve en móvil por CSS) */}
               <p className="muted small pos-catalog-hint" style={{ margin: 0, fontSize: 11 }}>
-                Mostrando 10 destacados. Usa el buscador o el escáner para el resto del catálogo.
+                Los 10 más vendidos según tus facturas. Usa el buscador o el escáner para el resto del catálogo.
               </p>
 
               {/* Product Grid */}
@@ -1326,10 +1339,27 @@ export function Sales() {
                       }}
                     >
                       <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 4, marginBottom: 6 }}>
                           <span className="muted small" style={{ fontSize: 10, fontWeight: 700 }}>
                             {product.sku}
                           </span>
+                          {isCompactViewport && (productRotation[product.sku] || 0) > 0 && (
+                            <span
+                              style={{
+                                fontSize: 9,
+                                fontWeight: 800,
+                                color: '#6d28d9',
+                                background: '#f5f3ff',
+                                border: '1px solid #e9e4ff',
+                                padding: '1px 5px',
+                                borderRadius: 6,
+                                flexShrink: 0
+                              }}
+                              title="Unidades vendidas según el historial de facturas"
+                            >
+                              {productRotation[product.sku]} vend.
+                            </span>
+                          )}
                           <span
                             style={{
                               fontSize: 10,
@@ -1897,6 +1927,7 @@ export function Sales() {
                 {/* Contado vs Crédito Buttons */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <button
+                    className="pos-paymode-btn"
                     onClick={() => setPaymentType('CONTADO')}
                     style={{
                       padding: 10,
@@ -1912,6 +1943,7 @@ export function Sales() {
                     $ AL CONTADO
                   </button>
                   <button
+                    className="pos-paymode-btn"
                     onClick={() => setPaymentType('CREDITO')}
                     style={{
                       padding: 10,

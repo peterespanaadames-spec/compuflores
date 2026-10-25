@@ -687,9 +687,47 @@ export async function fetchProductsFromSupabase(): Promise<DbProduct[]> {
   }
 }
 
+/**
+ * Rotación real por SKU: suma unidades vendidas en las últimas 300 ventas
+ * COMPLETADAS del inquilino activo (tabla core 'sales' + 'sale_items').
+ * Se usa en el POS para ordenar el catálogo destacado de móvil por rotación.
+ */
+export async function fetchTopSellingRotationFromSupabase(): Promise<Record<string, number>> {
+  if (!isSupabaseConfigured) return {};
+
+  try {
+    const orgId = await getActiveOrgId();
+    const { data, error } = await supabase
+      .from('sales')
+      .select('id, sale_items(sku, quantity)')
+      .eq('organization_id', orgId)
+      .eq('status', 'COMPLETADA')
+      .order('created_at', { ascending: false })
+      .limit(300);
+
+    if (error) {
+      console.warn('Error consultando rotación de ventas en Supabase:', error.message);
+      return {};
+    }
+
+    const rotation: Record<string, number> = {};
+    for (const sale of (data || []) as any[]) {
+      const items = Array.isArray(sale?.sale_items) ? sale.sale_items : [];
+      for (const item of items) {
+        const key = String(item?.sku || '').trim();
+        if (!key) continue;
+        rotation[key] = (rotation[key] || 0) + (Number(item?.quantity) || 0);
+      }
+    }
+    return rotation;
+  } catch (err) {
+    console.warn('Fallback de rotación de ventas por error de red:', err);
+    return {};
+  }
+}
+
 export async function fetchProductBySkuFromSupabase(sku: string): Promise<DbProduct | null> {
   if (!sku) return null;
-
   // 1. Try local server proxy
   try {
     const res = await fetch(`/api/products/${encodeURIComponent(sku)}`);

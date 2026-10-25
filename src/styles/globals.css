@@ -810,32 +810,51 @@ button {
   }
   /* POS y grillas de fichas: apareamiento más angosto para 2 columnas reales */
   [style*="minmax(180px, 1fr)"] {
-    grid-template-columns: repeat(auto-fill, minmax(122px, 1fr)) !important;
+    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)) !important;
+    gap: 8px !important;
   }
   /* Fichas del catálogo POS: cuadros más pequeños */
   [style*="min-height: 140px"] {
     min-height: 0 !important;
+    padding: 8px !important;
+  }
+  /* Panel del catálogo compacto: buscador y píldoras reducidos */
+  .pos-search-card {
+    padding: 8px 10px !important;
+  }
+  .pos-search-card .input {
+    font-size: 13px !important;
+  }
+  .pos-cat-pill {
+    padding: 4px 10px !important;
+    font-size: 11px !important;
+  }
+  /* Métodos de pago: botones de modo reducidos y panel ajustado */
+  .pos-paymode-btn {
+    padding: 7px 6px !important;
+    font-size: 11.5px !important;
+  }
+  .pos-payment-box {
+    padding: 10px !important;
+    gap: 8px !important;
+  }
+  .pos-method-line {
+    padding: 8px !important;
+    border-radius: 12px !important;
   }
   /* Catálogo compacto: aviso solo en móvil */
   .pos-catalog-hint {
     display: block;
-  }
-  /* Métodos de pago: encajar en el ancho de la página */
-  .pos-payment-box {
-    padding: 12px !important;
-    gap: 10px !important;
-  }
-  .pos-method-line {
-    padding: 10px !important;
-    border-radius: 14px !important;
+    font-size: 10.5px !important;
+    margin-bottom: 8px !important;
   }
   /* Tipos de comprobante apilables y contenedores más ajustados */
   [style*="grid-template-columns: repeat(3, 1fr)"] {
     grid-template-columns: 1fr !important;
   }
   .pos-issue-box {
-    padding: 12px !important;
-    gap: 10px !important;
+    padding: 10px !important;
+    gap: 8px !important;
   }
 }
 
