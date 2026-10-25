@@ -570,6 +570,7 @@ export function Sales() {
   const igtfAmountUSD = isIgtfApplied ? taxableBaseUSD * 0.03 : 0;
   const grandTotalUSD = Math.round((taxableBaseUSD + taxAmountUSD + igtfAmountUSD) * 100) / 100;
   const grandTotalVES = convertUSDtoVES(grandTotalUSD, activeRate);
+  const cartUnitsCount = cart.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0);
 
   // Initialize payment entry when entering step 2
   const startCheckout = () => {
@@ -1347,6 +1348,7 @@ export function Sales() {
 
             {/* RIGHT COLUMN: Cart Panel */}
             <div
+              id="pos-cart-panel"
               className="card"
               style={{
                 padding: 16,
@@ -1523,6 +1525,25 @@ export function Sales() {
               )}
             </div>
           </div>
+
+          {/* Barra móvil fija: resumen del carrito siempre visible (escritorio la oculta por CSS) */}
+          {cart.length > 0 && (
+            <div className="pos-mobile-cartbar">
+              <div className="pos-mobile-cartbar-summary">
+                <span className="pos-mobile-cartbar-count">
+                  {cartUnitsCount} {cartUnitsCount === 1 ? 'artículo' : 'artículos'}
+                </span>
+                <b className="pos-mobile-cartbar-total">
+                  {formatUSD(grandTotalUSD)}
+                  {' '}
+                  <span>· Bs. {grandTotalVES.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</span>
+                </b>
+              </div>
+              <button type="button" className="pos-mobile-cartbar-cta" onClick={startCheckout}>
+                <CreditCard size={15} /> COBRAR &gt;
+              </button>
+            </div>
+          )}
         </>
       )}
 

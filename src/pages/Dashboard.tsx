@@ -271,7 +271,7 @@ export function Dashboard() {
         <EmptyState title="No se pudieron cargar los indicadores" description={loadError} />
       ) : (
         <>
-          <div className="grid grid-4">
+          <div className="grid grid-4 kpi-duo">
             <Card>
               <div className="kpi-label">Ventas Totales (7 días)</div>
               <div className="kpi-value positive">{isLoading ? '—' : formatUSD(summary.salesUsd)}</div>

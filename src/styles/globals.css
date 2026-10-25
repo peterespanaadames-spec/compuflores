@@ -750,6 +750,10 @@ button {
   [style*="grid-template-columns: 1fr 400px"] {
     grid-template-columns: 1fr !important;
   }
+  /* Respiro inferior para la barra fija del carrito en el POS */
+  [style*="grid-template-columns: 1fr 380px"] {
+    padding-bottom: 78px;
+  }
   /* Paneles pegajosos dejan de flotar cuando el contenido se apila */
   [style*="position: sticky"] {
     position: static !important;
@@ -799,6 +803,84 @@ button {
   .print-preview-actions {
     flex-wrap: wrap;
     gap: 8px;
+  }
+  /* Dashboard: KPI en parejas de dos por fila (sin importar el ancho) */
+  .grid.kpi-duo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* POS y grillas de fichas: apareamiento más angosto para 2 columnas reales */
+  [style*="minmax(180px, 1fr)"] {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+  }
+}
+
+/* =====================================================================
+   POS MÓVIL — barra fija de resumen del carrito
+   Con el catálogo y el carrito apilados en columna, el vendedor pierde
+   de vista lo agregado: esta barra compacta queda siempre visible
+   (solo pantallas angostas; el escritorio conserva el panel lateral).
+   ===================================================================== */
+.pos-mobile-cartbar {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .pos-mobile-cartbar {
+    display: flex;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 14px;
+    z-index: 40;
+    align-items: center;
+    gap: 12px;
+    background: #1f2937;
+    border-radius: 14px;
+    padding: 10px 12px 10px 14px;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.4);
+  }
+  .pos-mobile-cartbar-summary {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    color: #ffffff;
+  }
+  .pos-mobile-cartbar-count {
+    font-size: 10px;
+    font-weight: 700;
+    color: #cbd5e1;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .pos-mobile-cartbar-total {
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pos-mobile-cartbar-total span {
+    font-size: 11px;
+    color: #cbd5e1;
+    font-weight: 600;
+  }
+  .pos-mobile-cartbar-cta {
+    flex: 0 0 auto;
+    border: none;
+    border-radius: 10px;
+    background: #FDF06F;
+    color: #111827;
+    font-size: 12.5px;
+    font-weight: 800;
+    padding: 10px 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: filter 0.15s ease;
+  }
+  .pos-mobile-cartbar-cta:hover {
+    filter: brightness(0.95);
   }
 }
 
