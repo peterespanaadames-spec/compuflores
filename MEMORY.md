@@ -85,6 +85,14 @@
 - **CustomerPortal** (ya tenía base <640px): wishlist grid `minmax(150px,1fr)` en móvil y botón azul submit full width.
 - Verificado en producción: bundle contiene `cr-currency-mobile-btn`, `width: 108px`, `minmax(150px, 1fr)`, paddings del tracker. Build+lint limpios.
 
+## Guardia de salida de la tienda (2026-10-25, commit 78e9c6d)
+- Pedido: evitar pérdida del carrito/sesión por cierres de pestaña o «Atrás» accidentales.
+- **Hook `useExitGuard`** (`src/modules/shop/hooks/useExitGuard.ts`): capa nativa `beforeunload` (Chrome/Firefox/Edge/Android; iOS Safari NO muestra diálogos nativos — límite del navegador) + centinela SPA: pushState «trampa» con flag `frenyerExitGuardSentinel` al activar y `popstate` que abre el modal interno y re-arma el centinela. Refs: `isPromptOpenRef`, `sentinelDepthRef` (cap 20) y `teardownRef` para que `abandon()` quite los listeners ANTES de `history.go(-depth)`.
+- **Componente `ExitGuardModal`** (`src/modules/shop/components/ExitGuardModal.tsx`): banner flotante con clases `eg-*`, botones exactos «¿Quieres permanecer aquí?» / «Abandonar sistema»; móvil = hoja inferior sobre la barra (bottom 84px, full-width) y ≥768px = esquina inferior derecha 372px con acciones en fila. z-index 1600/1601 (encima de usuario 1200).
+- **Integración en ShopPage**: `isExitGuardEnabled = totalCartUnits > 0 || currentUserRole !== null` (carrito CON contenido O sesión activa). Para limitar solo a carrito: quitar la segunda condición en una línea.
+- Trampa: no mostrar el aviso por cada `popstate` ajeno — el handler solo reacciona si `sentinelDepthRef` > 0 (centinela propio bajo el cursor del history), así no interfiere con React Router.
+- Verificado: bundle `index-CHOwNcQT.js` en producción contiene `frenyerExitGuardSentinel`, textos de los botones y clases `eg-*`. Build+lint limpios.
+
 ## Configuración -> Negocio guarda en Supabase (2026-10-23)
 - **Antes**: el botón Guardar solo escribía `localStorage` (`frenyer_business_profile`); nada llegaba a la BD.
 - **Fix**: nuevos `GET`/`PUT /api/business-profile` en `server.ts` que leen/escriben la fila `organizations` del contexto (con espejo local `data/organizations.json`). `Config.tsx` sincroniza el perfil desde la BD al montar (la BD gana sobre el local) y el PUT persiste en Supabase; botón muestra "Guardando...". La 0026 no aplicada → retry automático con columnas base (name/rif/phone/address) + `warnings` en la respuesta.
