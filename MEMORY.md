@@ -113,6 +113,11 @@
 - Verificado en producción: CSS `/assets/index-ss7J1P_-.css` contiene los selectores de atributo y las clases nuevas. Build+lint limpios.
 - Pendiente menor: filas de acciones de pos finalizar venta (dos botones lado a lado con textos largos) podrían apretarse en 320px — no reportado aún.
 
+## Migración de componentes demo de Ventas al design system (2026-10-25, commit e339a73)
+- **SalesKPIs / SalesCharts / SalesFilters / SalesTransactionsTable** reescritos con clases del sistema: `grid grid-2/grid-3`, `.card`, `.kpi-label/.kpi-value(.positive)`, `.table-wrap/.table/.num`, `.badge success/warning`, `.input`. Eliminadas todas las clases Tailwind muertas.
+- **Hallazgo clave**: estos 4 componentes no están importados por ninguna página (código demo) — rollup les hace tree-shaking y el bundle de producción no cambió de hash tras migrarlos. La verificación real es build+lint sobre el código fuente.
+- **Condición** (2026-10-26): el bundle de producción no incluye estos componentes porque no están usuarios. Si se conectan a una vista futura, se necesitará pasarles datos reales por props (hoy muestran datos de ejemplo fijos).
+
 ## Configuración -> Negocio guarda en Supabase (2026-10-23)
 - **Antes**: el botón Guardar solo escribía `localStorage` (`frenyer_business_profile`); nada llegaba a la BD.
 - **Fix**: nuevos `GET`/`PUT /api/business-profile` en `server.ts` que leen/escriben la fila `organizations` del contexto (con espejo local `data/organizations.json`). `Config.tsx` sincroniza el perfil desde la BD al montar (la BD gana sobre el local) y el PUT persiste en Supabase; botón muestra "Guardando...". La 0026 no aplicada → retry automático con columnas base (name/rif/phone/address) + `warnings` en la respuesta.
