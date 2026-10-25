@@ -93,6 +93,15 @@
 - Trampa: no mostrar el aviso por cada `popstate` ajeno — el handler solo reacciona si `sentinelDepthRef` > 0 (centinela propio bajo el cursor del history), así no interfiere con React Router.
 - Verificado: bundle `index-CHOwNcQT.js` en producción contiene `frenyerExitGuardSentinel`, textos de los botones y clases `eg-*`. Build+lint limpios.
 
+## Redistribución móvil: barra inferior única (2026-10-25, commit 0c20c7b)
+- Pedido: en móvil, cintillo superior SIN usuario/tracker/carrito; todo organizado en la barra inferior: Inicio · Usuario · Rastrear · Chat (verde) · Carrito. Sin FAB de chat ni tarjeta «Servicios Expresos» en móvil.
+- **Cintillo superior oculto <768px**: clases nuevas `cr-header-user` (chip usuario), `cr-header-tracker` (botón Rastrear) y `cr-header-cart` (carrito del header) → `display:none` en el bloque móvil. Desktop intacto.
+- **Barra inferior re-hecha**: 5 items con `flex:1; min-width:0` (los 108px fijos se solapaban en pantallas angostas). Ítem «Rastrear» abre el OrderTrackerModal real (`setSelectedTrackingOrder(null); setIsOrderTrackerOpen(true)`). «Chat» con clase `cr-bottom-chat` verde (#16a34a) y `handleOpenWhatsApp()`.
+- **Bug corregido de paso**: el ítem «Pedidos» de la barra inferior abría por error el modal de LOGIN (`isTrackerOpen` es el modal de auth, nombre confuso) — retirado del nav.
+- **FAB WhatsApp y tarjeta express**: `display:none` <768px; en escritorio el FAB sigue vivo (media min-width 768 re-posiciona).
+- Pendiente menor: el menú de usuario (dropdown) queda anclado al chip del header (oculto); en móvil aparece al pie del cintillo, funcional pero podría querer anclarse abajo si el usuario lo reporta.
+- Verificado: bundle `index-BO2wUwId.js` contiene `cr-bottom-tracker`/`Rastrear`, `cr-bottom-chat`/`Chat`, reglas de ocultado del header y FAB. Build+lint limpios.
+
 ## Configuración -> Negocio guarda en Supabase (2026-10-23)
 - **Antes**: el botón Guardar solo escribía `localStorage` (`frenyer_business_profile`); nada llegaba a la BD.
 - **Fix**: nuevos `GET`/`PUT /api/business-profile` en `server.ts` que leen/escriben la fila `organizations` del contexto (con espejo local `data/organizations.json`). `Config.tsx` sincroniza el perfil desde la BD al montar (la BD gana sobre el local) y el PUT persiste en Supabase; botón muestra "Guardando...". La 0026 no aplicada → retry automático con columnas base (name/rif/phone/address) + `warnings` en la respuesta.
