@@ -63,6 +63,19 @@
 - **Migración 0027 preparada** (`0027_complete_rls_unlock.sql`, aditiva e idempotente, pendiente en SQL Editor junto a 0025 y 0026): deshabilita RLS en `sale_items`, `payments` y `receivable_payments` — elimina la necesidad del respaldo service role.
 - Guardar cuenta manual CxC (cliente registrado y nombre libre) funciona E2E; si el usuario reporta "no graba/no la muestra", casi siempre es caché del bundle → recordar Ctrl+F5.
 
+## Adaptación móvil de la tienda online (2026-10-25, commit 6bd8c61)
+- Elección del usuario: adaptar RESPONSIVO solo la tienda (`ShopPage.tsx`), no el panel ERP.
+- Vista base del grid ya era mobile-first (2 cols → 6 en ≥1280px); viewport meta ya correcto en `index.html`. Lo adaptado:
+  - **Topbar compacto en <768px**: paddings/gaps reducidos, texto del botón «Rastrear Pedido» oculto (queda icono camión), nombre y chevron del chip de usuario ocultos (queda avatar), currency toggle más pequeño.
+  - **Banners apilados en móvil** (`.cr-banners-grid` 1 col <768px; 2 cols ≥768px restaurado en bloque nuevo) — a 2 columnas el contenido era ilegible en 360px; dots del carrusel ocultos en móvil (sin sentido con banners visibles).
+  - **Buscador duplicado eliminado**: la barra simple del bloque de chips (antes `md:hidden`, clase Tailwind) rebautizada `.cr-mobile-simple-search` y oculta SIEMPRE por CSS del componente; queda una sola barra (la del header con sugerencias predictivas). Clase propia en vez de Tailwind para no depender de loading de Tailwind.
+  - Cards: `.cr-card-content` y `.cr-card-action-btn` compactos en móvil (texto no desborda en 2 cols).
+  - FABs: WhatsApp 48px y tarjeta «Servicios Expresos» compactas, elevadas a bottom 76px en móvil para despejar la barra inferior.
+  - Toast con clase `.cr-toast`: en móvil ocupa ancho controlado (left/right 16px).
+- Trampas: al editar JSX con estilos inline cuidadoso con oldString/newString — una edición borró props `fontSize/fontWeight/whiteSpace/maxWidth` del chip de usuario y se restauraron a mano.
+- **Regla**: cualquier ajuste responsivo nuevo de la tienda va en el bloque «ADAPTACIÓN MÓVIL» del `<style>` del componente (media max-width 767px), no en estilos inline.
+- Verificado: bundle de producción contiene las reglas nuevas; build+lint limpios.
+
 ## Configuración -> Negocio guarda en Supabase (2026-10-23)
 - **Antes**: el botón Guardar solo escribía `localStorage` (`frenyer_business_profile`); nada llegaba a la BD.
 - **Fix**: nuevos `GET`/`PUT /api/business-profile` en `server.ts` que leen/escriben la fila `organizations` del contexto (con espejo local `data/organizations.json`). `Config.tsx` sincroniza el perfil desde la BD al montar (la BD gana sobre el local) y el PUT persiste en Supabase; botón muestra "Guardando...". La 0026 no aplicada → retry automático con columnas base (name/rif/phone/address) + `warnings` en la respuesta.
