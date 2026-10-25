@@ -76,6 +76,15 @@
 - **Regla**: cualquier ajuste responsivo nuevo de la tienda va en el bloque «ADAPTACIÓN MÓVIL» del `<style>` del componente (media max-width 767px), no en estilos inline.
 - Verificado: bundle de producción contiene las reglas nuevas; build+lint limpios.
 
+## Ronda 2 de adaptación móvil (2026-10-25, commit f6d76dd)
+- Pedido del usuario (la tienda en móvil): multimoneda en un botón desplegable, chat más a la derecha, botones de la barra inferior más juntos, icono de carrito de compra.
+- **Multimoneda móvil**: toggle doble USD/VES recibe `.cr-currency-desktop` (oculto <768px); nuevo botón compacto `.cr-currency-mobile-btn` (muestra la moneda activa + chevron) que despliega `.cr-currency-menu` con las dos opciones (con backdrop de cierre, estado `isCurrencyMenuOpen`). Desktop sin cambios.
+- **Chat (WhatsApp FAB)**: en móvil pegado más al borde (right 12→6px).
+- **Barra inferior**: botones más juntos y centrados (`.cr-bottom-item` flex 0 auto, width 108px, contenedor centered + gap 2px); icono del ítem «Carrito» cambiado de `CreditCard` a `ShoppingCart` (import `CreditCard` quitado de ShopPage; sigue usado en tracker/portal).
+- **OrderTrackerModal** (ya tenía base <640px): header/body compactos (12px/14px paddings, title 13.5px) añadidos a su media query.
+- **CustomerPortal** (ya tenía base <640px): wishlist grid `minmax(150px,1fr)` en móvil y botón azul submit full width.
+- Verificado en producción: bundle contiene `cr-currency-mobile-btn`, `width: 108px`, `minmax(150px, 1fr)`, paddings del tracker. Build+lint limpios.
+
 ## Configuración -> Negocio guarda en Supabase (2026-10-23)
 - **Antes**: el botón Guardar solo escribía `localStorage` (`frenyer_business_profile`); nada llegaba a la BD.
 - **Fix**: nuevos `GET`/`PUT /api/business-profile` en `server.ts` que leen/escriben la fila `organizations` del contexto (con espejo local `data/organizations.json`). `Config.tsx` sincroniza el perfil desde la BD al montar (la BD gana sobre el local) y el PUT persiste en Supabase; botón muestra "Guardando...". La 0026 no aplicada → retry automático con columnas base (name/rif/phone/address) + `warnings` en la respuesta.
