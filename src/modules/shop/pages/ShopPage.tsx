@@ -11,7 +11,6 @@ import {
   CheckCircle,
   Truck,
   Store,
-  CreditCard,
   DollarSign,
   ArrowRight,
   Package,
@@ -233,6 +232,9 @@ export function ShopPage() {
   const [trackerQuery, setTrackerQuery] = useState('');
   const [trackedOrders, setTrackedOrders] = useState<any[]>([]);
   const [isSearchingOrders, setIsSearchingOrders] = useState(false);
+
+  // Menú desplegable multimoneda (solo móvil: botón compacto que expande opciones)
+  const [isCurrencyMenuOpen, setIsCurrencyMenuOpen] = useState(false);
 
   // Sesión y Rol (Cliente vs Usuario Asociado)
   const [currentAuthUser, setCurrentAuthUser] = useState<any>(null);
@@ -1918,6 +1920,55 @@ export function ShopPage() {
         .cr-mobile-simple-search {
           display: none; /* el buscador del header (con sugerencias) reemplaza esta barra duplicada */
         }
+
+        /* Multimoneda móvil: botón compacto que despliega las opciones */
+        .cr-currency-mobile {
+          display: none;
+          position: relative;
+        }
+        .cr-currency-mobile-btn {
+          display: flex;
+          align-items: center;
+          gap: 3px;
+          border: 1px solid #e2e8f0;
+          border-radius: 9999px;
+          background: #f1f5f9;
+          color: #1e3a8a;
+          font-size: 11px;
+          font-weight: 800;
+          padding: 5px 9px;
+          cursor: pointer;
+        }
+        .cr-currency-menu {
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+          padding: 6px;
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          min-width: 118px;
+        }
+        .cr-currency-menu button {
+          border: none;
+          border-radius: 8px;
+          background: transparent;
+          color: #334155;
+          font-size: 12px;
+          font-weight: 700;
+          padding: 8px 12px;
+          cursor: pointer;
+          text-align: left;
+          transition: background 0.15s ease;
+        }
+        .cr-currency-menu button:hover {
+          background: #f1f5f9;
+        }
+        .cr-currency-menu button.active-currency-option {
+          background: #eff6ff;
+          color: #1e3a8a;
+        }
         @media (max-width: 767px) {
           .cr-topbar-inner {
             padding: 10px 12px;
@@ -1935,6 +1986,13 @@ export function ShopPage() {
           .cr-currency-btn {
             padding: 3px 6px;
             font-size: 10px;
+          }
+          /* Multimoneda: el toggle doble no cabe; botón compacto + menú desplegable */
+          .cr-currency-desktop {
+            display: none;
+          }
+          .cr-currency-mobile {
+            display: block;
           }
           /* Banners apilados: a 2 columnas el contenido queda ilegible en 360px */
           .cr-banners-grid {
@@ -1966,7 +2024,16 @@ export function ShopPage() {
             width: 48px;
             height: 48px;
             bottom: 76px;
-            right: 12px;
+            right: 6px;
+          }
+          /* Barra inferior: botones más juntos y centrados */
+          .cr-mobile-bottom-bar {
+            justify-content: center;
+            gap: 2px;
+          }
+          .cr-bottom-item {
+            flex: 0 0 auto;
+            width: 108px;
           }
           /* Con los banners apilados los puntos del carrusel pierden sentido */
           .cr-carousel-dots {
@@ -2044,7 +2111,7 @@ export function ShopPage() {
           </div>
 
           <div className="cr-header-actions">
-            <div className="cr-currency-toggle" title="Cambiar moneda">
+            <div className="cr-currency-toggle cr-currency-desktop" title="Cambiar moneda">
               <button
                 type="button"
                 className={`cr-currency-btn ${activeCurrency === 'USD' ? 'active' : ''}`}
@@ -2059,6 +2126,53 @@ export function ShopPage() {
               >
                 VES (Bs.)
               </button>
+            </div>
+
+            {/* Multimoneda móvil: botón compacto que despliega las opciones */}
+            <div className="cr-currency-mobile">
+              <button
+                type="button"
+                className="cr-currency-mobile-btn"
+                onClick={() => setIsCurrencyMenuOpen(prev => !prev)}
+                aria-label="Cambiar moneda"
+                title="Cambiar moneda"
+              >
+                {activeCurrency === 'USD' ? 'USD' : 'VES'}
+                <ChevronDown size={11} />
+              </button>
+              {isCurrencyMenuOpen && (
+                <>
+                  <div
+                    style={{ position: 'fixed', inset: 0, zIndex: 1180 }}
+                    onClick={() => setIsCurrencyMenuOpen(false)}
+                  />
+                  <div
+                    className="cr-currency-menu"
+                    style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 1190 }}
+                  >
+                    <button
+                      type="button"
+                      className={`${activeCurrency === 'USD' ? 'active-currency-option' : ''}`}
+                      onClick={() => {
+                        setActiveCurrency('USD');
+                        setIsCurrencyMenuOpen(false);
+                      }}
+                    >
+                      USD ($)
+                    </button>
+                    <button
+                      type="button"
+                      className={`${activeCurrency === 'VES' ? 'active-currency-option' : ''}`}
+                      onClick={() => {
+                        setActiveCurrency('VES');
+                        setIsCurrencyMenuOpen(false);
+                      }}
+                    >
+                      VES (Bs.)
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Botón directo de Seguimiento / Tracker */}
@@ -3343,7 +3457,7 @@ export function ShopPage() {
           className="cr-bottom-item"
           onClick={() => setIsCartOpen(true)}
         >
-          <CreditCard size={20} />
+          <ShoppingCart size={20} />
           <span>Carrito</span>
           {totalCartUnits > 0 && <span className="cr-bottom-badge">{totalCartUnits}</span>}
         </button>

@@ -955,6 +955,19 @@ export function OrderTrackerModal({
             border-radius: 0;
             border: none;
           }
+          .tracker-header {
+            padding: 12px 14px;
+          }
+          .tracker-header-title h2 {
+            font-size: 13.5px;
+          }
+          .tracker-body {
+            padding: 14px;
+            gap: 12px;
+          }
+          .tracker-search-btn {
+            padding: 8px 12px;
+          }
           .tracker-footer {
             flex-direction: column;
           }

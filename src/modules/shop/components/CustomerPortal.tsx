@@ -1310,6 +1310,8 @@ export function CustomerPortal({
           .cp-profile-display-grid, .cp-form-grid { grid-template-columns: 1fr; }
           .cp-order-top-row { flex-direction: column; align-items: flex-start; }
           .cp-order-right-actions { width: 100%; justify-content: space-between; }
+          .cp-wishlist-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+          .cp-btn-blue-submit { align-self: stretch; }
         }
       `}</style>
     </div>
