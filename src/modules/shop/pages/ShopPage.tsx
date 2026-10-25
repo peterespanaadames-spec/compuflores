@@ -2016,10 +2016,8 @@ export function ShopPage() {
             padding: 6px 8px;
           }
           .cr-express-delivery-card {
-            padding: 8px 12px;
-            bottom: 76px;
-            left: 12px;
-            gap: 8px;
+            /* Móvil: el chat vive en la barra inferior; la tarjeta express se retira */
+            display: none;
           }
           .cr-truck-icon-wrap {
             width: 36px;
@@ -2027,19 +2025,28 @@ export function ShopPage() {
             border-radius: 10px;
           }
           .cr-whatsapp-fab {
-            width: 48px;
-            height: 48px;
-            bottom: 76px;
-            right: 6px;
+            /* Móvil: el chat vive en la barra inferior; el FAB se retira (escritorio lo conserva) */
+            display: none;
           }
-          /* Barra inferior: botones más juntos y centrados */
+          /* Cintillo superior: usuario, rastreo y carrito se reubicaron en la barra inferior */
+          .cr-header-user,
+          .cr-header-tracker,
+          .cr-header-cart {
+            display: none;
+          }
+          /* Barra inferior: 5 botones repartidos en el ancho de la pantalla */
           .cr-mobile-bottom-bar {
-            justify-content: center;
-            gap: 2px;
+            justify-content: stretch;
+            gap: 0;
           }
           .cr-bottom-item {
-            flex: 0 0 auto;
-            width: 108px;
+            flex: 1;
+            min-width: 0;
+            padding: 0 2px;
+          }
+          /* Item de chat en verde WhatsApp */
+          .cr-bottom-chat {
+            color: #16a34a;
           }
           /* Con los banners apilados los puntos del carrusel pierden sentido */
           .cr-carousel-dots {
@@ -2188,7 +2195,7 @@ export function ShopPage() {
                 setSelectedTrackingOrder(null);
                 setIsOrderTrackerOpen(true);
               }}
-              className="btn-minimal-tracker"
+              className="btn-minimal-tracker cr-header-tracker"
               title="Seguimiento en tiempo real de tu pedido"
             >
               <Truck size={12} /> <span className="cr-tracker-label">Rastrear Pedido</span>
@@ -2205,7 +2212,7 @@ export function ShopPage() {
                     navigate('/login');
                   }
                 }}
-                className="cr-icon-btn"
+                className="cr-icon-btn cr-header-user"
                 title={
                   currentUserRole === 'asociado'
                     ? `Usuario Asociado: ${associatedUserData?.name || 'Personal'} (${associatedUserData?.role || 'Admin'})`
@@ -2609,7 +2616,7 @@ export function ShopPage() {
 
             <button
               type="button"
-              className="cr-icon-btn"
+              className="cr-icon-btn cr-header-cart"
               onClick={() => setIsCartOpen(true)}
               aria-label="Abrir carrito"
             >
@@ -3447,22 +3454,23 @@ export function ShopPage() {
 
         <button
           type="button"
-          className="cr-bottom-item"
-          onClick={() => handleOpenWhatsApp()}
+          className="cr-bottom-item cr-bottom-tracker"
+          onClick={() => {
+            setSelectedTrackingOrder(null);
+            setIsOrderTrackerOpen(true);
+          }}
         >
-          <MessageCircle size={20} />
-          <span>WhatsApp</span>
-          <span className="cr-bottom-badge">0</span>
+          <Truck size={20} />
+          <span>Rastrear</span>
         </button>
 
         <button
           type="button"
-          className="cr-bottom-item"
-          onClick={() => setIsTrackerOpen(true)}
+          className="cr-bottom-item cr-bottom-chat"
+          onClick={() => handleOpenWhatsApp()}
         >
-          <FileText size={20} />
-          <span>Pedidos</span>
-          <span className="cr-bottom-badge">0</span>
+          <MessageCircle size={20} />
+          <span>Chat</span>
         </button>
 
         <button
