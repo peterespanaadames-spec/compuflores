@@ -112,6 +112,14 @@
 - **Métodos de pago / resumen-emisión**: `.pos-payment-box`, `.pos-method-line`, `.pos-issue-box` compactos ≤640.
 - Verificado: build+lint limpios (hashes de bundle cambian cada ronda; verificar el servido de turno).
 
+## Ceros en dashboard/cuentas = sesión expirada (2026-10-26, commit 9ac59a0)
+- **Síntoma del usuario**: «Resumen operativo» todo en 0 y «Cuentas Bancarias» 0 cuentas.
+- **Diagnóstico E2E con navegador de prueba + usuario temporal en Supabase**: el backend está SANO en localhost y producción (banco 4 filas/Banesco 74k, 64 ventas, dashboard mostró USD 2,731.56 / Bs 887.30 con sesión fresca). Los ceros = sesión expirada/inexistente: `fetchTable` con 401 devolvía `[]` y la UI mostraba ceros en silencio.
+- **Reproducción del flujo**: crear usuario via `/auth/v1/admin/users` (service role), login `/api/auth/login`, PATCH `profiles.role` + `user_metadata.role` (el ERP decide por rol del metadata; un usuario nuevo sin metadata → cliente → redirigido a la tienda), verificado /dashboard con snapshot + network.list (200 en products/sales/sale-items/CxC/CxP). Usuario de prueba borrado al terminar.
+- **Fix**: Dashboard `fetchTable` con 401/403 → mensaje «Tu sesión expiró…» (estado completo con EmptyState); BankAccounts `sessionUnavailable` → banner rojo encima del vacío, se apaga cuando un GET ok llega (Sincronizar tras re-entrar).
+- **Trampa del navegador de rsc**: los refs expiran; tras `location.href=/login` re-snapshot para refs frescos; «Failed to fetch»/`ERR_TUNNEL_CONNECTION_FAILED` fueron fallos transitorios de red del runner, el retry 200 confirmó el flujo.
+- Herramientas BROWSER útiles: snapshot/find/fill_form/click/evaluate/network.list/screenshot (solo con tab enfocado).
+
 ## Rotación del POS corregida vía servidor (2026-10-26, commit 034c061)
 - **Hallazgo** (log del dev server): «Invalid API key» al consultar la rotación — `src/lib/supabase/client.ts` es **INERTE por diseño** (apiKey 'sin-credencial-en-el-navegador'; regla de dominio: el navegador nunca consulta Supabase directo). La función inline que monté la semana pasada violaba esa regla y nunca pudo funcionar.
 - **Fix**: nuevo endpoint `GET /api/sales/rotation` en `api/server.ts` (últimas 300 ventas COMPLETADAS + `sale_items(sku,quantity)` con contexto de sesión/RLS, devuelve `{ sku: unidades }`; es tolerante: `{data:{}, warnings}` ante error). `Sales.tsx` ahora llama `authenticatedFetch('/api/sales/rotation')`; quitados los imports `supabase` (client) e `getActiveOrgId` del módulo. El endpoint exige sesión → probarlo con cookie (Invoke-WebRequest solo da 200 «Sesión requerida»).
