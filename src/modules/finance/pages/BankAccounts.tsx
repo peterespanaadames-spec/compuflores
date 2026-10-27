@@ -88,6 +88,8 @@ export function BankAccountsPage() {
   const [selectedClassification, setSelectedClassification] = useState<string>('Todas');
   const [accountSearch, setAccountSearch] = useState<string>('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
+  // Sesión expirada: aviso visible por si la lista queda vacía en silencio
+  const [sessionUnavailable, setSessionUnavailable] = useState(false);
 
   // Submission locks for anti-double-click & concurrency
   const [isSubmittingDeposit, setIsSubmittingDeposit] = useState(false);
@@ -173,7 +175,11 @@ export function BankAccountsPage() {
       ]);
 
       let hasAccounts = false;
+      if ('status' in accRes && (accRes.status === 401 || accRes.status === 403)) {
+        setSessionUnavailable(true);
+      }
       if (accRes.ok) {
+        setSessionUnavailable(false);
         const accs = await accRes.json();
         if (accs.success && Array.isArray(accs.data)) {
           setAccounts(accs.data);
@@ -1217,6 +1223,13 @@ export function BankAccountsPage() {
               Mostrando <b>{filteredVisibleAccounts.length}</b> de {activeFolder === 'inactivas' ? inactiveAccounts.length : normalAccounts.length} cuentas
             </span>
           </div>
+
+          {/* Aviso de sesión expirada: explica la lista vacía en vez de confundir */}
+          {sessionUnavailable && (
+            <div style={{ margin: '0 0 14px', padding: '12px 16px', borderRadius: 10, border: '1px solid #fca5a5', background: '#fef2f2', color: '#991b1b', fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10 }}>
+              ⚠️ Tu sesión expiró o no es válida, por eso no se cargan tus cuentas. Cierra sesión y vuelve a iniciar sesión para verlas.
+            </div>
+          )}
 
           {/* Grid of Bank Accounts */}
           {filteredVisibleAccounts.length === 0 ? (

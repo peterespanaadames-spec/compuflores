@@ -68,6 +68,11 @@ export function Dashboard() {
         const fetchTable = async (url: string): Promise<Array<Record<string, any>>> => {
           try {
             const res = await authenticatedFetch(url);
+            if (res.status === 401 || res.status === 403) {
+              // Sesión expirada/inexistente: aviso visible en vez de ceros silenciosos.
+              setLoadError('Tu sesión expiró o no es válida. Cierra sesión y vuelve a iniciar sesión para ver tus datos.');
+              return [];
+            }
             if (!res.ok) return [];
             const json = await res.json();
             return Array.isArray(json?.data) ? json.data : [];
