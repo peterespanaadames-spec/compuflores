@@ -5591,6 +5591,35 @@ app.get('/api/sales', async (_req, res: AuthenticatedResponse) => {
   }
 });
 
+app.get('/api/sales/rotation', async (_req, res: AuthenticatedResponse) => {
+  // Rotacion real por SKU: suma de unidades vendidas en las ultimas 300
+  // ventas COMPLETADAS del inquilino activo (sales + sale_items). Alimenta
+  // el catalogo destacado del POS en movil; el cliente nunca consulta
+  // Supabase directo (regla de dominio: credenciales solo en el servidor).
+  try {
+    const orgId = res.locals.supabaseContext!.organizationId;
+    const result = await authenticatedSupabaseRestRequest(
+      res,
+      `sales?organization_id=eq.${encodeURIComponent(orgId)}&status=eq.COMPLETADA&select=id,sale_items(sku,quantity)&order=created_at.desc&limit=300`
+    );
+    if (result.error) {
+      return res.status(200).json({ success: true, data: {}, warnings: result.error });
+    }
+    const rotation: Record<string, number> = {};
+    for (const sale of (result.data || []) as any[]) {
+      const items = Array.isArray(sale?.sale_items) ? sale.sale_items : [];
+      for (const item of items) {
+        const key = String(item?.sku || '').trim();
+        if (!key) continue;
+        rotation[key] = (rotation[key] || 0) + (Number(item?.quantity) || 0);
+      }
+    }
+    return res.json({ success: true, data: rotation });
+  } catch (err: any) {
+    return res.status(200).json({ success: true, data: {}, warnings: err?.message });
+  }
+});
+
 app.get('/api/sales/last-doc-number', async (req, res: AuthenticatedResponse) => {
   const type = req.query.type as string || 'FACTURA';
   try {
