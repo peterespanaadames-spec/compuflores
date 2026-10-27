@@ -112,6 +112,13 @@
 - **Métodos de pago / resumen-emisión**: `.pos-payment-box`, `.pos-method-line`, `.pos-issue-box` compactos ≤640.
 - Verificado: build+lint limpios (hashes de bundle cambian cada ronda; verificar el servido de turno).
 
+## POS: CONTADO dinámico, fecha/número rotulados, Cerrar amarillo (2026-10-26, commit b8bd68f)
+- **«$ AL CONTADO»** ahora dinámico en TODAS las versiones: seleccionado = antracita con texto blanco; deseleccionado = gris `#E2E8F0` con texto oscuro (igual que «CRÉDITO (CxC)»).
+- **Fecha/Número de comprobante en una línea**: la regla móvil genérica `[style*="grid-template-columns: 1fr 1fr"] → 1fr` (≤640px) los apilaba; el grid cambió a `minmax(0,1fr) minmax(0,1fr)` (no casa con el atributo) + CSS `.pos-doc-fields` con la misma definición forzada, labels 9.5px e inputs 12px.
+- **«Cerrar» de la vista de impresión**: fondo amarillo `#FFF275`, borde `#FDF06F`, texto `#111827` bold (antes blanco).
+- **Lección** (repetida): los checks literales de strings minificados fallan por espacios — El «Cerrar» amarillo solo se confirmó con regex de contexto alrededor de 'VISTA PREVIA DE IMPRESIÓN'; buscar sin espacios o con contexto.
+- Verificado en producción: JS `index-CZjYvDnC.js` (contado condicional, Cerrar amarillo, grid desligado) y CSS `.pos-doc-fields` de una línea. Build+lint limpios.
+
 ## POS móvil: textos, colores y una sola línea (2026-10-25, commit 38000f5)
 - **Botón «FACTURAS EN ESPERA» → «FACT. PEND.»** con contenedor `.pos-toolbar-actions` (móvil: ambos botones flex 1, centrados y alineados en fila con «+ Venta Libre»).
 - **Buscador de productos**: input con `flex:1/minWidth:0` (antes el texto del placeholder lo apretaba); **buscador de cliente** (Datos del Cliente) con texto en negrita (fontWeight 700).
