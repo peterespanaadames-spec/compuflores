@@ -1118,7 +1118,15 @@ async function authenticatedSupabaseRestRequest(
     organizationId: '00000000-0000-0000-0000-000000000001',
     role: 'admin'
   };
-  console.log('Requesting endpoint:', endpoint, 'with context:', context);
+  // Log de diagnóstico solo si se habilita FRENYER_DEBUG_LOGS=on
+  // (imprimir endpoint+token y payloads en cada llamada ralentiza serverless).
+  if (process.env.FRENYER_DEBUG_LOGS === 'on') {
+    console.log('Requesting endpoint:', endpoint, 'with context:', {
+      organizationId: context.organizationId,
+      role: context.role,
+      accessToken: context.accessToken ? '(presente)' : '(ausente)'
+    });
+  }
 
   const method = options.method || 'GET';
   const table = endpoint.split('?')[0].split('/')[0];
@@ -3446,7 +3454,9 @@ app.get('/api/bank-accounts', async (_req, res) => {
     const local = loadPersistedBankAccounts();
     try {
       const result = await authenticatedSupabaseRestRequest(res, 'bank_accounts?select=*&order=bank_name.asc');
-      console.log('DEBUG: authenticatedSupabaseRestRequest bank_accounts result:', result);
+      if (process.env.FRENYER_DEBUG_LOGS === 'on') {
+        console.log('DEBUG: authenticatedSupabaseRestRequest bank_accounts result:', result);
+      }
       if (!result.error && Array.isArray(result.data) && result.data.length > 0) {
         const map = new Map<string, any>();
         for (const item of local) map.set(item.id, item);
@@ -7398,6 +7408,23 @@ interface CachedSession {
 
 const sessionCache = new Map<string, CachedSession>();
 
+// Singleflight: cuando varias peticiones paralelas traen el mismo token
+// (el dashboard dispara ~6 fetch a la vez), todas comparten UNA sola
+// resolución en vuelo en lugar de consultar Supabase cada una por su cuenta.
+type ResolvedRemoteSession = { user: any; role: string; organizationId: string };
+const sessionInflight = new Map<string, Promise<ResolvedRemoteSession | null>>();
+
+function resolveRemoteSession(token: string): Promise<ResolvedRemoteSession | null> {
+  let inflight = sessionInflight.get(token);
+  if (!inflight) {
+    inflight = resolveSessionUser(token).finally(() => {
+      sessionInflight.delete(token);
+    });
+    sessionInflight.set(token, inflight);
+  }
+  return inflight;
+}
+
 function readTokenExpiry(token: string): number {
   try {
     const payload = token.split('.')[1];
@@ -7440,7 +7467,7 @@ async function resolveRequestSession(
     };
   }
 
-  const resolved = await resolveSessionUser(token);
+  const resolved = await resolveRemoteSession(token);
   if (resolved) {
     const tokenExpiry = readTokenExpiry(token);
     sessionCache.set(token, {
@@ -7463,7 +7490,7 @@ async function resolveRequestSession(
       if (refreshed.data.refresh_token) {
         setSessionCookie(res, REFRESH_COOKIE, refreshed.data.refresh_token, SESSION_MAX_AGE_MS);
       }
-      const resolvedAfter = await resolveSessionUser(newToken);
+      const resolvedAfter = await resolveRemoteSession(newToken);
       if (resolvedAfter) {
         return { token: newToken, local: null, remote: resolvedAfter };
       }
