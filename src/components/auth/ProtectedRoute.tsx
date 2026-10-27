@@ -2,7 +2,6 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { isInternalRole } from '../../lib/auth/roles';
-import { Sparkles } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -17,15 +16,32 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return (
       <div className="auth-loading-screen">
         <div className="auth-loading-card">
-          <div className="auth-logo-icon">
-            <Sparkles className="w-7 h-7 text-white" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9 }}>
+            <span
+              style={{
+                fontSize: 32,
+                fontWeight: 800,
+                color: '#1F2C5B',
+                letterSpacing: '-0.02em',
+                lineHeight: 1
+              }}
+            >
+              Frenyer
+            </span>
+            <span
+              style={{
+                width: 11,
+                height: 11,
+                borderRadius: '50%',
+                background: '#F2C330',
+                display: 'inline-block',
+                marginTop: -8
+              }}
+            />
           </div>
-          <div>
-            <h2 className="auth-title" style={{ fontSize: 18, marginBottom: 4 }}>Frenyer ERP</h2>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 13, color: 'var(--muted)' }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--brand-500)', display: 'inline-block' }} />
-              <span>Verificando credenciales de acceso...</span>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 13, color: 'var(--muted)' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--brand-500)', display: 'inline-block' }} />
+            <span>Verificando credenciales de acceso...</span>
           </div>
         </div>
       </div>
