@@ -1068,7 +1068,7 @@ export function AccountsPayable() {
       </div>
 
       {/* 4 KPI Metrics Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
+      <div className="fin-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
         <div className="card" style={{ padding: 20 }}>
           <div
             className="kpi-label"
@@ -1132,7 +1132,7 @@ export function AccountsPayable() {
 
       {/* Control Filter Bar */}
       <div
-        className="card"
+        className="card fin-filters"
         style={{ padding: '16px 20px', marginBottom: 20, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}
       >
         <div
@@ -1208,7 +1208,7 @@ export function AccountsPayable() {
       </div>
 
       {/* Main Content Grid: Left Table, Right Side Panel */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20, alignItems: 'start' }}>
+      <div className="pay-main-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20, alignItems: 'start' }}>
         {/* Left: Detailed Report Table */}
         <div className="card" style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -1239,6 +1239,7 @@ export function AccountsPayable() {
                   >
                     {/* Supplier Header Row */}
                     <div
+                      className="fin-sup-row"
                       style={{
                         padding: '14px 18px',
                         display: 'flex',

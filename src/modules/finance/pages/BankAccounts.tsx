@@ -1156,7 +1156,7 @@ export function BankAccountsPage() {
               )}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f8fafc', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border)', width: 250 }}>
+            <div className="bank-search-box" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f8fafc', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border)', width: 250 }}>
               <Search size={14} style={{ color: '#94a3b8' }} />
               <input
                 placeholder="Buscar cuenta..."
@@ -1244,7 +1244,7 @@ export function BankAccountsPage() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-3" style={{ gap: 14 }}>
+            <div className="grid grid-3 bank-cards-grid" style={{ gap: 14 }}>
               {filteredVisibleAccounts.map(acc => {
                 const linkedPms = paymentMethods.filter(pm => pm.bank_account_id === acc.id);
                 const isVES = acc.currency === 'VES';
@@ -1469,7 +1469,7 @@ export function BankAccountsPage() {
           </div>
 
           {/* Account Detail Header */}
-          <div className="card" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div className="card bank-acct-head" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <div style={{ width: 44, height: 44, borderRadius: 10, background: 'var(--brand-accent)', color: '#111827', border: '1px solid #FDF06F', display: 'grid', placeItems: 'center' }}>
                 <Building size={20} />
@@ -1512,7 +1512,7 @@ export function BankAccountsPage() {
           </div>
 
           {/* Table Toolbar / Controls */}
-          <div className="card" style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 12 }}>
+          <div className="card bank-mov-toolbar" style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 12 }}>
             <div style={{ display: 'flex', gap: 6 }}>
               {[
                 { id: 'Todos', label: `Todos (${filteredMovementsList.length})` },
@@ -1560,7 +1560,7 @@ export function BankAccountsPage() {
             )}
 
             {/* Search Input inside Movements */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid var(--border)', borderRadius: 6, padding: '0 10px', minWidth: 220 }}>
+            <div className="bank-mov-search" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid var(--border)', borderRadius: 6, padding: '0 10px', minWidth: 220 }}>
               <Search size={14} style={{ color: '#94a3b8' }} />
               <input
                 style={{ border: 'none', outline: 'none', padding: '6px 0', fontSize: 11, width: '100%' }}
@@ -1593,13 +1593,13 @@ export function BankAccountsPage() {
               <table className="table" style={{ fontSize: 12 }}>
                 <thead>
                   <tr style={{ background: '#0a2540', color: '#fff' }}>
-                    <th style={{ color: '#fff', fontSize: 11 }}>CUENTA</th>
+                    <th className="mov-col-oculta" style={{ color: '#fff', fontSize: 11 }}>CUENTA</th>
                     <th style={{ color: '#fff', fontSize: 11 }}>FECHA</th>
-                    <th style={{ color: '#fff', fontSize: 11 }}>USUARIO</th>
+                    <th className="mov-col-oculta" style={{ color: '#fff', fontSize: 11 }}>USUARIO</th>
                     <th style={{ color: '#fff', fontSize: 11 }}>TIPO</th>
                     <th style={{ color: '#fff', fontSize: 11 }}>DETALLE / REFERENCIA</th>
-                    <th style={{ color: '#fff', fontSize: 11, textAlign: 'center' }}>TASA</th>
-                    <th style={{ color: '#fff', fontSize: 11, textAlign: 'right' }}>COMISIÓN</th>
+                    <th className="mov-col-oculta" style={{ color: '#fff', fontSize: 11, textAlign: 'center' }}>TASA</th>
+                    <th className="mov-col-oculta" style={{ color: '#fff', fontSize: 11, textAlign: 'right' }}>COMISIÓN</th>
                     <th style={{ color: '#fff', fontSize: 11, textAlign: 'right' }}>MONTO</th>
                   </tr>
                 </thead>
@@ -1616,9 +1616,9 @@ export function BankAccountsPage() {
                       const isVES = selectedAccountForMovements.currency === 'VES';
                       return (
                         <tr key={mov.id}>
-                          <td><b>{selectedAccountForMovements.bank_name}</b></td>
+                          <td className="mov-col-oculta"><b>{selectedAccountForMovements.bank_name}</b></td>
                           <td>{new Date(mov.created_at).toLocaleString('es-VE', { hour12: true })}</td>
-                          <td>{mov.user_name}</td>
+                          <td className="mov-col-oculta">{mov.user_name}</td>
                           <td>
                             <Badge tone={mov.type === 'ENTRADA' ? 'success' : 'danger'}>
                               {mov.type}
@@ -1628,10 +1628,10 @@ export function BankAccountsPage() {
                             <div style={{ fontWeight: 600, color: '#334155' }}>{mov.concept}</div>
                             <span className="muted small" style={{ fontSize: 10 }}>Ref: {mov.reference}</span>
                           </td>
-                          <td style={{ textAlign: 'center', fontWeight: 600, color: '#64748b' }}>
+                          <td className="mov-col-oculta" style={{ textAlign: 'center', fontWeight: 600, color: '#64748b' }}>
                             {mov.rate ? `${mov.rate.toFixed(2)} Bs/$` : '—'}
                           </td>
-                          <td style={{ textAlign: 'right', color: '#64748b' }}>
+                          <td className="mov-col-oculta" style={{ textAlign: 'right', color: '#64748b' }}>
                             {mov.commission > 0 
                               ? (isVES ? formatVES(mov.commission) : formatUSD(mov.commission)) 
                               : 'Bs 0,00'}

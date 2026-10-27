@@ -2450,6 +2450,108 @@ button {
   border-bottom: 1px solid var(--border-subtle);
 }
 
+/* =====================================================================
+   RESPONSIVE FINANZAS MÓVIL — Cuentas Bancarias, Cuentas por Cobrar,
+   Cuentas por Pagar y Reporte de Cuentas.
+   Reglas SOLO para pantallas angostas: el escritorio (>900px) no cambia.
+   ===================================================================== */
+@media (max-width: 900px) {
+  /* CxC / CxP: listado y panel lateral se apilan en una sola columna */
+  .ar-main-grid,
+  .pay-main-grid {
+    grid-template-columns: 1fr !important;
+  }
+  /* Cuentas bancarias: tarjeta a 1/2 por fila según ancho */
+  .bank-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  /* KPI de Finanzas: 2 por fila (antes 4 apretadas) */
+  .fin-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+  /* Filas de cliente/proveedor y órdenes: el bloque de montos baja a 2a línea */
+  .fin-sup-row,
+  .ar-order-row {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  /* KPI: los importes Bs + USD en paralelo no caben; 1 tarjeta por fila */
+  .fin-kpi-grid {
+    grid-template-columns: 1fr !important;
+  }
+  /* Cuentas bancarias: 1 tarjeta por fila */
+  .bank-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+  /* Filtros: cada control ocupa su propia línea completa */
+  .fin-filters input,
+  .fin-filters select {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .fin-filters [style*="flex: 1"],
+  .fin-filters [style*="min-width: 240"],
+  .fin-filters [style*="min-width: 260"] {
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+  }
+  .fin-filters [style*="flex-wrap: nowrap"] {
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
+  }
+  /* Buscador de cuentas: ancho completo */
+  .bank-search-box {
+    width: 100% !important;
+  }
+  /* Encabezado del detalle de una cuenta: saldo pasa debajo del nombre */
+  .bank-acct-head {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  .bank-acct-head > div:last-child {
+    text-align: left !important;
+  }
+  /* Barra de la tabla de movimientos: filas completas, buscador sin mínimo */
+  .bank-mov-toolbar {
+    gap: 8px !important;
+  }
+  .bank-mov-toolbar > div,
+  .bank-mov-toolbar > button {
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
+  .bank-mov-search {
+    min-width: 0 !important;
+  }
+  .bank-mov-toolbar .input {
+    width: 100% !important;
+  }
+  /* Tablas financieras: ocultar columnas secundarias para menos scroll */
+  .mov-col-oculta,
+  .ar-flat-table .ar-col-concepto,
+  .report-table .rep-col-oculta {
+    display: none !important;
+  }
+  /* Celdas más compactas en móvil */
+  .bank-mov-table th,
+  .bank-mov-table td,
+  .ar-flat-table th,
+  .ar-flat-table td,
+  .report-table th,
+  .report-table td {
+    padding: 9px 10px !important;
+  }
+  .bank-mov-table td:nth-child(2),
+  .report-table td:nth-child(1) {
+    white-space: nowrap;
+  }
+}
+
 /* --------------------------- Impresión (carta) ---------------------------
    Al pulsar «Imprimir Comprobante» se emite SOLO la hoja factura, sin el
    menú lateral, la cabecera ni los botones, ajustada a página letter.

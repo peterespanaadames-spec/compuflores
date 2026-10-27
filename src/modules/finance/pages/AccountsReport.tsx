@@ -192,7 +192,7 @@ export function AccountsReportPage() {
       </div>
 
       {/* 2. Rejilla de Métricas KPI */}
-      <div className="grid grid-4 gap-4 mb-6">
+      <div className="grid grid-4 kpi-duo gap-4 mb-6">
         <Card>
           <div className="kpi-label">TOTAL RECAUDADO ($)</div>
           <div className="kpi-value text-text mt-1">{formatUSD(totalUSD)}</div>
@@ -222,7 +222,7 @@ export function AccountsReportPage() {
 
       {/* 3. Filtros y Búsqueda */}
       <Card className="mb-6">
-        <div className="flex flex-col xl:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col xl:flex-row items-center justify-between gap-4 fin-filters">
           <div className="relative w-full xl:w-72">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
             <input
@@ -298,17 +298,17 @@ export function AccountsReportPage() {
           <div className="p-8 text-center muted small">No se encontraron pagos con los filtros seleccionados.</div>
         ) : (
           <div className="table-wrap">
-            <table className="table">
+            <table className="table report-table">
               <thead>
                 <tr>
                   <th>Fecha</th>
                   <th>Comprobante</th>
-                  <th>Tipo</th>
+                  <th className="rep-col-oculta">Tipo</th>
                   <th>Cliente</th>
-                  <th>Método de Pago</th>
-                  <th>Banco / Destino</th>
+                  <th className="rep-col-oculta">Método de Pago</th>
+                  <th className="rep-col-oculta">Banco / Destino</th>
                   <th className="num">Monto ($)</th>
-                  <th className="num">Monto (VES)</th>
+                  <th className="num rep-col-oculta">Monto (VES)</th>
                   <th className="num">Acción</th>
                 </tr>
               </thead>
@@ -317,18 +317,18 @@ export function AccountsReportPage() {
                   <tr key={p.id}>
                     <td className="muted text-xs">{new Date(p.created_at).toLocaleDateString()}</td>
                     <td className="font-bold text-xs">{p.doc_number}</td>
-                    <td>
+                    <td className="rep-col-oculta">
                       <Badge tone={p.doc_type.includes('FACT') ? 'success' : p.doc_type.includes('NOTA') ? 'warning' : 'brand'}>
                         {p.doc_type}
                       </Badge>
                     </td>
                     <td className="font-semibold text-xs">{p.customer_name}</td>
-                    <td className="text-xs font-medium">{p.method}</td>
-                    <td>
+                    <td className="text-xs font-medium rep-col-oculta">{p.method}</td>
+                    <td className="rep-col-oculta">
                       <span className="badge warning">{p.bank_name}</span>
                     </td>
                     <td className="num font-bold">{formatUSD(p.amount_usd)}</td>
-                    <td className="num muted">
+                    <td className="num muted rep-col-oculta">
                       Bs. {p.amount_ves.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     <td className="num">

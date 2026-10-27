@@ -954,7 +954,7 @@ export function Accounts() {
       </div>
 
       {/* 4 KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 20 }}>
+      <div className="fin-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 20 }}>
         <div className="card" style={{ padding: 20 }}>
           <div className="kpi-label" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#64748b', letterSpacing: '0.05em' }}>
             CARTERA TOTAL
@@ -1006,7 +1006,7 @@ export function Accounts() {
 
       {/* Filter and View Mode Bar */}
       <div
-        className="card"
+        className="card fin-filters"
         style={{
           padding: '16px 20px',
           marginBottom: 20,
@@ -1173,7 +1173,7 @@ export function Accounts() {
       </div>
 
       {/* Main Content Grid: Left Drill-down, Right Cancelation History */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.85fr) minmax(320px, 1.15fr)', gap: 20, alignItems: 'start' }}>
+      <div className="ar-main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.85fr) minmax(320px, 1.15fr)', gap: 20, alignItems: 'start' }}>
         
         {/* Left Side: Summary and Drill-down */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1225,6 +1225,7 @@ export function Accounts() {
                     >
                       {/* Client Header Row */}
                       <div
+                        className="fin-sup-row"
                         style={{
                           padding: '14px 18px',
                           display: 'flex',
@@ -1369,6 +1370,7 @@ export function Accounts() {
                               return (
                                 <div
                                   key={order.id}
+                                  className="ar-order-row"
                                   onClick={() => setSelectedAccount(order)}
                                   style={{
                                     display: 'flex',
@@ -1511,11 +1513,11 @@ export function Accounts() {
             ) : (
               /* VIEW 2: FLAT TABLE OF ALL ORDERS */
               <div className="table-wrap">
-                <table className="table" style={{ fontSize: 12 }}>
+                <table className="table ar-flat-table" style={{ fontSize: 12 }}>
                   <thead>
                     <tr>
                       <th>Cliente / Documento</th>
-                      <th>Concepto</th>
+                      <th className="ar-col-concepto">Concepto</th>
                       <th>Vencimiento</th>
                       <th className="num">Pendiente</th>
                       <th style={{ textAlign: 'center' }}>Estado</th>
@@ -1543,7 +1545,7 @@ export function Accounts() {
                               {badgeText} · {acc.doc_number}
                             </span>
                           </td>
-                          <td>
+                          <td className="ar-col-concepto">
                             <div>{acc.concept}</div>
                             <span className="muted small" style={{ fontSize: 11, color: '#64748b' }}>
                               Emisión: {acc.issue_date}
