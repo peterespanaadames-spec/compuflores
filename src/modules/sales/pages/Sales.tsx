@@ -1972,8 +1972,8 @@ export function Sales() {
                       padding: 10,
                       borderRadius: PAYMENT_PALETTE.pill,
                       border: paymentType === 'CONTADO' ? `2px solid ${PAYMENT_PALETTE.ink}` : `1px solid ${PAYMENT_PALETTE.secondaryBorder}`,
-                      background: PAYMENT_PALETTE.anthracite,
-                      color: '#ffffff',
+                      background: paymentType === 'CONTADO' ? PAYMENT_PALETTE.anthracite : '#E2E8F0',
+                      color: paymentType === 'CONTADO' ? '#ffffff' : PAYMENT_PALETTE.inkBody,
                       fontSize: 13,
                       fontWeight: 700,
                       cursor: 'pointer'
@@ -2847,7 +2847,7 @@ export function Sales() {
 
                 {/* Form fields: Fecha & Número */}
                 {documentType !== 'ESPERA' && (
-                  <div className="form-grid pos-doc-fields" style={{ gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div className="form-grid pos-doc-fields" style={{ gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 8 }}>
                     <div className="field">
                       <label style={{ fontSize: 10, fontWeight: 700 }}>FECHA</label>
                       <input className="input" style={{ fontSize: 12.5, padding: '8px 10px' }} value={new Date().toLocaleDateString('es-VE')} disabled />
@@ -3284,7 +3284,7 @@ export function Sales() {
                   <Printer size={14} /> Imprimir Comprobante
                 </Button>
                 <Button
-                  style={{ background: '#fff', fontSize: 12 }}
+                  style={{ background: '#FFF275', color: '#111827', borderColor: '#FDF06F', fontSize: 12, fontWeight: 800 }}
                   onClick={() => setPrintDocument(null)}
                 >
                   Cerrar

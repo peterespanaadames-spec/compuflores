@@ -858,9 +858,17 @@ button {
     width: 14px !important;
     height: 14px !important;
   }
-  /* Fecha y número de comprobante compactos */
+  /* Fecha y número de comprobante compactos, SIEMPRE en una línea */
   .pos-doc-fields {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
     gap: 6px !important;
+  }
+  .pos-doc-fields .input {
+    font-size: 12px !important;
+    padding: 6px 8px !important;
+  }
+  .pos-doc-fields label {
+    font-size: 9.5px !important;
   }
   /* Barra de acciones del POS: Fact. Pend. y Venta Libre alineados */
   .pos-toolbar-actions {
