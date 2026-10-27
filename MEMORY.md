@@ -112,6 +112,12 @@
 - **Métodos de pago / resumen-emisión**: `.pos-payment-box`, `.pos-method-line`, `.pos-issue-box` compactos ≤640.
 - Verificado: build+lint limpios (hashes de bundle cambian cada ronda; verificar el servido de turno).
 
+## Rotación del POS corregida vía servidor (2026-10-26, commit 034c061)
+- **Hallazgo** (log del dev server): «Invalid API key» al consultar la rotación — `src/lib/supabase/client.ts` es **INERTE por diseño** (apiKey 'sin-credencial-en-el-navegador'; regla de dominio: el navegador nunca consulta Supabase directo). La función inline que monté la semana pasada violaba esa regla y nunca pudo funcionar.
+- **Fix**: nuevo endpoint `GET /api/sales/rotation` en `api/server.ts` (últimas 300 ventas COMPLETADAS + `sale_items(sku,quantity)` con contexto de sesión/RLS, devuelve `{ sku: unidades }`; es tolerante: `{data:{}, warnings}` ante error). `Sales.tsx` ahora llama `authenticatedFetch('/api/sales/rotation')`; quitados los imports `supabase` (client) e `getActiveOrgId` del módulo. El endpoint exige sesión → probarlo con cookie (Invoke-WebRequest solo da 200 «Sesión requerida»).
+- **Regla reforzada**: cualquier dato nuevo del ERP = endpoint en `api/server.ts` + `authenticatedFetch` desde la página. Nunca usar `createClient` del browser para leer datos.
+- Verificado: bundle `index-DSNddHDz.js` en producción contiene `api/sales/rotation` y no contiene consultas directas. Build+lint limpios; dev restarted tras editar `server.ts` (kill :3000 → npm run dev).
+
 ## POS: CONTADO dinámico, fecha/número rotulados, Cerrar amarillo (2026-10-26, commit b8bd68f)
 - **«$ AL CONTADO»** ahora dinámico en TODAS las versiones: seleccionado = antracita con texto blanco; deseleccionado = gris `#E2E8F0` con texto oscuro (igual que «CRÉDITO (CxC)»).
 - **Fecha/Número de comprobante en una línea**: la regla móvil genérica `[style*="grid-template-columns: 1fr 1fr"] → 1fr` (≤640px) los apilaba; el grid cambió a `minmax(0,1fr) minmax(0,1fr)` (no casa con el atributo) + CSS `.pos-doc-fields` con la misma definición forzada, labels 9.5px e inputs 12px.
