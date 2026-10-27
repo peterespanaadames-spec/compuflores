@@ -1,6 +1,7 @@
 # MEMORY.md — FRENYER
 
 ## Estado actual
+- **Velocidad + historial bancario (2026-10-26, commit eb7f942)**: logs por-request gated con `FRENYER_DEBUG_LOGS=on` (2 puntos en `api/server.ts`); singleflight de sesión (`sessionInflight` Map + `resolveRemoteSession`) compartiendo la resolución en vuelo del mismo token (dashboard disparaba ~6 fetch y cada uno resolvía sesión); migración **0028** creada (`0028_bank_movements_payment_methods.sql`, idempotente) porque `bank_movements` y `payment_methods` **NO EXISTEN en Supabase (404; la 0004 nunca se aplicó)** — sin ellas no hay historial bancario; el endpoint `/api/supabase/migrations-bundle` lista archivos dinámicamente, incluye la 0028 sola. **PENDIENTE: usuario pegar 0028 en SQL Editor (junto a 0025/0026/0027)**.
 - **Base del Sistema**: Frenyer ERP bimonetario (React 19, Vite, Express 5, TypeScript, Supabase PostgreSQL) desplegado en Vercel (https://compuflores.vercel.app/, commits directos a `main`).
 - **Ajustes de estética 2026-10-24 (resumen)**: botón amarillo `var(--brand-accent)` con letras negras unificado en cabeceras de módulos y acciones clave (Compras/Proveedores/Gastos/Bancos/Cotizaciones/Ventas/Usuarios/Logo BCV/Tracker); «Supabase» del topbar → «Conexión» en Config/Auditoría (solo sincroniza estado, modal retirado); Alma oculto tras `{false && ...}` (restaurable); Config/Almacén limpio de badges SQL; tienda sin toast de bienvenida al volver del panel.
 - **Gestión de Usuarios Asociados y Permisos**:
