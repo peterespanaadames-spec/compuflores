@@ -4914,6 +4914,23 @@ function defaultPermissionsForRole(role: any): string[] {
   return ['ventas', 'inventario', 'finanzas', 'reportes', 'usuarios'];
 }
 
+/**
+ * Permisos efectivos de un perfil. Los permisos guardados mandan, salvo en
+ * roles administrativos: un administrador nunca puede quedar con menos
+ * módulos que su rol (un guardado parcial en Configuración no debe recortar
+ * el menú del dueño del negocio).
+ */
+function resolveEffectivePermissions(role: any, stored: any): string[] {
+  const fromRole = defaultPermissionsForRole(role);
+  if (!Array.isArray(stored) || stored.length === 0) return fromRole;
+
+  const r = String(role || '').trim().toLowerCase();
+  const isAdminRole = ['admin', 'administrador', 'propietario', 'gerente', 'manager', 'superadmin', 'director'].includes(r);
+  if (!isAdminRole) return stored;
+
+  return Array.from(new Set([...fromRole, ...stored]));
+}
+
 function mapPersistedUserRows(rows: any[]): any[] {
   return (rows || []).map((p: any) => {
     const names = (p.full_name || p.name || 'Usuario').trim().split(/\s+/);
@@ -4926,9 +4943,7 @@ function mapPersistedUserRows(rows: any[]): any[] {
       title: p.title || p.position || 'Personal Asociado',
       active: p.active !== false && p.is_active !== false,
       initials: initials,
-      permissions: Array.isArray(p.permissions) && p.permissions.length > 0
-        ? p.permissions
-        : defaultPermissionsForRole(p.role),
+      permissions: resolveEffectivePermissions(p.role, p.permissions),
       created_at: p.created_at || new Date().toISOString()
     };
   });
@@ -4943,13 +4958,14 @@ function mergePersistedUsersWithSupabase(mappedRows: any[]): any[] {
         (l.email && su.email && String(l.email).toLowerCase() === String(su.email).toLowerCase())
     );
     if (!lu) return su;
+    const mergedPermissions = Array.isArray(lu.permissions) && lu.permissions.length > 0 ? lu.permissions : su.permissions;
     return {
       ...su,
       name: lu.name || su.name,
       role: lu.role || su.role,
       title: lu.title !== undefined ? lu.title : su.title,
       active: lu.active !== undefined ? lu.active : su.active,
-      permissions: Array.isArray(lu.permissions) && lu.permissions.length > 0 ? lu.permissions : su.permissions
+      permissions: resolveEffectivePermissions(lu.role || su.role, mergedPermissions)
     };
   });
 
@@ -5012,19 +5028,10 @@ app.post('/api/users', async (req, res: AuthenticatedResponse) => {
     const names = cleanName.split(/\s+/);
     const initials = names.length >= 2 ? `${names[0][0]}${names[1][0]}`.toUpperCase() : names[0].slice(0, 2).toUpperCase();
 
-    // Default permissions per role if not specified
+    // Permisos por rol cuando el formulario no los envía (misma matriz que el menú).
     let permissions = Array.isArray(body.permissions) ? body.permissions : [];
     if (permissions.length === 0) {
-      const role = (body.role || 'Cashier').toLowerCase();
-      if (role === 'admin' || role === 'propietario' || role === 'administrador') {
-        permissions = ['ventas', 'inventario', 'finanzas', 'reportes', 'usuarios'];
-      } else if (role === 'manager' || role === 'gerente') {
-        permissions = ['ventas', 'inventario', 'reportes'];
-      } else if (role === 'cashier' || role === 'cajero') {
-        permissions = ['ventas'];
-      } else {
-        permissions = ['reportes'];
-      }
+      permissions = defaultPermissionsForRole(body.role || 'Cashier');
     }
 
     let authUserId = '';
