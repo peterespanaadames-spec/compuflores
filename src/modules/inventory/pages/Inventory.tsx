@@ -1986,39 +1986,57 @@ export function Inventory() {
                 <span className="small muted">Stock actual contabilizado: {historyModalProduct.stock} unidades.</span>
               </div>
             ) : (
-              <div className="table-wrap" style={{ maxHeight: 350, overflowY: 'auto' }}>
-                <table className="table" style={{ fontSize: '12px' }}>
-                  <thead>
-                    <tr>
-                      <th>Fecha</th>
-                      <th>Tipo</th>
-                      <th>Documento</th>
-                      <th>Entrada / Salida</th>
-                      <th className="num">Cantidad</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {productMovements.map((m, idx) => {
-                      const isEntry = Number(m.quantity) > 0 || m.movement_type === 'COMPRA' || m.movement_type === 'ENTRADA';
-                      return (
-                        <tr key={idx}>
-                          <td className="muted">{m.created_at ? new Date(m.created_at).toLocaleString() : '—'}</td>
-                          <td>
-                            <Badge tone={isEntry ? 'success' : 'danger'}>
-                              {m.movement_type || (isEntry ? 'ENTRADA' : 'SALIDA')}
-                            </Badge>
-                          </td>
-                          <td className="font-bold">{m.doc_number || m.doc_type || '—'}</td>
-                          <td>{isEntry ? 'Entrada' : 'Salida'}</td>
-                          <td className="num font-bold" style={{ color: isEntry ? '#15803D' : '#dc2626' }}>
-                            {isEntry ? `+${m.quantity}` : m.quantity}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                {/* Desktop: tabla completa */}
+                <div className="inv-history-desktop table-wrap" style={{ maxHeight: 350, overflowY: 'auto' }}>
+                  <table className="table" style={{ fontSize: '12px' }}>
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Documento</th>
+                        <th>Entrada / Salida</th>
+                        <th className="num">Cantidad</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {productMovements.map((m, idx) => {
+                        const isEntry = Number(m.quantity) > 0 || m.movement_type === 'COMPRA' || m.movement_type === 'ENTRADA';
+                        return (
+                          <tr key={idx}>
+                            <td className="muted">{m.created_at ? new Date(m.created_at).toLocaleString() : '—'}</td>
+                            <td>
+                              <Badge tone={isEntry ? 'success' : 'danger'}>
+                                {m.movement_type || (isEntry ? 'ENTRADA' : 'SALIDA')}
+                              </Badge>
+                            </td>
+                            <td className="font-bold">{m.doc_number || m.doc_type || '—'}</td>
+                            <td>{isEntry ? 'Entrada' : 'Salida'}</td>
+                            <td className="num font-bold" style={{ color: isEntry ? '#15803D' : '#dc2626' }}>
+                              {isEntry ? `+${m.quantity}` : m.quantity}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Móvil: una línea por movimiento, sin scroll horizontal */}
+                <div className="inv-history-mobile" style={{ maxHeight: 350, overflowY: 'auto' }}>
+                  {productMovements.map((m, idx) => {
+                    const isEntry = Number(m.quantity) > 0 || m.movement_type === 'COMPRA' || m.movement_type === 'ENTRADA';
+                    return (
+                      <div key={idx} className="inv-hist-row">
+                        <span className="inv-hist-date">{m.created_at ? new Date(m.created_at).toLocaleDateString() : '—'}</span>
+                        <span className={`inv-hist-badge ${isEntry ? 'in' : 'out'}`}>{m.movement_type || (isEntry ? 'ENTRADA' : 'SALIDA')}</span>
+                        <span className="inv-hist-doc">{m.doc_number || m.doc_type || '—'}</span>
+                        <span className="inv-hist-io">{isEntry ? 'Entrada' : 'Salida'}</span>
+                        <span className={`inv-hist-qty ${isEntry ? 'in' : 'out'}`}>{isEntry ? `+${m.quantity}` : m.quantity}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18, borderTop: '1px solid var(--border)', paddingTop: 14 }}>
