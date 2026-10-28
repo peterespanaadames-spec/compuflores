@@ -306,10 +306,18 @@ export function Sidebar({ isMobileOpen = false, onNavigate }: SidebarProps) {
         )}
         
         <div style={{ padding: '12px 12px 4px 12px', fontSize: 11, color: '#9298a5' }}>
-          <div style={{ fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {businessProfile.businessName}
-          </div>
-          Bs. / USD
+          {businessProfile.logo ? (
+            <img
+              src={businessProfile.logo}
+              alt={businessProfile.businessName}
+              style={{ maxHeight: 32, maxWidth: '100%', objectFit: 'contain', marginBottom: 4 }}
+            />
+          ) : (
+            <div style={{ fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {businessProfile.businessName}
+            </div>
+          )}
+          <div>Bs. / USD</div>
         </div>
       </div>
     </aside>

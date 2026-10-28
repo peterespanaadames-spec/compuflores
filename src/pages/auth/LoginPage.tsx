@@ -119,7 +119,7 @@ export function LoginPage() {
             <Sparkles className="w-6 h-6" />
           </div>
           <h2 className="auth-title">
-            {isRegister ? 'Crear Cuenta' : 'CompuRepuesto Flores Inversiones'}
+            {isRegister ? 'Crear Cuenta' : 'Frenyer'}
           </h2>
         </header>
 

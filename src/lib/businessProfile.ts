@@ -20,7 +20,7 @@ export function getBusinessProfile(): BusinessProfile {
     // ignore
   }
   return {
-    businessName: 'CompuRepuestos, C.A.',
+    businessName: 'Frenyer',
     slogan: 'Gestión empresarial inteligente',
     rif: 'J-123456789',
     email: 'contacto@frenyer.com',

@@ -243,7 +243,13 @@ export function DashboardLayout() {
           >
             {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <div className="topbar-title">{businessProfile.businessName || 'Frenyer'}</div>
+          <div className="topbar-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {businessProfile.logo ? (
+              <img src={businessProfile.logo} alt={businessProfile.businessName} style={{ maxHeight: 28, maxWidth: 120, objectFit: 'contain' }} />
+            ) : (
+              businessProfile.businessName || 'Frenyer'
+            )}
+          </div>
 
           {/* Right Header Area with BCV Pill & Actions */}
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
