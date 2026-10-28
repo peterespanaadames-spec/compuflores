@@ -1477,15 +1477,6 @@ export function ConfigPage() {
                 />
               </div>
 
-              <div className="field full">
-                <label>Mensaje al pie del ticket</label>
-                <textarea
-                  className="input"
-                  style={{ height: 80, padding: 12, resize: 'vertical' }}
-                  value={ticketFooter}
-                  onChange={(e) => setTicketFooter(e.target.value)}
-                />
-              </div>
             </div>
           </Card>
 
