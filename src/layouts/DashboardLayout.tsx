@@ -6,7 +6,7 @@ import { ManualBcvRateModal } from '../components/modals/ManualBcvRateModal';
 import { getActiveExchangeRate, setActiveExchangeRate, isFutureExchangeRate } from '../lib/currency';
 import { getBusinessProfile, BusinessProfile } from '../lib/businessProfile';
 import { useAuth } from '../context/AuthContext';
-import { isInternalRole } from '../lib/auth/roles';
+import { isInternalRole, defaultPermissionsForRole } from '../lib/auth/roles';
 
 export function DashboardLayout() {
   const navigate = useNavigate();
@@ -99,7 +99,10 @@ export function DashboardLayout() {
                   title: matched.title || 'Personal Asociado',
                   active: true,
                   initials,
-                  permissions: Array.isArray(matched.permissions) ? matched.permissions : ['ventas']
+                  permissions:
+                    Array.isArray(matched.permissions) && matched.permissions.length > 0
+                      ? matched.permissions
+                      : defaultPermissionsForRole(matched.role || 'Admin')
                 };
                 localStorage.setItem('frenyer_active_user', JSON.stringify(config));
                 localStorage.setItem('frenyer_user_permissions', JSON.stringify(config.permissions));

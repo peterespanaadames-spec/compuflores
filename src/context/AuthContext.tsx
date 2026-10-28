@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import { refreshSupabaseStatus } from '../lib/supabase/client';
+import { defaultPermissionsForRole } from '../lib/auth/roles';
 
 export interface UserProfile {
   id?: string;
@@ -99,7 +100,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (matched) {
             resolvedName = matched.name || resolvedName;
             resolvedRole = matched.role || resolvedRole;
-            resolvedPermissions = matched.permissions || [];
+            // Sin permisos guardados el servidor ahora los deriva del rol;
+            // este respaldo cubre respuestas antiguas en caché.
+            resolvedPermissions = Array.isArray(matched.permissions) && matched.permissions.length > 0
+              ? matched.permissions
+              : defaultPermissionsForRole(resolvedRole);
           }
         }
       }
@@ -113,14 +118,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
       role: resolvedRole,
       initials: getInitials(resolvedName),
-      permissions: resolvedPermissions,
+      permissions: resolvedPermissions.length > 0
+        ? resolvedPermissions
+        : defaultPermissionsForRole(resolvedRole),
       avatarUrl: currentUser.user_metadata?.avatar_url
     };
 
     if (typeof window !== 'undefined') {
       localStorage.setItem('frenyer_active_user', JSON.stringify(newProfile));
       localStorage.setItem('frenyer_user_role', resolvedRole);
-      localStorage.setItem('frenyer_user_permissions', JSON.stringify(resolvedPermissions));
+      localStorage.setItem(
+        'frenyer_user_permissions',
+        JSON.stringify(newProfile.permissions)
+      );
       window.dispatchEvent(new CustomEvent('frenyer:active-user-changed', { detail: newProfile }));
     }
 

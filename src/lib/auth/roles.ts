@@ -21,3 +21,28 @@ export const INTERNAL_ROLES = [
 export function isInternalRole(role?: string | null): boolean {
   return (INTERNAL_ROLES as readonly string[]).includes((role || '').trim().toLowerCase());
 }
+
+// Permiso por módulo (mismo vocabulario que usa el Sidebar en permissionKey).
+export const ALL_MODULE_PERMISSIONS = ['ventas', 'inventario', 'finanzas', 'reportes', 'usuarios'];
+
+/**
+ * Permisos por defecto según el rol, mismo vocabulario del servidor
+ * (`defaultPermissionsForRole`). Se usa cuando el perfil del usuario no
+ * trae permisos guardados, para que el menú lateral no quede recortado.
+ */
+export function defaultPermissionsForRole(role?: string | null): string[] {
+  const r = (role || '').trim().toLowerCase();
+  if (['admin', 'administrador', 'propietario', 'gerente', 'manager', 'superadmin', 'director'].includes(r)) {
+    return [...ALL_MODULE_PERMISSIONS];
+  }
+  if (['cajero', 'cashier'].includes(r)) {
+    return ['ventas'];
+  }
+  if (['almacenista', 'inventario'].includes(r)) {
+    return ['inventario', 'reportes'];
+  }
+  if (['contador', 'soporte'].includes(r)) {
+    return ['finanzas', 'reportes'];
+  }
+  return [...ALL_MODULE_PERMISSIONS];
+}

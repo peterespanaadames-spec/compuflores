@@ -4890,6 +4890,28 @@ function deletePersistedUser(id: string) {
   }
 }
 
+/**
+ * Permisos por defecto cuando el perfil no tiene la columna `permissions`
+ * (aún no existe en `profiles`): el administrador/gerente ve TODOS los módulos.
+ */
+function defaultPermissionsForRole(role: any): string[] {
+  const r = String(role || '').trim().toLowerCase();
+  if (['admin', 'administrador', 'propietario', 'gerente', 'manager', 'superadmin', 'director'].includes(r)) {
+    return ['ventas', 'inventario', 'finanzas', 'reportes', 'usuarios'];
+  }
+  if (['cajero', 'cashier'].includes(r)) {
+    return ['ventas'];
+  }
+  if (['almacenista', 'inventario'].includes(r)) {
+    return ['inventario', 'reportes'];
+  }
+  if (['contador', 'soporte'].includes(r)) {
+    return ['finanzas', 'reportes'];
+  }
+  // Interior desconocido: lista completa para no recortar el menú.
+  return ['ventas', 'inventario', 'finanzas', 'reportes', 'usuarios'];
+}
+
 function mapPersistedUserRows(rows: any[]): any[] {
   return (rows || []).map((p: any) => {
     const names = (p.full_name || p.name || 'Usuario').trim().split(/\s+/);
@@ -4902,7 +4924,9 @@ function mapPersistedUserRows(rows: any[]): any[] {
       title: p.title || p.position || 'Personal Asociado',
       active: p.active !== false && p.is_active !== false,
       initials: initials,
-      permissions: Array.isArray(p.permissions) ? p.permissions : ['ventas'],
+      permissions: Array.isArray(p.permissions) && p.permissions.length > 0
+        ? p.permissions
+        : defaultPermissionsForRole(p.role),
       created_at: p.created_at || new Date().toISOString()
     };
   });
