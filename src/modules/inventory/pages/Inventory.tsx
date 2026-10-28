@@ -2269,8 +2269,9 @@ export function Inventory() {
                   setAdjustAmount(p.stock.toString());
                   setMobileSheetProduct(null);
                 }}
+                style={{ background: '#111827', color: '#fff', border: 'none' }}
               >
-                <SlidersHorizontal size={17} /> Ajustar stock
+                <SlidersHorizontal size={16} /> Ajustar stock
               </button>
               <button
                 type="button"
@@ -2280,7 +2281,7 @@ export function Inventory() {
                   handleOpenHistoryModal(p);
                 }}
               >
-                <Clock size={17} /> Ver historial
+                <Clock size={16} /> Ver historial
               </button>
               <button
                 type="button"
@@ -2290,7 +2291,7 @@ export function Inventory() {
                   handleEditProductClick(p);
                 }}
               >
-                <Edit2 size={17} /> Editar producto
+                <Edit2 size={16} /> Editar
               </button>
             </div>
           </div>
