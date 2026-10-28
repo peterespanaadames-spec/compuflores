@@ -24,6 +24,7 @@ import {
   MapPin,
   Phone,
   Monitor,
+  Printer,
   Copy,
   Eye,
   EyeOff
@@ -719,6 +720,9 @@ export function ConfigPage() {
   const [mainCurrency, setMainCurrency] = useState('VES');
   const [stockAlert, setStockAlert] = useState(5);
   const [ticketFooter, setTicketFooter] = useState('¡Gracias por su compra!');
+  const [defaultPrintFormat, setDefaultPrintFormat] = useState('ticket80');
+  const [cashDrawerTrigger, setCashDrawerTrigger] = useState(true);
+  const [headerMessage, setHeaderMessage] = useState('¡Gracias por su compra en Bella Vista!');
 
   // --- ASSOCIATED USERS & RBAC STATE ---
   const [users, setUsers] = useState<AssociatedUser[]>([]);
@@ -1466,6 +1470,82 @@ export function ConfigPage() {
                   value={ticketFooter}
                   onChange={(e) => setTicketFooter(e.target.value)}
                 />
+              </div>
+            </div>
+          </Card>
+
+          {/* Section 4: Impresion, tickets y perifericos */}
+          <Card>
+            <div style={{ marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Printer size={18} /> IMPRESIÓN, TICKETS Y PERIFÉRICOS
+              </h3>
+              <span className="muted small">
+                Defina el formato por defecto de los comprobantes y administre las impresoras de tickets conectadas.
+              </span>
+            </div>
+
+            <div className="form-grid">
+              <div className="field">
+                <label>FORMATO DE COMPROBANTE POR DEFECTO</label>
+                <select
+                  className="input"
+                  value={defaultPrintFormat}
+                  onChange={(e) => setDefaultPrintFormat(e.target.value)}
+                >
+                  <option value="ticket58">Ticket Térmico (58mm - Compacto)</option>
+                  <option value="ticket80">Ticket Térmico (80mm - Estándar)</option>
+                  <option value="carta">Documento Carta (Para cotizaciones)</option>
+                  <option value="pdf">Descargar PDF Automatizado</option>
+                </select>
+              </div>
+
+              <div className="field" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <div>
+                  <label style={{ margin: 0 }}>Disparo de Cajón Monedero</label>
+                  <span className="muted small" style={{ display: 'block', marginTop: 2 }}>
+                    Envía la señal de apertura de gaveta automáticamente al imprimir comprobante.
+                  </span>
+                </div>
+                <div className="switch-container" onClick={() => setCashDrawerTrigger(!cashDrawerTrigger)}>
+                  <div className={`switch-track ${cashDrawerTrigger ? 'active' : ''}`}>
+                    <div className="switch-thumb" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="field">
+                <label>MENSAJE DE ENCABEZADO / BIENVENIDA</label>
+                <input
+                  className="input"
+                  value={headerMessage}
+                  onChange={(e) => setHeaderMessage(e.target.value)}
+                  placeholder="¡Gracias por su compra en Bella Vista!"
+                />
+              </div>
+
+              <div className="field">
+                <label>GARANTÍA / TÉRMINOS DE COMPRA (PIE)</label>
+                <input
+                  className="input"
+                  value={ticketFooter}
+                  onChange={(e) => setTicketFooter(e.target.value)}
+                  placeholder="Conserve su ticket para cambios dentro de las 48 horas."
+                />
+              </div>
+            </div>
+
+            <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+              <div style={{ marginBottom: 10 }}>
+                <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>HARDWARE E IMPRESORAS TÉRMICAS</h4>
+                <span className="muted small">
+                  Haga clic en "Buscar Impresoras" para escanear dispositivos térmicos USB, LAN o Bluetooth en la red local.
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button type="button" variant="primary" style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px' }}>
+                  <Printer size={14} /> Buscar Impresoras
+                </Button>
               </div>
             </div>
           </Card>
