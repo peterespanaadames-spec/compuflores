@@ -2430,16 +2430,34 @@ app.get('/api/public/config', async (_req, res) => {
   const effectiveRate = lastCertifiedRate?.appliedRate || 877.90;
   const rateDate = lastCertifiedRate?.valueDate || 'Hoy';
 
+  // Intentar obtener el logo/favicon desde la tabla organizations (service role,
+  // ya que este endpoint es público y no hay sesión de usuario).
+  let orgLogo: string | null = null;
+  let orgFavicon: string | null = null;
+  let orgName: string | null = null;
+  try {
+    const orgRes = await supabaseServiceRestRequest('organizations?select=name,logo,favicon&limit=1');
+    if (!orgRes.error && Array.isArray(orgRes.data) && orgRes.data.length > 0) {
+      orgLogo = orgRes.data[0].logo || null;
+      orgFavicon = orgRes.data[0].favicon || null;
+      orgName = orgRes.data[0].name || null;
+    }
+  } catch {
+    // ignore
+  }
+
   return res.json({
     success: true,
     data: {
-      businessName: 'Frenyer, C.A.',
+      businessName: orgName || 'Frenyer, C.A.',
       rif: 'J-123456789',
       phone: '+58 212 555 1212',
       whatsapp: '+58 412 000 0000',
       email: 'contacto@frenyer.com',
       address: 'Av. Francisco de Miranda, Centro Financiero, Caracas, Venezuela',
       slogan: 'Tu aliado comercial bimonetario',
+      logo: orgLogo,
+      favicon: orgFavicon,
       bcvRate: effectiveRate,
       bcvRateDate: rateDate,
       branches: [
