@@ -36,6 +36,7 @@ import { getActiveExchangeRate, setActiveExchangeRate, formatUSD, formatVES } fr
 import { authenticatedFetch } from '../../../lib/supabase/api';
 import { refreshSupabaseStatus } from '../../../lib/supabase/client';
 import { getBusinessProfile, saveBusinessProfile } from '../../../lib/businessProfile';
+import { getPrintSettings, savePrintSettings, refreshPrintSettingsFromServer } from '../../../lib/printSettings';
 import {
   DbBranch,
   fetchBranchesFromSupabase,
@@ -723,6 +724,20 @@ export function ConfigPage() {
   const [defaultPrintFormat, setDefaultPrintFormat] = useState('ticket80');
   const [cashDrawerTrigger, setCashDrawerTrigger] = useState(true);
   const [headerMessage, setHeaderMessage] = useState('¡Gracias por su compra en Bella Vista!');
+
+  useEffect(() => {
+    const ps = getPrintSettings();
+    setDefaultPrintFormat(ps.defaultFormat);
+    setCashDrawerTrigger(ps.cashDrawerTrigger);
+    setHeaderMessage(ps.headerMessage);
+    setTicketFooter(ps.footerMessage);
+    refreshPrintSettingsFromServer().then((s) => {
+      setDefaultPrintFormat(s.defaultFormat);
+      setCashDrawerTrigger(s.cashDrawerTrigger);
+      setHeaderMessage(s.headerMessage);
+      setTicketFooter(s.footerMessage);
+    }).catch(() => {});
+  }, []);
 
   // --- ASSOCIATED USERS & RBAC STATE ---
   const [users, setUsers] = useState<AssociatedUser[]>([]);
@@ -1547,6 +1562,27 @@ export function ConfigPage() {
                   <Printer size={14} /> Buscar Impresoras
                 </Button>
               </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+              <Button type="button" variant="primary" style={{ display: 'flex', alignItems: 'center', gap: 6, height: 40, padding: '0 20px' }} onClick={async () => {
+                const updated = savePrintSettings({
+                  defaultFormat: defaultPrintFormat as any,
+                  cashDrawerTrigger,
+                  headerMessage,
+                  footerMessage: ticketFooter
+                });
+                try {
+                  await authenticatedFetch('/api/print-settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updated)
+                  });
+                } catch {}
+                alert('Configuración de impresión guardada.');
+              }}>
+                <Save size={16} /> Guardar configuración de impresión
+              </Button>
             </div>
           </Card>
 

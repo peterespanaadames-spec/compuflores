@@ -6840,6 +6840,120 @@ app.put('/api/business-profile', async (req, res: AuthenticatedResponse) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// PRINT SETTINGS (formato de ticket, cajon monedero, encabezado/pie)
+// ---------------------------------------------------------------------------
+const PRINT_SETTINGS_MIRROR_FILE = path.resolve(DATA_DIR, 'print_settings.json');
+
+function loadPersistedPrintSettings(): any {
+  try {
+    if (fs.existsSync(PRINT_SETTINGS_MIRROR_FILE)) {
+      const raw = fs.readFileSync(PRINT_SETTINGS_MIRROR_FILE, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') return parsed;
+    }
+  } catch {}
+  return null;
+}
+
+function savePersistedPrintSettings(row: any) {
+  try {
+    if (!fs.existsSync(path.dirname(PRINT_SETTINGS_MIRROR_FILE))) {
+      fs.mkdirSync(path.dirname(PRINT_SETTINGS_MIRROR_FILE), { recursive: true });
+    }
+    fs.writeFileSync(PRINT_SETTINGS_MIRROR_FILE, JSON.stringify(row, null, 2), 'utf-8');
+  } catch (e) {
+    console.warn('No se pudo persistir print_settings localmente:', e);
+  }
+}
+
+app.get('/api/print-settings', async (_req, res: AuthenticatedResponse) => {
+  try {
+    const orgId = res.locals.supabaseContext?.organizationId || '00000000-0000-0000-0000-000000000001';
+    const result = await supabaseServiceRestRequest(`print_settings?organization_id=eq.${encodeURIComponent(orgId)}&limit=1`);
+    if (!result.error && Array.isArray(result.data) && result.data.length > 0) {
+      const row = result.data[0];
+      savePersistedPrintSettings(row);
+      return res.json({ success: true, data: {
+        defaultFormat: row.default_format || 'ticket80',
+        cashDrawerTrigger: row.cash_drawer_trigger !== false,
+        headerMessage: row.header_message || '',
+        footerMessage: row.footer_message || ''
+      }});
+    }
+    const local = loadPersistedPrintSettings();
+    if (local) {
+      return res.json({ success: true, data: {
+        defaultFormat: local.default_format || local.defaultFormat || 'ticket80',
+        cashDrawerTrigger: local.cash_drawer_trigger !== false && local.cashDrawerTrigger !== false,
+        headerMessage: local.header_message || local.headerMessage || '',
+        footerMessage: local.footer_message || local.footerMessage || ''
+      }});
+    }
+    return res.json({ success: true, data: {
+      defaultFormat: 'ticket80',
+      cashDrawerTrigger: true,
+      headerMessage: '',
+      footerMessage: ''
+    }});
+  } catch (err) {
+    const local = loadPersistedPrintSettings();
+    if (local) {
+      return res.json({ success: true, data: {
+        defaultFormat: local.default_format || local.defaultFormat || 'ticket80',
+        cashDrawerTrigger: local.cash_drawer_trigger !== false && local.cashDrawerTrigger !== false,
+        headerMessage: local.header_message || local.headerMessage || '',
+        footerMessage: local.footer_message || local.footerMessage || ''
+      }});
+    }
+    return res.status(500).json({ success: false, error: err instanceof Error ? err.message : 'Error al leer configuración de impresión.' });
+  }
+});
+
+app.put('/api/print-settings', async (req, res: AuthenticatedResponse) => {
+  try {
+    const orgId = res.locals.supabaseContext?.organizationId || '00000000-0000-0000-0000-000000000001';
+    const raw = req.body || {};
+    const payload = {
+      organization_id: orgId,
+      default_format: String(raw.defaultFormat ?? raw.default_format ?? 'ticket80'),
+      cash_drawer_trigger: raw.cashDrawerTrigger !== false && raw.cash_drawer_trigger !== false,
+      header_message: String(raw.headerMessage ?? raw.header_message ?? ''),
+      footer_message: String(raw.footerMessage ?? raw.footer_message ?? ''),
+      updated_at: new Date().toISOString()
+    };
+
+    let result = await supabaseServiceRestRequest(`print_settings?organization_id=eq.${encodeURIComponent(orgId)}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: payload
+    });
+    if (result.error || !result.data || (Array.isArray(result.data) && result.data.length === 0)) {
+      result = await supabaseServiceRestRequest('print_settings', {
+        method: 'POST',
+        headers: { Prefer: 'return=representation' },
+        body: payload
+      });
+    }
+
+    if (result.error) {
+      savePersistedPrintSettings(payload);
+      return res.status(502).json({ success: false, error: result.error });
+    }
+
+    const row = Array.isArray(result.data) ? result.data[0] : result.data;
+    savePersistedPrintSettings(row || payload);
+    return res.json({ success: true, data: {
+      defaultFormat: (row?.default_format) || payload.default_format,
+      cashDrawerTrigger: (row?.cash_drawer_trigger) !== false,
+      headerMessage: row?.header_message || payload.header_message,
+      footerMessage: row?.footer_message || payload.footer_message
+    }});
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err instanceof Error ? err.message : 'Error al guardar configuración de impresión.' });
+  }
+});
+
 app.get('/api/accounts-payable', async (_req, res: AuthenticatedResponse) => {
   try {
     const orgId = res.locals.supabaseContext?.organizationId || '00000000-0000-0000-0000-000000000001';
