@@ -2695,6 +2695,20 @@ button {
   @media (max-width: 640px) {
     .inv-history-desktop { display: none !important; }
     .inv-history-mobile { display: block; }
+.inv-hist-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.inv-hist-header span { flex: 0 0 auto; }
+.inv-hist-header span:nth-child(3) { flex: 1 1 auto; min-width: 0; }
     .inv-hist-row {
       display: flex;
       align-items: center;
