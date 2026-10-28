@@ -2672,16 +2672,16 @@ button {
   .inv-sheet-actions button {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
-    height: 44px;
+    height: 40px;
     padding: 0 12px;
     border: 1px solid var(--border);
     border-radius: 10px;
     background: #fff;
     color: var(--text);
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 600;
     text-align: left;
     cursor: pointer;
   }

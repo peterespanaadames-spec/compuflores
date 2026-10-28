@@ -2247,7 +2247,6 @@ export function Inventory() {
                 <div className="inv-sheet-name">{mobileSheetProduct.name}</div>
                 <div className="inv-sheet-meta">
                   Stock: <b>{mobileSheetProduct.stock}</b>
-                  {mobileSheetProduct.branchName ? ` · ${mobileSheetProduct.branchName}` : ''}
                 </div>
               </div>
               <button
