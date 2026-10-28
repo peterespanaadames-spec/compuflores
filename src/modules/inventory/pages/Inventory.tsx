@@ -21,7 +21,8 @@ import {
   Image as ImageIcon,
   Database,
   FileText,
-  MapPin
+  MapPin,
+  ChevronRight
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
@@ -285,6 +286,16 @@ export function Inventory() {
   const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
   const [adjustAmount, setAdjustAmount] = useState('1');
   const [adjustType, setAdjustType] = useState<'add' | 'deduct' | 'set'>('add');
+
+  // Menú rápido del producto en móvil (ajustar stock / historial / editar)
+  const [mobileSheetProduct, setMobileSheetProduct] = useState<Product | null>(null);
+
+  /** En pantallas angostas la fila abre el menú rápido; en escritorio no hace nada. */
+  const openMobileProductSheet = (product: Product) => {
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches) {
+      setMobileSheetProduct(product);
+    }
+  };
 
   // New Product / Edit Form State matching Mockup exactly
   const [newName, setNewName] = useState('');
@@ -800,12 +811,12 @@ export function Inventory() {
           <h1 style={{ fontWeight: 700, fontSize: 24, color: 'var(--text)' }}>
             Productos e inventario
           </h1>
-          <p style={{ margin: 0, color: 'var(--muted)', fontSize: 13 }}>
+          <p className="inv-head-sub" style={{ margin: 0, color: 'var(--muted)', fontSize: 13 }}>
             Precios base registrados en USD ($) · Conversión automática en venta según tasa diaria
           </p>
         </div>
 
-        <div className="actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="actions inv-head-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Button
             style={{
               display: 'flex',
@@ -820,35 +831,48 @@ export function Inventory() {
               setIsManagementOpen(true);
             }}
           >
-            <FileSpreadsheet size={16} style={{ color: '#e36f6f' }} /> Gestión de Inventario
+            <FileSpreadsheet size={16} style={{ color: '#e36f6f' }} />
+            <span>Gestión<span className="inv-only-desktop"> de Inventario</span></span>
           </Button>
           <Button variant="primary" onClick={handleOpenNewProduct}>
-            <Plus size={16} /> Nuevo producto
+            <Plus size={16} /> <span>Nuevo producto</span>
           </Button>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-4" style={{ marginBottom: 16 }}>
+      <div className="grid grid-4 inv-kpis" style={{ marginBottom: 16 }}>
         <Card>
-          <div className="kpi-label">Productos Registrados</div>
+          <div className="kpi-label">
+            <span className="inv-only-mobile">Productos</span>
+            <span className="inv-only-desktop">Productos Registrados</span>
+          </div>
           <div className="kpi-value">{totalProducts}</div>
           <span className="muted small">Modelado de catálogo único</span>
         </Card>
         <Card>
-          <div className="kpi-label">Existencias en Físico</div>
+          <div className="kpi-label">
+            <span className="inv-only-mobile">Unidades</span>
+            <span className="inv-only-desktop">Existencias en Físico</span>
+          </div>
           <div className="kpi-value">{totalUnities}</div>
           <span className="muted small">Unidades consolidadas</span>
         </Card>
         <Card>
-          <div className="kpi-label">Valoración Total (Costo)</div>
+          <div className="kpi-label">
+            <span className="inv-only-mobile">Costo</span>
+            <span className="inv-only-desktop">Valoración Total (Costo)</span>
+          </div>
           <div className="kpi-value">$ {totalCostValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
           <span className="muted small" style={{ color: '#15803D', fontWeight: 600 }}>
             ≈ {formatVES(convertUSDtoVES(totalCostValue, activeExchangeRate))}
           </span>
         </Card>
         <Card>
-          <div className="kpi-label">Valoración Estimada (PVP)</div>
+          <div className="kpi-label">
+            <span className="inv-only-mobile">PVP</span>
+            <span className="inv-only-desktop">Valoración Estimada (PVP)</span>
+          </div>
           <div className="kpi-value" style={{ color: 'var(--brand-700)' }}>$ {totalPvpValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
           <span className="muted small" style={{ color: '#15803D', fontWeight: 600 }}>
             ≈ {formatVES(convertUSDtoVES(totalPvpValue, activeExchangeRate))}
@@ -858,7 +882,7 @@ export function Inventory() {
 
       {/* Catalog Table Card */}
       <Card>
-        <div className="toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+        <div className="toolbar inv-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
           <div className="search" style={{ flex: 1, maxWidth: 440 }}>
             <Search size={16} />
             <input
@@ -890,6 +914,7 @@ export function Inventory() {
 
             <button
               type="button"
+              className="inv-sync"
               onClick={loadProducts}
               title="Actualizar catálogo de productos"
               style={{
@@ -914,20 +939,20 @@ export function Inventory() {
         </div>
 
         <div className="table-wrap">
-          <table className="table">
+          <table className="table inv-table">
             <thead>
               <tr>
-                <th>Foto</th>
-                <th>SKU</th>
+                <th className="inv-col-more">Foto</th>
+                <th className="inv-col-more">SKU</th>
                 <th>Producto</th>
-                <th>Categoría</th>
-                <th>Sede / Almacén</th>
-                <th>Vencimiento</th>
-                <th className="num">Costo ($)</th>
-                <th className="num">Precio ($ / Bs.)</th>
-                <th>IVA</th>
-                <th className="num">Stock</th>
-                <th style={{ textAlign: 'center' }}>Acciones</th>
+                <th className="inv-col-more">Categoría</th>
+                <th className="inv-col-more">Sede / Almacén</th>
+                <th className="inv-col-more">Vencimiento</th>
+                <th className="num inv-col-more">Costo ($)</th>
+                <th className="num inv-col-more">Precio ($ / Bs.)</th>
+                <th className="inv-col-more">IVA</th>
+                <th className="num inv-col-more">Stock</th>
+                <th className="inv-col-more" style={{ textAlign: 'center' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -954,8 +979,8 @@ export function Inventory() {
                 </tr>
               ) : (
                 filteredProducts.map((p) => (
-                <tr key={p.sku}>
-                  <td>
+                <tr key={p.sku} onClick={() => openMobileProductSheet(p)}>
+                  <td className="inv-col-more">
                     <div
                       style={{
                         width: 34,
@@ -978,21 +1003,22 @@ export function Inventory() {
                       )}
                     </div>
                   </td>
-                  <td><b>{p.sku}</b></td>
-                  <td>
+                  <td className="inv-col-more"><b>{p.sku}</b></td>
+                  <td className="inv-col-main">
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>
                         {p.name}
                       </span>
                       {p.barcode && (
-                        <span className="muted small" style={{ fontSize: 10 }}>
+                        <span className="muted small inv-product-barcode" style={{ fontSize: 10 }}>
                           Barcode: {p.barcode}
                         </span>
                       )}
                     </div>
+                    <ChevronRight size={16} className="inv-row-chevron" />
                   </td>
-                  <td>{p.category}</td>
-                  <td>
+                  <td className="inv-col-more">{p.category}</td>
+                  <td className="inv-col-more">
                     <span
                       style={{
                         background: '#eff6ff',
@@ -1011,11 +1037,11 @@ export function Inventory() {
                       {p.branchName || 'Sede Principal'}
                     </span>
                   </td>
-                  <td>{p.expiry}</td>
-                  <td className="num">
+                  <td className="inv-col-more">{p.expiry}</td>
+                  <td className="num inv-col-more">
                     <span style={{ fontWeight: 600 }}>${p.cost.toFixed(2)}</span>
                   </td>
-                  <td className="num">
+                  <td className="num inv-col-more">
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                       <b style={{ color: 'var(--text)' }}>USD {p.price.toFixed(2)}</b>
                       <span className="muted small" style={{ fontSize: 10, color: '#15803D', fontWeight: 600 }}>
@@ -1023,17 +1049,17 @@ export function Inventory() {
                       </span>
                     </div>
                   </td>
-                  <td>
+                  <td className="inv-col-more">
                     <Badge tone={p.iva === 'Exento' ? 'success' : 'brand'}>
                       {p.iva}
                     </Badge>
                   </td>
-                  <td className="num" style={{ fontWeight: 700 }}>
+                  <td className="num inv-col-more" style={{ fontWeight: 700 }}>
                     <span style={{ color: p.stock <= p.minStock ? 'var(--danger)' : 'inherit' }}>
                       {p.stock}
                     </span>
                   </td>
-                  <td>
+                  <td className="inv-col-more">
                     <div style={{ display: 'flex', gap: 6, justifyContent: 'center', alignItems: 'center' }}>
                       {/* Botones de incremento y deducción rápida de stock removidos por requerimiento */}
 
@@ -2197,6 +2223,76 @@ export function Inventory() {
                   Aplicar Ajuste
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Menú rápido del producto (solo móvil): acciones esenciales */}
+      {mobileSheetProduct && (
+        <div
+          className="inv-sheet-backdrop"
+          onClick={() => setMobileSheetProduct(null)}
+          role="presentation"
+        >
+          <div
+            className="inv-sheet"
+            role="dialog"
+            aria-label={`Acciones de ${mobileSheetProduct.name}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="inv-sheet-handle" />
+            <div className="inv-sheet-head">
+              <div>
+                <div className="inv-sheet-name">{mobileSheetProduct.name}</div>
+                <div className="inv-sheet-meta">
+                  Stock: <b>{mobileSheetProduct.stock}</b>
+                  {mobileSheetProduct.branchName ? ` · ${mobileSheetProduct.branchName}` : ''}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="inv-sheet-close"
+                aria-label="Cerrar"
+                onClick={() => setMobileSheetProduct(null)}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="inv-sheet-actions">
+              <button
+                type="button"
+                onClick={() => {
+                  const p = mobileSheetProduct;
+                  setAdjustingProduct(p);
+                  setAdjustType('set');
+                  setAdjustAmount(p.stock.toString());
+                  setMobileSheetProduct(null);
+                }}
+              >
+                <SlidersHorizontal size={17} /> Ajustar stock
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const p = mobileSheetProduct;
+                  setMobileSheetProduct(null);
+                  handleOpenHistoryModal(p);
+                }}
+              >
+                <Clock size={17} /> Ver historial
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const p = mobileSheetProduct;
+                  setMobileSheetProduct(null);
+                  handleEditProductClick(p);
+                }}
+              >
+                <Edit2 size={17} /> Editar producto
+              </button>
             </div>
           </div>
         </div>

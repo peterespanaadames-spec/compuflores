@@ -2556,6 +2556,145 @@ button {
    Al pulsar «Imprimir Comprobante» se emite SOLO la hoja factura, sin el
    menú lateral, la cabecera ni los botones, ajustada a página letter.
    ------------------------------------------------------------------------- */
+/* =====================================================================
+   RESPONSIVE INVENTARIO MÓVIL — catálogo de productos.
+   Solo pantallas angostas (≤640px): el escritorio (>640px) no cambia.
+   Fila = solo el nombre del producto; el detalle vive en una hoja
+   inferior con ajustar stock, historial y editar.
+   ===================================================================== */
+.inv-only-mobile,
+.inv-row-chevron,
+.inv-sheet-backdrop {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .inv-only-desktop { display: none !important; }
+  .inv-only-mobile { display: inline; }
+  .inv-head-sub { display: none !important; }
+
+  /* Botones de cabecera: compactos y en una sola línea */
+  .inv-head-actions {
+    width: 100%;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+  }
+  .inv-head-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 34px;
+    padding: 0 8px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .inv-head-actions .btn svg { width: 14px; height: 14px; flex: 0 0 auto; }
+  .inv-head-actions .btn span { overflow: hidden; text-overflow: ellipsis; }
+
+  /* KPI: cuatro tarjetas pequeñas en una sola línea */
+  .inv-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    margin-bottom: 12px !important;
+  }
+  .inv-kpis .card { padding: 8px 6px !important; border-radius: 10px; }
+  .inv-kpis .kpi-label { font-size: 9px; line-height: 1.15; }
+  .inv-kpis .kpi-value { font-size: 13px; margin: 2px 0 0; }
+  .inv-kpis .muted.small { display: none !important; }
+
+  /* Filtros apilados y botón de sincronizar solo con icono */
+  .inv-toolbar { flex-direction: column; align-items: stretch !important; gap: 8px !important; }
+  .inv-toolbar .search { max-width: none !important; width: 100%; }
+  .inv-toolbar select { width: 100% !important; }
+  .inv-toolbar .inv-sync { padding: 0 10px !important; }
+  .inv-toolbar .inv-sync span { display: none; }
+
+  /* Tabla: una fila por producto, solo el nombre, toda la fila táctil */
+  .inv-table thead { display: none; }
+  .inv-table,
+  .inv-table tbody,
+  .inv-table tr,
+  .inv-table td { display: block; width: 100%; }
+  .inv-table tr {
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+  }
+  .inv-table tr:last-child { border-bottom: none; }
+  .inv-table tr:hover td { background: transparent; }
+  .inv-table td { padding: 14px 6px !important; border: none !important; }
+  .inv-col-more { display: none !important; }
+  .inv-table td.inv-col-main { display: flex; align-items: center; }
+  .inv-product-barcode { display: none; }
+  .inv-row-chevron { display: block; margin-left: auto; color: #cbd5e1; flex: 0 0 auto; }
+
+  /* Hoja inferior con las acciones del producto */
+  .inv-sheet-backdrop {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 1200;
+    align-items: flex-end;
+  }
+  .inv-sheet {
+    width: 100%;
+    max-height: 78dvh;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 18px 18px 0 0;
+    padding: 10px 16px calc(18px + env(safe-area-inset-bottom));
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.18);
+    animation: inv-sheet-up 0.18s ease-out;
+  }
+  .inv-sheet-handle {
+    width: 38px;
+    height: 4px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    margin: 0 auto 10px;
+  }
+  .inv-sheet-head { display: flex; align-items: flex-start; gap: 10px; }
+  .inv-sheet-name { font-size: 14px; font-weight: 800; color: var(--text); line-height: 1.2; }
+  .inv-sheet-meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .inv-sheet-close {
+    margin-left: auto;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .inv-sheet-actions { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+  .inv-sheet-actions button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+  }
+  .inv-sheet-actions button:active { background: #f8fafc; }
+  .inv-sheet-actions button svg { color: #64748b; flex: 0 0 auto; }
+}
+
+@keyframes inv-sheet-up {
+  from { transform: translateY(14px); opacity: 0.6; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
 @media print {
   @page {
     size: letter;
