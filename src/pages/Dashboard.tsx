@@ -154,11 +154,12 @@ export function Dashboard() {
         const currentMonth = now.getMonth();
 
         const isDueSoonOrThisMonth = (item: any): boolean => {
-          const balance = Number(item.balance_usd ?? item.remaining_amount ?? 0);
-          if (balance <= 0) return false;
-
           const st = String(item.status || '').toUpperCase();
           if (st === 'PAGADO' || st === 'PAGADA') return false;
+
+          // Un compromiso PENDIENTE cuenta aunque su monto sea 0 (visibilidad:
+          // una cuenta registrada sin costo no debe desaparecer del resumen).
+          // El filtro de fecha sí se respeta.
 
           const rawDate = item.due_date || item.dueDate;
           if (!rawDate) {

@@ -96,7 +96,41 @@ interface PaymentMethodRecord {
 }
 
 export function ConfigPage() {
-  const [activeTab, setActiveTab] = useState<'negocio' | 'almacen' | 'usuarios' | 'auditoria'>('negocio');
+  const [activeTab, setActiveTab] = useState<'negocio' | 'almacen' | 'usuarios' | 'auditoria' | 'respaldo'>('negocio');
+  // --- RESPALDO (descargas) ---
+  const [isBackupLoading, setIsBackupLoading] = useState<'excel' | 'json' | null>(null);
+  const [backupMessage, setBackupMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+
+  /** Descarga el respaldo del servidor como archivo (Excel o JSON). */
+  const downloadBackup = async (format: 'excel' | 'json') => {
+    setIsBackupLoading(format);
+    setBackupMessage(null);
+    try {
+      const res = await authenticatedFetch(`/api/backup?format=${format}`);
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        throw new Error(json?.error || `El servidor respondió con estado ${res.status}.`);
+      }
+      const blob = await res.blob();
+      const disposition = res.headers.get('Content-Disposition') || '';
+      const match = disposition.match(/filename="?([^"]+)"?/i);
+      const filename = match ? match[1] : `frenyer-respaldo-${new Date().toISOString().slice(0, 10)}.${format === 'excel' ? 'xls' : 'json'}`;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setBackupMessage({ tone: 'ok', text: `Respaldo descargado: ${filename}` });
+    } catch (e: any) {
+      setBackupMessage({ tone: 'error', text: e?.message || 'No se pudo generar el respaldo. Intenta de nuevo.' });
+    } finally {
+      setIsBackupLoading(null);
+    }
+  };
+
   // --- SEDES Y ALMACENES (BRANCHES) STATE ---
   const [branches, setBranches] = useState<DbBranch[]>([]);
   const [isBranchesLoading, setIsBranchesLoading] = useState(false);
@@ -1044,6 +1078,12 @@ export function ConfigPage() {
           className={`config-tab-btn ${activeTab === 'auditoria' ? 'active' : ''}`}
         >
           Auditoría
+        </button>
+        <button
+          onClick={() => setActiveTab('respaldo')}
+          className={`config-tab-btn ${activeTab === 'respaldo' ? 'active' : ''}`}
+        >
+          Respaldo
         </button>
       </div>
 
@@ -3451,6 +3491,67 @@ GRANT ALL ON TABLE public.branches TO anon;`}</pre>
           </div>
         );
       })()}
+
+      {/* Tab 4: Respaldo (descarga de datos del negocio) */}
+      {activeTab === 'respaldo' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <FolderArchive size={20} style={{ color: '#2D2E32' }} />
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>Respaldo de datos</h3>
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: '#475569' }}>
+              Descarga una copia completa de la información del negocio: movimientos de ventas,
+              facturas, notas, pedidos, cotizaciones, movimientos bancarios, cuentas por cobrar y
+              pagar, clientes, proveedores, inventarios y gastos. El archivo se genera con los datos
+              del momento en que presionas el botón.
+            </p>
+          </Card>
+
+          <Card>
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+              <Button
+                variant="primary"
+                onClick={() => downloadBackup('excel')}
+                disabled={isBackupLoading !== null}
+                style={{ minWidth: 170, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                title="Descargar respaldo en Excel (una hoja por sección)"
+              >
+                <Save size={16} /> {isBackupLoading === 'excel' ? 'Generando Excel...' : 'Excel'}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => downloadBackup('json')}
+                disabled={isBackupLoading !== null}
+                style={{ minWidth: 170, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                title="Descargar respaldo en JSON (datos completos)"
+              >
+                <Database size={16} /> {isBackupLoading === 'json' ? 'Generando JSON...' : 'JSON'}
+              </Button>
+            </div>
+            <p style={{ margin: '12px 0 0', fontSize: 12, color: '#64748b' }}>
+              Excel abre cada sección en su propia hoja (Ventas, Pedidos, Bancos, Clientes...).
+              JSON contiene los mismos datos en texto estructurado, ideal para copias de seguridad.
+            </p>
+            {backupMessage && (
+              <div
+                style={{
+                  marginTop: 14,
+                  padding: '10px 14px',
+                  borderRadius: 8,
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  border: backupMessage.tone === 'ok' ? '1px solid #bbf7d0' : '1px solid #fecaca',
+                  background: backupMessage.tone === 'ok' ? '#f0fdf4' : '#fef2f2',
+                  color: backupMessage.tone === 'ok' ? '#15803D' : '#DC2626'
+                }}
+              >
+                {backupMessage.text}
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

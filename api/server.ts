@@ -555,7 +555,9 @@ app.use([
   '/api/business-profile',
   // Usuarios asociados: solo con sesion. Protege perfiles y habilita el
   // respaldo service-role para que el administrador vea TODOS los usuarios.
-  '/api/users'
+  '/api/users',
+  // Respaldo general (descarga Excel/JSON): contiene datos de todo el negocio.
+  '/api/backup'
 ], authenticateSupabaseRequest);
 
 // Lectura y actualizacion de pedidos quedan protegidas; el POST y el rastreo /track siguen publicos
@@ -8025,6 +8027,162 @@ app.patch('/api/admin/users/:id', authenticateSupabaseRequest, async (req, res) 
     res.json({ success: true, user: data.user });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// RESPALDO GENERAL (descarga Excel / JSON)
+// ---------------------------------------------------------------------------
+/** Lee un archivo JSON del respaldo local; [] si no existe o está corrupto. */
+function readLocalBackupJson(fileName: string): any[] {
+  try {
+    const file = path.resolve(DATA_DIR, fileName);
+    if (fs.existsSync(file)) {
+      const parsed = JSON.parse(fs.readFileSync(file, 'utf-8'));
+      return Array.isArray(parsed) ? parsed : [];
+    }
+  } catch {}
+  return [];
+}
+
+/** Consulta una tabla: sesión autenticada → respaldo service role → archivo local. */
+async function backupTable(
+  res: AuthenticatedResponse,
+  table: string,
+  localFile: string,
+  order: string = 'created_at.desc'
+): Promise<{ rows: any[]; origen: string }> {
+  const endpoint = `${table}?select=*&order=${encodeURIComponent(order)}&limit=10000`;
+  try {
+    const auth = await authenticatedSupabaseRestRequest(res, endpoint);
+    if (!auth.error && Array.isArray(auth.data) && auth.data.length > 0) {
+      return { rows: auth.data, origen: 'supabase-sesion' };
+    }
+  } catch {}
+
+  try {
+    const backup = await supabaseServiceRestRequest(endpoint);
+    if (!backup.error && Array.isArray(backup.data) && backup.data.length > 0) {
+      return { rows: backup.data, origen: 'supabase-service' };
+    }
+  } catch {}
+
+  return { rows: readLocalBackupJson(localFile), origen: 'local' };
+}
+
+const XML_SAFE: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
+function xmlEscape(value: any): string {
+  return String(value ?? '').replace(/[&<>"]/g, (c) => XML_SAFE[c] || c);
+}
+
+/** Convierte filas en una hoja SpreadsheetML (Excel la abre nativamente). */
+function backupSheet(name: string, rows: any[]): string {
+  const safeName = xmlEscape(name).replace(/[\\\/\?\*\[\]:]/g, '-').slice(0, 31) || 'Datos';
+  const headers: string[] = [];
+  rows.forEach((r) => {
+    Object.keys(r || {}).forEach((k) => {
+      if (!headers.includes(k) && headers.length < 40) headers.push(k);
+    });
+  });
+  const cols = headers.length > 0 ? headers : ['sin_datos'];
+  const esc = (v: string) => v.replace(/_x005F_/g, 'x');
+  const cells = (row: any) =>
+    cols
+      .map((c) => {
+        const raw = row?.[c];
+        if (raw === null || raw === undefined || raw === '') return `<Cell/>`;
+        if (typeof raw === 'number' && isFinite(raw)) {
+          return `<Cell><Data ss:Type="Number">${raw}</Data></Cell>`;
+        }
+        if (typeof raw === 'boolean') {
+          return `<Cell><Data ss:Type="String">${raw ? 'SÍ' : 'NO'}</Data></Cell>`;
+        }
+        // Objetos/arrays (JSON) y textos: sanitizar y limitar longitud
+        const text = typeof raw === 'object' ? JSON.stringify(raw) : String(raw);
+        return `<Cell><Data ss:Type="String">${xmlEscape(text.slice(0, 800))}</Data></Cell>`;
+      })
+      .join('');
+
+  const headerRow = `<Row>${cols.map((c) => `<Cell><Data ss:Type="String">${esc(xmlEscape(c))}</Data></Cell>`).join('')}</Row>`;
+  const bodyRows = rows.map((r) => `<Row>${cells(r)}</Row>`).join('');
+
+  return `<Worksheet ss:Name="${esc(xmlEscape(safeName))}"><Table>${headerRow}${bodyRows}</Table></Worksheet>`;
+}
+
+app.get('/api/backup', async (req, res: AuthenticatedResponse) => {
+  try {
+    const format = String((req.query as any).format || 'json').toLowerCase();
+
+    const secciones: Array<{ titulo: string; tabla: string; archivo: string; hoja: string }> = [
+      { titulo: 'Ventas (facturas y notas)', tabla: 'sales', archivo: 'sales.json', hoja: 'Ventas' },
+      { titulo: 'Artículos vendidos', tabla: 'sale_items', archivo: 'sale_items.json', hoja: 'Articulos Vendidos' },
+      { titulo: 'Pagos de ventas', tabla: 'payments', archivo: 'payments.json', hoja: 'Pagos Ventas' },
+      { titulo: 'Pedidos', tabla: 'orders', archivo: 'orders.json', hoja: 'Pedidos' },
+      { titulo: 'Cotizaciones', tabla: 'quotes', archivo: 'quotes.json', hoja: 'Cotizaciones' },
+      { titulo: 'Movimientos bancarios', tabla: 'bank_movements', archivo: 'bank_movements.json', hoja: 'Mov Bancarios' },
+      { titulo: 'Cuentas bancarias', tabla: 'bank_accounts', archivo: 'bank_accounts.json', hoja: 'Ctas Bancarias' },
+      { titulo: 'Cuentas por cobrar', tabla: 'accounts_receivable', archivo: 'accounts_receivable.json', hoja: 'Ctas por Cobrar' },
+      { titulo: 'Abonos CxC', tabla: 'receivable_payments', archivo: 'receivable_payments.json', hoja: 'Abonos CxC' },
+      { titulo: 'Cuentas por pagar', tabla: 'accounts_payable', archivo: 'accounts_payable.json', hoja: 'Ctas por Pagar' },
+      { titulo: 'Pagos a proveedores', tabla: 'payable_payments', archivo: 'payable_payments.json', hoja: 'Pagos Proveedores' },
+      { titulo: 'Clientes', tabla: 'customers', archivo: 'customers.json', hoja: 'Clientes' },
+      { titulo: 'Proveedores', tabla: 'suppliers', archivo: 'suppliers.json', hoja: 'Proveedores' },
+      { titulo: 'Inventario (productos)', tabla: 'products', archivo: 'products.json', hoja: 'Inventario' },
+      { titulo: 'Movimientos de inventario', tabla: 'inventory_movements', archivo: 'inventory_movements.json', hoja: 'Mov Inventario' },
+      { titulo: 'Gastos', tabla: 'expenses', archivo: 'expenses.json', hoja: 'Gastos' },
+      { titulo: 'Categorías de gasto', tabla: 'expense_categories', archivo: 'expense_categories.json', hoja: 'Categorias Gasto' }
+    ];
+
+    const stamps = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+    const filenameBase = `frenyer-respaldo-${stamps}`;
+
+    if (format === 'excel' || format === 'xls' || format === 'excel-xml') {
+      const sheets: string[] = [];
+      const resumen: Array<{ seccion: string; filas: number; origen: string }> = [];
+      for (const s of secciones) {
+        const { rows, origen } = await backupTable(res, s.tabla, s.archivo);
+        sheets.push(backupSheet(s.hoja, rows));
+        resumen.push({ seccion: s.titulo, filas: rows.length, origen });
+      }
+      // Hoja 0: resumen del respaldo
+      sheets.unshift(
+        backupSheet(
+          'Resumen',
+          resumen.map((r) => ({ Seccion: r.seccion, Filas: r.filas, Origen: r.origen, Generado: new Date().toISOString() }))
+        )
+      );
+      const xml = `<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+<Styles><Style ss:ID="h"><Font ss:Bold="1"/></Style></Styles>
+${sheets.join('\n')}
+</Workbook>`;
+
+      res.setHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${filenameBase}.xls"`);
+      return res.status(200).send(xml);
+    }
+
+    // JSON: todo el respaldo en un archivo
+    const data: Record<string, any[]> = {};
+    const resumen: Array<{ seccion: string; filas: number; origen: string }> = [];
+    for (const s of secciones) {
+      const { rows, origen } = await backupTable(res, s.tabla, s.archivo);
+      data[s.hoja] = rows;
+      resumen.push({ seccion: s.titulo, filas: rows.length, origen });
+    }
+
+    res.setHeader('Content-Disposition', `attachment; filename="${filenameBase}.json"`);
+    return res.status(200).json({
+      success: true,
+      generado: new Date().toISOString(),
+      organizacion: res.locals.supabaseContext?.organizationId || null,
+      usuario: res.locals.supabaseContext?.userEmail || null,
+      resumen,
+      data
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'No se pudo generar el respaldo.' });
   }
 });
 
