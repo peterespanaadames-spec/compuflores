@@ -2023,6 +2023,13 @@ export function Inventory() {
                 </div>
                 {/* Móvil: una línea por movimiento, sin scroll horizontal */}
                 <div className="inv-history-mobile" style={{ maxHeight: 350, overflowY: 'auto' }}>
+                  <div className="inv-hist-header">
+                    <span>Fecha</span>
+                    <span>Tipo</span>
+                    <span>Doc</span>
+                    <span>E/S</span>
+                    <span>Cant.</span>
+                  </div>
                   {productMovements.map((m, idx) => {
                     const isEntry = Number(m.quantity) > 0 || m.movement_type === 'COMPRA' || m.movement_type === 'ENTRADA';
                     return (
