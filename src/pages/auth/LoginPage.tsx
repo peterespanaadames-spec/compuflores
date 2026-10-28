@@ -125,13 +125,13 @@ export function LoginPage() {
       <section className="auth-container">
         {/* Cabecera */}
         <header className="auth-header">
-          <div className="auth-logo-icon">
-            {logo ? (
-              <img src={logo} alt="Frenyer" style={{ width: 32, height: 32, objectFit: 'contain' }} />
-            ) : (
+          {logo ? (
+            <img src={logo} alt="Frenyer" style={{ maxWidth: 220, maxHeight: 120, objectFit: 'contain', margin: '0 auto 14px' }} />
+          ) : (
+            <div className="auth-logo-icon">
               <Sparkles className="w-6 h-6" />
-            )}
-          </div>
+            </div>
+          )}
           <h2 className="auth-title">
             {isRegister ? 'Crear Cuenta' : 'Frenyer'}
           </h2>
