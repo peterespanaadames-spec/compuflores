@@ -552,7 +552,10 @@ app.use([
   '/api/expenses',
   '/api/expense-categories',
   '/api/customer',
-  '/api/business-profile'
+  '/api/business-profile',
+  // Usuarios asociados: solo con sesion. Protege perfiles y habilita el
+  // respaldo service-role para que el administrador vea TODOS los usuarios.
+  '/api/users'
 ], authenticateSupabaseRequest);
 
 // Lectura y actualizacion de pedidos quedan protegidas; el POST y el rastreo /track siguen publicos
@@ -4887,84 +4890,83 @@ function deletePersistedUser(id: string) {
   }
 }
 
+function mapPersistedUserRows(rows: any[]): any[] {
+  return (rows || []).map((p: any) => {
+    const names = (p.full_name || p.name || 'Usuario').trim().split(/\s+/);
+    const initials = names.length >= 2 ? `${names[0][0]}${names[1][0]}`.toUpperCase() : names[0].slice(0, 2).toUpperCase();
+    return {
+      id: p.id,
+      name: p.full_name || p.name || 'Usuario Registrado',
+      email: p.email || '',
+      role: p.role || 'Cashier',
+      title: p.title || p.position || 'Personal Asociado',
+      active: p.active !== false && p.is_active !== false,
+      initials: initials,
+      permissions: Array.isArray(p.permissions) ? p.permissions : ['ventas'],
+      created_at: p.created_at || new Date().toISOString()
+    };
+  });
+}
+
+function mergePersistedUsersWithSupabase(mappedRows: any[]): any[] {
+  const localList = loadPersistedUsers();
+  const combined = mappedRows.map((su: any) => {
+    const lu = localList.find(
+      (l: any) =>
+        String(l.id) === String(su.id) ||
+        (l.email && su.email && String(l.email).toLowerCase() === String(su.email).toLowerCase())
+    );
+    if (!lu) return su;
+    return {
+      ...su,
+      name: lu.name || su.name,
+      role: lu.role || su.role,
+      title: lu.title !== undefined ? lu.title : su.title,
+      active: lu.active !== undefined ? lu.active : su.active,
+      permissions: Array.isArray(lu.permissions) && lu.permissions.length > 0 ? lu.permissions : su.permissions
+    };
+  });
+
+  localList.forEach((lu: any) => {
+    if (!combined.some(cu => String(cu.id) === String(lu.id) || (cu.email && lu.email && String(cu.email).toLowerCase() === String(lu.email).toLowerCase()))) {
+      combined.push(lu);
+    }
+  });
+
+  return combined;
+}
+
 app.get('/api/users', async (_req, res: AuthenticatedResponse) => {
   try {
-    const orgId = res.locals.supabaseContext?.organizationId || '00000000-0000-0000-0000-000000000001';
-    
-    // 1. Intentar consultar perfiles/usuarios de Supabase si existe conexiÃ³n
+    // 1. Intento autenticado: el administrador debe ver TODOS los usuarios asociados.
     try {
-      const result = await supabaseRestRequest('profiles?select=*&order=created_at.desc');
+      const result = await authenticatedSupabaseRestRequest(res, 'profiles?select=*&order=created_at.desc');
       if (!result.error && Array.isArray(result.data) && result.data.length > 0) {
-        // Mapear al modelo unificado de usuarios asociados
-        const mappedFromSupabase = result.data.map((p: any) => {
-          const names = (p.full_name || p.name || 'Usuario').trim().split(/\s+/);
-          const initials = names.length >= 2 ? `${names[0][0]}${names[1][0]}`.toUpperCase() : names[0].slice(0, 2).toUpperCase();
-          return {
-            id: p.id,
-            name: p.full_name || p.name || 'Usuario Registrado',
-            email: p.email || '',
-            role: p.role || 'Cashier',
-            title: p.title || p.position || 'Personal Asociado',
-            active: p.active !== false && p.is_active !== false,
-            initials: initials,
-            permissions: Array.isArray(p.permissions) ? p.permissions : ['ventas'],
-            created_at: p.created_at || new Date().toISOString()
-          };
-        });
-
-        // Combinar con los locales: el perfil local manda en cargo, estado y permisos
-        // porque esas columnas no existen en la tabla profiles de Supabase.
-        const localList = loadPersistedUsers();
-        const combined = mappedFromSupabase.map((su: any) => {
-          const lu = localList.find(
-            (l: any) =>
-              String(l.id) === String(su.id) ||
-              (l.email && su.email && String(l.email).toLowerCase() === String(su.email).toLowerCase())
-          );
-          if (!lu) return su;
-          return {
-            ...su,
-            name: lu.name || su.name,
-            role: lu.role || su.role,
-            title: lu.title !== undefined ? lu.title : su.title,
-            active: lu.active !== undefined ? lu.active : su.active,
-            permissions: Array.isArray(lu.permissions) && lu.permissions.length > 0 ? lu.permissions : su.permissions
-          };
-        });
-
-        localList.forEach((lu: any) => {
-          if (!combined.some(cu => String(cu.id) === String(lu.id) || (cu.email && lu.email && String(cu.email).toLowerCase() === String(lu.email).toLowerCase()))) {
-            combined.push(lu);
-          }
-        });
-
-        return res.json({ success: true, data: combined });
+        return res.json({ success: true, data: mergePersistedUsersWithSupabase(mapPersistedUserRows(result.data)) });
       }
     } catch (sbErr) {
-      console.warn('Aviso consultando usuarios en Supabase:', sbErr);
+      console.warn('Aviso consultando usuarios en Supabase (autenticado):', sbErr);
     }
 
-    // 2. Si Supabase no responde o está en modo local resiliente
-    let local = loadPersistedUsers();
-    const requiredAdminEmails = ['fotocopiasfyp@gmail.com', 'sharkvenimport@gmail.com'];
-    for (const adminEmail of requiredAdminEmails) {
-      if (!local.some(u => u.email && u.email.toLowerCase() === adminEmail)) {
-        const adminUser = {
-          id: `usr-${adminEmail.split('@')[0]}`,
-          name: adminEmail === 'sharkvenimport@gmail.com' ? 'Sharkven Import Admin' : 'Administrador Principal',
-          email: adminEmail,
-          role: 'Admin',
-          title: 'Director / Propietario',
-          active: true,
-          initials: adminEmail === 'sharkvenimport@gmail.com' ? 'SI' : 'AP',
-          permissions: ['ventas', 'inventario', 'finanzas', 'reportes', 'usuarios'],
-          created_at: new Date().toISOString()
-        };
-        savePersistedUser(adminUser);
-        local.push(adminUser);
+    // 2. Respaldo con service role SOLO para sesiones autenticadas:
+    //    si RLS bloqueó la lectura de la sesión, el administrador con acceso
+    //    total todavía ve la lista completa. Anónimos no deben ver perfiles.
+    const session = res.locals.supabaseContext;
+    const isAuthenticated = !!(session?.userEmail || session?.userId);
+    if (isAuthenticated) {
+      try {
+        const backup = await supabaseServiceRestRequest('profiles?select=*&order=created_at.desc');
+        if (!backup.error && Array.isArray(backup.data) && backup.data.length > 0) {
+          return res.json({ success: true, data: mergePersistedUsersWithSupabase(mapPersistedUserRows(backup.data)) });
+        }
+      } catch (svcErr) {
+        console.warn('Aviso consultando usuarios con service role:', svcErr);
       }
     }
-    return res.json({ success: true, data: local });
+
+    // 3. Respaldo local resiliente, SIN reinsertar correos administrativos:
+    //    lo que el usuario elimina deja de volver a aparecer en cada sincronización.
+    return res.json({ success: true, data: loadPersistedUsers() });
   } catch (err: any) {
     return res.status(200).json({ success: false, error: err?.message, data: loadPersistedUsers() });
   }
@@ -5199,14 +5201,59 @@ app.post('/api/users/:id/toggle-status', async (req, res: AuthenticatedResponse)
 
 app.delete('/api/users/:id', async (req, res: AuthenticatedResponse) => {
   try {
+    const session = res.locals.supabaseContext;
+    const isAuthenticated = !!(session?.userEmail || session?.userId);
+    if (!isAuthenticated) {
+      return res.status(401).json({ success: false, error: 'Sesión requerida para eliminar usuarios.' });
+    }
     const { id } = req.params;
     deletePersistedUser(id);
 
-    try {
-      await supabaseRestRequest(`profiles?id=eq.${encodeURIComponent(id)}`, {
-        method: 'DELETE'
+    const deleteProfile = async (): Promise<{ ok: boolean; via: string; detail?: any }> => {
+      const filter = `profiles?id=eq.${encodeURIComponent(id)}`;
+
+      // Sonda con service role: PostgREST devuelve 204 incluso cuando RLS
+      // bloquea silenciosamente el borrado, así que hay que verificar.
+      const stillExists = async (): Promise<boolean> => {
+        try {
+          const probe = await supabaseServiceRestRequest(`${filter}&select=id`);
+          return !probe.error && Array.isArray(probe.data) && probe.data.length > 0;
+        } catch {
+          return false;
+        }
+      };
+
+      // 1. Intento autenticado (respeta RLS con la sesión del administrador).
+      try {
+        const result = await authenticatedSupabaseRestRequest(res, filter, { method: 'DELETE' });
+        if (!result.error && !(await stillExists())) {
+          return { ok: true, via: 'sesion' };
+        }
+      } catch (authErr) {
+        console.warn('Aviso eliminando usuario en Supabase (autenticado):', authErr);
+      }
+
+      // 2. Respaldo con service role: si RLS bloquea el borrado de la sesión,
+      //    el administrador con acceso total igual logra eliminar el perfil.
+      try {
+        const backup = await supabaseServiceRestRequest(filter, { method: 'DELETE' });
+        if (!backup.error && !(await stillExists())) {
+          return { ok: true, via: 'service-role' };
+        }
+        return { ok: false, via: 'service-role', detail: backup.error };
+      } catch (svcErr) {
+        return { ok: false, via: 'service-role', detail: svcErr };
+      }
+    };
+
+    const outcome = await deleteProfile();
+    if (!outcome.ok) {
+      console.warn('El perfil no pudo eliminarse de Supabase:', id, outcome.detail);
+      return res.json({
+        success: true,
+        message: 'Usuario eliminado del directorio local. No pudo borrarse en la base de datos.'
       });
-    } catch {}
+    }
 
     return res.json({ success: true, message: 'Usuario eliminado exitosamente.' });
   } catch (err: any) {

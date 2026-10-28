@@ -260,7 +260,7 @@ export function SaleDetailPage({ saleId: propSaleId, onBack }: SaleDetailPagePro
       {/* Cabecera de acciones: oculta al imprimir */}
       <div className="page-head flex items-center justify-between gap-4 no-print">
         <div>
-          <Button variant="secondary" onClick={handleBack} className="mb-3">
+          <Button variant="accent" onClick={handleBack} className="mb-3">
             <ArrowLeft className="w-4 h-4" /> Volver al Reporte
           </Button>
           <h1>Comprobante y Detalle de Pago #{displayDocNum}</h1>
@@ -444,7 +444,7 @@ export function SaleDetailPage({ saleId: propSaleId, onBack }: SaleDetailPagePro
       ) : (
         <Card className="empty no-print">
           <p className="font-bold">No se encontró información para el comprobante #{activeId}.</p>
-          <Button variant="primary" onClick={handleBack} className="mt-4">
+          <Button variant="accent" onClick={handleBack} className="mt-4">
             <ArrowLeft className="w-4 h-4" /> Volver al Reporte
           </Button>
         </Card>
