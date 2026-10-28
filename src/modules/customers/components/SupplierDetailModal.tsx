@@ -416,7 +416,8 @@ export function SupplierDetailModal({
         animation: 'fadeIn 0.18s ease-out'
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget && !isSaving) onClose();
+        // Fuera de los botones el modal NO se cierra: solo «Registrar Proveedor»
+        // o «Cerrar» de la barra inferior cuentan como salida (evita perder datos).
       }}
     >
       {/* Toast Notification flotante dentro del modal */}
@@ -516,8 +517,11 @@ export function SupplierDetailModal({
             </div>
           </div>
 
-          {/* Acciones del encabezado */}
+          {/* Acciones del encabezado: solo para proveedores existentes.
+              En el registro de proveedor los botones solo viven en la barra inferior. */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {!isNew && (
+              <>
             {/* Botón Imprimir (Arriba) */}
             {!isNew && (
               <Button
@@ -538,7 +542,7 @@ export function SupplierDetailModal({
                 disabled={isSaving}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.85rem' }}
               >
-                <Save size={15} /> {isSaving ? 'Guardando...' : isNew ? 'Registrar Proveedor' : 'Guardar Cambios'}
+                <Save size={15} /> {isSaving ? 'Guardando...' : 'Guardar Cambios'}
               </Button>
             ) : (
               <Button
@@ -572,6 +576,8 @@ export function SupplierDetailModal({
             >
               <X size={16} /> Cerrar
             </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -1046,9 +1052,11 @@ export function SupplierDetailModal({
                   </div>
                 </div>
 
-                {/* Botón de Guardado dentro del Formulario */}
-                <div style={{ marginTop: 22, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-                  {!isNew && (
+                {/* Botón de Guardado dentro del Formulario:
+                    solo para proveedores existentes; en el registro
+                    la barra inferior es la única con «Registrar Proveedor». */}
+                {!isNew && (
+                  <div style={{ marginTop: 22, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
                     <Button
                       type="button"
                       variant="secondary"
@@ -1057,16 +1065,16 @@ export function SupplierDetailModal({
                     >
                       Volver a Movimientos
                     </Button>
-                  )}
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    disabled={isSaving}
-                    style={{ minWidth: 140 }}
-                  >
-                    <Save size={15} /> {isSaving ? 'Guardando...' : isNew ? 'Registrar Proveedor' : 'Guardar Cambios'}
-                  </Button>
-                </div>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      disabled={isSaving}
+                      style={{ minWidth: 140 }}
+                    >
+                      <Save size={15} /> {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+                    </Button>
+                  </div>
+                )}
               </form>
             </div>
           )}
