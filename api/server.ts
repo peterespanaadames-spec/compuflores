@@ -6884,7 +6884,15 @@ app.get('/api/accounts-payable', async (_req, res: AuthenticatedResponse) => {
           const k = pay.id || `${pay.payment_date || pay.date}-${pay.amount_usd || pay.amount}`;
           payMap.set(k, pay);
         }
-        map.set(p.id, { ...local, ...p, payable_payments: Array.from(payMap.values()) });
+        const mergedBalance = (() => {
+          const remoteBal = Number(p.balance_usd);
+          const localBal = Number(local.balance_usd);
+          const st = String(p.status || local.status || '').toUpperCase();
+          if (remoteBal > 0) return remoteBal;
+          if (localBal > 0 && st !== 'PAGADO' && st !== 'PAGADA') return localBal;
+          return remoteBal;
+        })();
+        map.set(p.id, { ...local, ...p, balance_usd: mergedBalance, payable_payments: Array.from(payMap.values()) });
       }
     }
 
@@ -6895,6 +6903,12 @@ app.get('/api/accounts-payable', async (_req, res: AuthenticatedResponse) => {
       const paidDiff = Math.round(Math.max(0, tot - bal) * 100) / 100;
       const pays = Array.isArray(item.payable_payments) ? item.payable_payments : [];
       const currentSum = pays.reduce((s: number, p: any) => s + (Number(p.amount_usd || p.amount) || 0), 0);
+      // Recalcular saldo real cuando el almacenado es 0 pero hay total pendiente
+      // (evita que el dashboard y la pantalla muestren 0 por datos desfasados).
+      const st = String(item.status || '').toUpperCase();
+      if (st !== 'PAGADO' && st !== 'PAGADA' && Number(item.balance_usd) === 0 && tot > 0) {
+        item.balance_usd = Math.max(0, Math.round((tot - currentSum) * 100) / 100);
+      }
       if (paidDiff > currentSum + 0.01) {
         const missing = Math.round((paidDiff - currentSum) * 100) / 100;
         pays.unshift({
