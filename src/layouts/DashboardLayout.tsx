@@ -6,6 +6,7 @@ import { ManualBcvRateModal } from '../components/modals/ManualBcvRateModal';
 import { getActiveExchangeRate, setActiveExchangeRate, isFutureExchangeRate } from '../lib/currency';
 import { getBusinessProfile, BusinessProfile, refreshBusinessProfileFromServer } from '../lib/businessProfile';
 import { useAuth } from '../context/AuthContext';
+import { InactivityLock } from '../components/auth/InactivityLock';
 import { isInternalRole, defaultPermissionsForRole } from '../lib/auth/roles';
 
 export function DashboardLayout() {
@@ -475,6 +476,8 @@ export function DashboardLayout() {
           setRateSource(src);
         }}
       />
+      {/* Bloqueo por inactividad (60 s) */}
+      <InactivityLock />
     </div>
   );
 }

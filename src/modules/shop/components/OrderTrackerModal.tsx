@@ -163,7 +163,7 @@ export function OrderTrackerModal({
     .padStart(7, '0');
 
   const business = getBusinessProfile();
-  const whatsappPhone = (business.phone || '584120000000').replace(/\D/g, '');
+  const whatsappPhone = (business.whatsapp || business.phone || '584120000000').replace(/\D/g, '');
   const whatsappMessage = encodeURIComponent(
     `Hola, quisiera consultar el estatus de mi pedido #${formattedOrderNumber} a nombre de ${order?.customer_name || 'Cliente'}.`
   );

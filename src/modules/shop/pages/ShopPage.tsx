@@ -173,6 +173,7 @@ export function ShopPage() {
       slogan: 'Materiales, Copias y Repuestos de Motos',
       logo: profile.logo,
       favicon: profile.favicon,
+       whatsapp: profile.whatsapp || profile.phone || '0412-5551212',
       bcvRate: getActiveExchangeRate(),
       bcvRateDate: 'Actual',
       branches: [
@@ -495,6 +496,13 @@ export function ShopPage() {
   const [customerDoc, setCustomerDoc] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('RETIRO');
+  const [deliveryDomicilioEnabled, setDeliveryDomicilioEnabled] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem('frenyer_delivery_methods');
+      if (raw) return JSON.parse(raw)?.domicilio === true;
+    } catch {}
+    return false;
+  });
   const [selectedBranchId, setSelectedBranchId] = useState('suc-01');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
@@ -861,7 +869,7 @@ export function ShopPage() {
 
   // Open WhatsApp with prefilled message
   const handleOpenWhatsApp = (message = 'Hola CompuRepuestos Flores Inversiones, me gustaría solicitar información y realizar un pedido.') => {
-    const cleanPhone = (businessConfig.phone || '04125551212').replace(/\D/g, '');
+    const cleanPhone = (businessConfig.whatsapp || businessConfig.phone || '04125551212').replace(/\D/g, '');
     const phoneWithCode = cleanPhone.startsWith('58') ? cleanPhone : `58${cleanPhone.replace(/^0/, '')}`;
     const url = `https://wa.me/${phoneWithCode}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
@@ -3999,21 +4007,23 @@ export function ShopPage() {
                       </div>
                     </div>
 
-                    <div
-                      onClick={() => setDeliveryMethod('DOMICILIO')}
-                      style={{
-                        padding: 16,
-                        border: deliveryMethod === 'DOMICILIO' ? '2px solid #1e3a8a' : '1px solid #e2e8f0',
-                        background: deliveryMethod === 'DOMICILIO' ? '#eff6ff' : '#ffffff',
-                        borderRadius: 12,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <b style={{ fontSize: 13 }}>Entrega a Domicilio</b>
-                      <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>
-                        Despacho local express a tu puerta.
+                    {deliveryDomicilioEnabled && (
+                      <div
+                        onClick={() => setDeliveryMethod('DOMICILIO')}
+                        style={{
+                          padding: 16,
+                          border: deliveryMethod === 'DOMICILIO' ? '2px solid #1e3a8a' : '1px solid #e2e8f0',
+                          background: deliveryMethod === 'DOMICILIO' ? '#eff6ff' : '#ffffff',
+                          borderRadius: 12,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <b style={{ fontSize: 13 }}>Entrega a Domicilio</b>
+                        <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>
+                          Despacho local express a tu puerta.
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   {deliveryMethod === 'DOMICILIO' && (

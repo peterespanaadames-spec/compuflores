@@ -98,8 +98,33 @@ interface PaymentMethodRecord {
 }
 
 export function ConfigPage() {
+  const [deliveryRetiroEnabled, setDeliveryRetiroEnabled] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem('frenyer_delivery_methods');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return parsed?.retiro !== false;
+      }
+    } catch {}
+    return true;
+  });
+  const [deliveryDomicilioEnabled, setDeliveryDomicilioEnabled] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem('frenyer_delivery_methods');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return parsed?.domicilio === true;
+      }
+    } catch {}
+    return false;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('frenyer_delivery_methods', JSON.stringify({ retiro: deliveryRetiroEnabled, domicilio: deliveryDomicilioEnabled }));
+    } catch {}
+  }, [deliveryRetiroEnabled, deliveryDomicilioEnabled]);
   const [activeTab, setActiveTab] = useState<'negocio' | 'almacen' | 'usuarios' | 'auditoria' | 'respaldo'>('negocio');
-  // --- RESPALDO (descargas) ---
   const [isBackupLoading, setIsBackupLoading] = useState<'excel' | 'json' | null>(null);
   const [backupMessage, setBackupMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
 
@@ -1583,7 +1608,32 @@ export function ConfigPage() {
       {/* Tab: Almacén y Sedes (Matching Image 2) */}
       {activeTab === 'almacen' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Header matching Image 2 */}
+          {/* Métodos de entrega habilitados */}
+          <Card>
+            <div style={{ marginBottom: 12 }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Métodos de entrega</h3>
+              <span className="muted small">Habilita los métodos disponibles en la tienda y en los pedidos.</span>
+            </div>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={deliveryRetiroEnabled}
+                  onChange={(e) => setDeliveryRetiroEnabled(e.target.checked)}
+                />
+                Retiro en tienda
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={deliveryDomicilioEnabled}
+                  onChange={(e) => setDeliveryDomicilioEnabled(e.target.checked)}
+                />
+                Entrega a Domicilio
+              </label>
+            </div>
+          </Card>
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
               <div style={{ color: '#0066f5', marginTop: 2 }}>

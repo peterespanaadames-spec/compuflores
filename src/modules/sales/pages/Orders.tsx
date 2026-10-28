@@ -1412,7 +1412,15 @@ export function OrdersPage() {
                     <label>Método de Entrega</label>
                     <select className="input" value={newOrderMethod} onChange={e => setNewOrderMethod(e.target.value as DeliveryMethod)}>
                       <option value="RETIRO">Retiro en Tienda</option>
-                      <option value="DOMICILIO">Entrega a Domicilio</option>
+                      {(() => {
+                        try {
+                          const raw = localStorage.getItem('frenyer_delivery_methods');
+                          if (raw && JSON.parse(raw)?.domicilio === true) {
+                            return <option value="DOMICILIO">Entrega a Domicilio</option>;
+                          }
+                        } catch {}
+                        return null;
+                      })()}
                     </select>
                   </div>
                   <div className="field">

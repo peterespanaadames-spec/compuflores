@@ -2435,12 +2435,23 @@ app.get('/api/public/config', async (_req, res) => {
   let orgLogo: string | null = null;
   let orgFavicon: string | null = null;
   let orgName: string | null = null;
+  let orgPhone: string | null = null;
+  let orgWhatsapp: string | null = null;
+  let orgEmail: string | null = null;
+  let orgAddress: string | null = null;
+  let orgSlogan: string | null = null;
   try {
-    const orgRes = await supabaseServiceRestRequest('organizations?select=name,logo,favicon&limit=1');
+    const orgRes = await supabaseServiceRestRequest('organizations?select=name,phone,whatsapp,email,address,slogan,logo,favicon&limit=1');
     if (!orgRes.error && Array.isArray(orgRes.data) && orgRes.data.length > 0) {
-      orgLogo = orgRes.data[0].logo || null;
-      orgFavicon = orgRes.data[0].favicon || null;
-      orgName = orgRes.data[0].name || null;
+      const o = orgRes.data[0];
+      orgLogo = o.logo || null;
+      orgFavicon = o.favicon || null;
+      orgName = o.name || null;
+      orgPhone = o.phone || null;
+      orgWhatsapp = o.whatsapp || null;
+      orgEmail = o.email || null;
+      orgAddress = o.address || null;
+      orgSlogan = o.slogan || null;
     }
   } catch {
     // ignore
@@ -2451,11 +2462,11 @@ app.get('/api/public/config', async (_req, res) => {
     data: {
       businessName: orgName || 'Frenyer, C.A.',
       rif: 'J-123456789',
-      phone: '+58 212 555 1212',
-      whatsapp: '+58 412 000 0000',
-      email: 'contacto@frenyer.com',
-      address: 'Av. Francisco de Miranda, Centro Financiero, Caracas, Venezuela',
-      slogan: 'Tu aliado comercial bimonetario',
+      phone: orgPhone || '+58 212 555 1212',
+      whatsapp: orgWhatsapp || '+58 412 000 0000',
+      email: orgEmail || 'contacto@frenyer.com',
+      address: orgAddress || 'Av. Francisco de Miranda, Centro Financiero, Caracas, Venezuela',
+      slogan: orgSlogan || 'Tu aliado comercial bimonetario',
       logo: orgLogo,
       favicon: orgFavicon,
       bcvRate: effectiveRate,
