@@ -4,7 +4,7 @@ import { Menu, Sparkles, RefreshCw, Edit3, AlertCircle, ArrowUpRight, Check, X, 
 import { Sidebar } from '../components/ui/Sidebar';
 import { ManualBcvRateModal } from '../components/modals/ManualBcvRateModal';
 import { getActiveExchangeRate, setActiveExchangeRate, isFutureExchangeRate } from '../lib/currency';
-import { getBusinessProfile, BusinessProfile } from '../lib/businessProfile';
+import { getBusinessProfile, BusinessProfile, refreshBusinessProfileFromServer } from '../lib/businessProfile';
 import { useAuth } from '../context/AuthContext';
 import { isInternalRole, defaultPermissionsForRole } from '../lib/auth/roles';
 
@@ -32,6 +32,10 @@ export function DashboardLayout() {
       window.removeEventListener('frenyer:business-profile-updated', handleProfileSync);
       window.removeEventListener('storage', handleProfileSync);
     };
+  }, []);
+
+  useEffect(() => {
+    refreshBusinessProfileFromServer().then((p) => setBusinessProfile(p)).catch(() => {});
   }, []);
 
   // Estado de la sesion activa: solo se usa para el guard de rol

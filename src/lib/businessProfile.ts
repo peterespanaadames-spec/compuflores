@@ -1,3 +1,5 @@
+import { authenticatedFetch } from './supabase/api';
+
 export interface BusinessProfile {
   businessName: string;
   slogan: string;
@@ -8,6 +10,21 @@ export interface BusinessProfile {
   whatsapp: string;
   logo: string | null;
   favicon: string | null;
+}
+
+export async function refreshBusinessProfileFromServer(): Promise<BusinessProfile> {
+  try {
+    const res = await authenticatedFetch('/api/business-profile');
+    if (res.ok) {
+      const json = await res.json();
+      if (json?.success && json?.data) {
+        return saveBusinessProfile(json.data);
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return getBusinessProfile();
 }
 
 export function getBusinessProfile(): BusinessProfile {

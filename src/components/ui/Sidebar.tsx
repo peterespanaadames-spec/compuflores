@@ -28,7 +28,7 @@ import {
   ChevronDown,
   Store
 } from 'lucide-react';
-import { getBusinessProfile, BusinessProfile } from '../../lib/businessProfile';
+import { getBusinessProfile, BusinessProfile, refreshBusinessProfileFromServer } from '../../lib/businessProfile';
 
 interface SidebarItem {
   label: string;
@@ -100,6 +100,10 @@ export function Sidebar({ isMobileOpen = false, onNavigate }: SidebarProps) {
       window.removeEventListener('frenyer:business-profile-updated', handleProfileSync);
       window.removeEventListener('storage', handleProfileSync);
     };
+  }, []);
+
+  useEffect(() => {
+    refreshBusinessProfileFromServer().then((p) => setBusinessProfile(p)).catch(() => {});
   }, []);
 
   // Define the menu structure exactly as shown in the image with RBAC keys
