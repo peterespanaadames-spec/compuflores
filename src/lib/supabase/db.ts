@@ -295,8 +295,9 @@ export async function fetchSuppliersFromSupabase(organizationId?: string): Promi
       const scopedOrganizationId = organizationId || await getActiveOrgId();
       let query = supabase
         .from('suppliers')
-        .select('*')
+        .select('id, name, doc_number, doc_type, phone, email, address, contact_person, status, organization_id, created_at, balance_usd')
         .order('created_at', { ascending: false });
+      if (scopedOrganizationId) { query = query.eq('organization_id', scopedOrganizationId); }
 
       let { data, error } = await query;
       if (!error && (!data || data.length === 0) && scopedOrganizationId) {
@@ -304,7 +305,7 @@ export async function fetchSuppliersFromSupabase(organizationId?: string): Promi
         try {
           const { data: allData, error: allErr } = await supabase
             .from('suppliers')
-            .select('*')
+            .select('id, name, doc_number, doc_type, phone, email, address, contact_person, status, organization_id, created_at, balance_usd')
             .order('created_at', { ascending: false });
           if (!allErr && allData && allData.length > 0) {
             data = allData;
@@ -664,10 +665,13 @@ export async function fetchProductsFromSupabase(): Promise<DbProduct[]> {
 
   // 2. Direct Supabase client fallback
   try {
-    const { data, error } = await supabase
+    const orgId = await getActiveOrgId();
+    let prodQuery = supabase
       .from('products')
-      .select('*')
+      .select('id, sku, name, description, price_usd, cost_usd, stock, min_stock, category, organization_id, created_at, unit, status')
       .order('name', { ascending: true });
+    if (orgId) { prodQuery = prodQuery.eq('organization_id', orgId); }
+    const { data, error } = await prodQuery;
 
     if (error) {
       console.warn('Error querying Supabase products:', error.message);
@@ -706,7 +710,7 @@ export async function fetchProductBySkuFromSupabase(sku: string): Promise<DbProd
   try {
     const { data, error } = await supabase
       .from('products')
-      .select('*')
+      .select('id, sku, name, description, price_usd, cost_usd, stock, min_stock, category, unit, status')
       .eq('sku', sku)
       .limit(1);
 
@@ -810,7 +814,7 @@ export async function createProductInSupabase(product: DbProduct): Promise<{ suc
     if (payload.sku) {
       const { data: existing } = await supabase
         .from('products')
-        .select('*')
+        .select('id, sku, name, stock, cost_usd, price_usd')
         .eq('sku', payload.sku)
         .limit(1);
 
@@ -1656,7 +1660,7 @@ export async function convertQuoteToInvoiceInSupabase(
       if (options.bankAccountId) {
         const { data: bData } = await supabase
           .from('bank_accounts')
-          .select('*')
+          .select('id, bank_name, account_number, currency, balance')
           .eq('id', options.bankAccountId)
           .maybeSingle();
         if (bData) {
@@ -1972,10 +1976,13 @@ export async function fetchBankAccountsFromSupabase(): Promise<{ success: boolea
 
   // 2. Direct Supabase client
   try {
-    const { data, error } = await supabase
+    const orgId = await getActiveOrgId();
+    let baQuery = supabase
       .from('bank_accounts')
-      .select('*')
+      .select('id, bank_name, account_number, currency, balance, organization_id, created_at')
       .order('bank_name', { ascending: true });
+    if (orgId) { baQuery = baQuery.eq('organization_id', orgId); }
+    const { data, error } = await baQuery;
 
     if (error) {
       return { success: false, data: [], error: error.message };
@@ -2345,56 +2352,81 @@ export async function createPurchaseInSupabase(input: {
       createdPurchaseId = `pur_${Date.now()}`;
     }
 
-    // Actualizar stock de productos en Supabase e inventario
-    for (const it of input.items) {
-      if (!it.sku) {
-        continue;
-      }
-      try {
-        const { data: prodList } = await supabase
-          .from('products')
-          .select('id, stock, cost_usd')
-          .eq('sku', it.sku)
-          .limit(1);
+     // Actualizar stock de productos en Supabase e inventario (batch: 1 SELECT + 1 INSERT en lugar de N+1)
+     const skus = input.items.map(it => it.sku).filter(Boolean) as string[];
+     let prodMap = new Map<string, { id: string; stock: number; cost_usd: number }>();
+     if (skus.length > 0) {
+       try {
+         const { data: prodList } = await supabase
+           .from('products')
+           .select('id, sku, stock, cost_usd')
+           .in('sku', skus);
+         if (Array.isArray(prodList)) {
+           for (const p of prodList) {
+             prodMap.set(p.sku, { id: p.id, stock: Number(p.stock) || 0, cost_usd: Number(p.cost_usd) || 0 });
+           }
+         }
+       } catch (err) {
+         console.warn('Aviso consultando productos para stock:', err);
+       }
+     }
 
-        const prod = prodList && prodList.length > 0 ? prodList[0] : null;
+     const movementsToInsert: any[] = [];
+     const productUpdates: Promise<any>[] = [];
+     for (const it of input.items) {
+       if (!it.sku) continue;
+       const prod = prodMap.get(it.sku);
+       if (!prod) continue;
+       try {
+         const newStock = Math.max(0, prod.stock + it.quantity);
+         const updatePayload: any = { stock: newStock };
+         if (input.updateCosts && it.unitCostUSD > 0) {
+           updatePayload.cost_usd = it.unitCostUSD;
+         }
+         productUpdates.push(
+            Promise.resolve(supabase.from('products').update(updatePayload).eq('sku', it.sku)) as Promise<any>
+          );
 
-        if (prod) {
-          const newStock = Math.max(0, (Number(prod.stock) || 0) + it.quantity);
-          const updatePayload: any = { stock: newStock };
-          if (input.updateCosts && it.unitCostUSD > 0) {
-            updatePayload.cost_usd = it.unitCostUSD;
-          }
-          await supabase.from('products').update(updatePayload).eq('sku', it.sku);
-          
-          // Registrar movimiento en el kárdex
-          try {
-            await supabase.from('inventory_movements').insert([{
-              organization_id: orgId,
-              product_id: prod.id,
-              sku: it.sku,
-              product_name: it.name,
-              movement_type: 'COMPRA',
-              doc_type: 'COMPRA_INTERNA',
-              doc_number: docNumber,
-              entity_type: 'PROVEEDOR',
-              entity_name: input.supplierName || 'Proveedor',
-              quantity: Math.abs(it.quantity),
-              unit_cost_usd: it.unitCostUSD,
-              total_usd: Math.round(it.quantity * it.unitCostUSD * 100) / 100,
-              previous_stock: Number(prod.stock) || 0,
-              new_stock: newStock,
-              reason: 'Compra interna de inventario',
-              created_at: new Date().toISOString()
-            }]);
-          } catch (mvErr) {
-            console.warn('Aviso registrando movimiento de compra:', mvErr);
-          }
-        }
-      } catch (err) {
-        console.warn('Aviso actualizando stock de producto:', err);
-      }
-    }
+          movementsToInsert.push({
+           organization_id: orgId,
+           product_id: prod.id,
+           sku: it.sku,
+           product_name: it.name,
+           movement_type: 'COMPRA',
+           doc_type: 'COMPRA_INTERNA',
+           doc_number: docNumber,
+           entity_type: 'PROVEEDOR',
+           entity_name: input.supplierName || 'Proveedor',
+           quantity: Math.abs(it.quantity),
+           unit_cost_usd: it.unitCostUSD,
+           total_usd: Math.round(it.quantity * it.unitCostUSD * 100) / 100,
+           previous_stock: prod.stock,
+           new_stock: newStock,
+           reason: 'Compra interna de inventario',
+           created_at: new Date().toISOString()
+         });
+       } catch (err) {
+         console.warn('Aviso preparando actualización de producto:', err);
+       }
+     }
+
+     // Ejecutar actualizaciones de productos en paralelo (independientes entre sí)
+     if (productUpdates.length > 0) {
+       try {
+         await Promise.all(productUpdates);
+       } catch (err) {
+         console.warn('Aviso actualizando stock de productos:', err);
+       }
+     }
+
+     // Insertar todos los movimientos de kárdex en una sola llamada
+     if (movementsToInsert.length > 0) {
+       try {
+         await supabase.from('inventory_movements').insert(movementsToInsert);
+       } catch (mvErr) {
+         console.warn('Aviso registrando movimientos de compra:', mvErr);
+       }
+     }
 
     // Si es Crédito, registrar y conciliar automáticamente el compromiso en accounts_payable
     if (input.paymentType === 'CREDITO') {
@@ -2442,7 +2474,7 @@ export async function createPurchaseInSupabase(input: {
       try {
         const { data: bAcc } = await supabase
           .from('bank_accounts')
-          .select('*')
+          .select('id, bank_name, account_number, currency, balance')
           .eq('id', input.bankAccountId)
           .maybeSingle();
 
@@ -2607,7 +2639,7 @@ export async function fetchBranchesFromSupabase(): Promise<DbBranch[]> {
     try {
       const { data, error } = await supabase
         .from('branches')
-        .select('*')
+         .select('id, name, address, phone, organization_id, created_at, code, status, is_active')
         .order('created_at', { ascending: true });
       if (!error && Array.isArray(data)) {
         const cleanData = filterOutLegacyMockBranches(data);
@@ -3272,7 +3304,7 @@ export async function fetchInventoryMovementsFromSupabase(): Promise<DbInventory
     try {
       const { data: movData, error: movErr } = await supabase
         .from('inventory_movements')
-        .select('*')
+        .select('id, organization_id, sku, product_name, movement_type, doc_type, doc_number, quantity, unit_cost_usd, total_usd, previous_stock, new_stock, created_at')
         .eq('organization_id', orgId)
         .order('created_at', { ascending: false });
 
@@ -3447,7 +3479,7 @@ export async function recordInventoryAdjustmentInSupabase(adjustment: {
       // Obtener producto
       const { data: prodList, error: prodErr } = await supabase
         .from('products')
-        .select('*')
+        .select('id, sku, name, stock, cost_usd, price_usd, branch_id')
         .eq('sku', adjustment.sku)
         .limit(1);
 

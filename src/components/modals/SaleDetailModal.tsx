@@ -80,98 +80,92 @@ export function SaleDetailModal({ isOpen, onClose, saleId }: { isOpen: boolean; 
     const loadDetails = async () => {
       setIsLoading(true);
       try {
-        // 1. Intentar buscar en tabla 'sales'
-        const { data: saleData } = await supabase
-          .from('sales')
-          .select('*')
-          .eq('id', saleId)
-          .maybeSingle();
+         // 1. Carga paralela: venta (con joins embebidos) + cuentas bancarias (independientes)
+         const [saleRes, bankRes] = await Promise.all([
+           supabase
+             .from('sales')
+             .select('id, doc_type, doc_number, created_at, customer_id, status, exchange_rate, total_usd, total_ves, payment_type, customers(name, doc_number, doc_type, phone), sale_items(id, name, quantity, unit_price_usd, total_usd), payments(method, amount_usd, amount_ves, bank_account_id)')
+             .eq('id', saleId)
+             .maybeSingle(),
+           supabase
+             .from('bank_accounts')
+             .select('id, bank_name, account_number, currency'),
+         ]);
 
-        if (saleData && isMounted) {
-          // A. Obtener datos del cliente desde tabla 'customers' si existe customer_id
-          let customerName = 'Consumidor Final';
-          let customerDoc = 'N/A';
-          let customerPhone = 'N/A';
+         const saleData = saleRes.data;
+         const bankAccounts = bankRes.data;
 
-          if (saleData.customer_id) {
-            const { data: customerData } = await supabase
-              .from('customers')
-              .select('name, doc_number, doc_type, phone')
-              .eq('id', saleData.customer_id)
-              .maybeSingle();
+         if (saleData && isMounted) {
+           const cust = (saleData as any).customers;
+           let customerName = 'Consumidor Final';
+           let customerDoc = 'N/A';
+           let customerPhone = 'N/A';
 
-            if (customerData) {
-              customerName = customerData.name || customerName;
-              customerDoc = customerData.doc_number ? `${customerData.doc_type ? customerData.doc_type + ' ' : ''}${customerData.doc_number}` : 'N/A';
-              customerPhone = customerData.phone || 'N/A';
-            }
-          }
+           if (cust) {
+             customerName = cust.name || customerName;
+             customerDoc = cust.doc_number ? `${cust.doc_type ? cust.doc_type + ' ' : ''}${cust.doc_number}` : 'N/A';
+             customerPhone = cust.phone || 'N/A';
+           } else if (saleData.customer_id) {
+             const { data: customerData } = await supabase
+               .from('customers')
+               .select('name, doc_number, doc_type, phone')
+               .eq('id', saleData.customer_id)
+               .maybeSingle();
+             if (customerData) {
+               customerName = customerData.name || customerName;
+               customerDoc = customerData.doc_number ? `${customerData.doc_type ? customerData.doc_type + ' ' : ''}${customerData.doc_number}` : 'N/A';
+               customerPhone = customerData.phone || 'N/A';
+             }
+           }
 
-          // B. Obtener artículos vendidos desde 'sale_items'
-          const { data: itemsData } = await supabase
-            .from('sale_items')
-            .select('*')
-            .eq('sale_id', saleId);
+           const rawItems = Array.isArray((saleData as any).sale_items) ? (saleData as any).sale_items : [];
+           const items: SaleItemDetail[] = rawItems.map((it: any) => ({
+             id: it.id,
+             name: it.name || 'Producto sin nombre',
+             quantity: Number(it.quantity) || 1,
+             unit_price_usd: Number(it.unit_price_usd) || 0,
+             total_usd: Number(it.total_usd) || ((Number(it.quantity) || 1) * (Number(it.unit_price_usd) || 0))
+           }));
 
-          const items: SaleItemDetail[] = (itemsData || []).map((it: any) => ({
-            id: it.id,
-            name: it.name || 'Producto sin nombre',
-            quantity: Number(it.quantity) || 1,
-            unit_price_usd: Number(it.unit_price_usd) || 0,
-            total_usd: Number(it.total_usd) || ((Number(it.quantity) || 1) * (Number(it.unit_price_usd) || 0))
-          }));
+           const bankMap = new Map((bankAccounts || []).map((b: any) => [b.id, b]));
+           const rawPayments = Array.isArray((saleData as any).payments) ? (saleData as any).payments : [];
+           const payments: PaymentRecordDetail[] = rawPayments.map((p: any) => {
+             const bank = p.bank_account_id ? bankMap.get(p.bank_account_id) : null;
+             return {
+               method: p.method || 'Efectivo',
+               amount_usd: Number(p.amount_usd) || 0,
+               amount_ves: Number(p.amount_ves) || 0,
+               bank_name: bank ? bank.bank_name : (p.method?.includes('Banesco') ? 'Banesco' : p.method?.includes('Venezuela') ? 'Banco de Venezuela' : p.method?.includes('Efectivo') ? 'Caja Efectivo' : undefined),
+               account_number: bank?.account_number
+             };
+           });
 
-          // C. Obtener pagos y cuentas bancarias desde 'payments' y 'bank_accounts'
-          const { data: paymentsData } = await supabase
-            .from('payments')
-            .select('*')
-            .eq('sale_id', saleId);
+           if (payments.length === 0) {
+             payments.push({
+               method: saleData.payment_type || 'Contado',
+               amount_usd: Number(saleData.total_usd) || 0,
+               amount_ves: Number(saleData.total_ves) || (Number(saleData.total_usd || 0) * Number(saleData.exchange_rate || 1))
+             });
+           }
 
-          // Cargar cuentas bancarias para asociar nombre del banco
-          const { data: bankAccounts } = await supabase
-            .from('bank_accounts')
-            .select('id, bank_name, account_number, currency');
-
-          const bankMap = new Map((bankAccounts || []).map((b: any) => [b.id, b]));
-
-          const payments: PaymentRecordDetail[] = (paymentsData || []).map((p: any) => {
-            const bank = p.bank_account_id ? bankMap.get(p.bank_account_id) : null;
-            return {
-              method: p.method || 'Efectivo',
-              amount_usd: Number(p.amount_usd) || 0,
-              amount_ves: Number(p.amount_ves) || 0,
-              bank_name: bank ? bank.bank_name : (p.method?.includes('Banesco') ? 'Banesco' : p.method?.includes('Venezuela') ? 'Banco de Venezuela' : p.method?.includes('Efectivo') ? 'Caja Efectivo' : undefined),
-              account_number: bank?.account_number
-            };
-          });
-
-          // Si no hay pagos registrados en 'payments', crear un registro representativo
-          if (payments.length === 0) {
-            payments.push({
-              method: saleData.payment_type || 'Contado',
-              amount_usd: Number(saleData.total_usd) || 0,
-              amount_ves: Number(saleData.total_ves) || (Number(saleData.total_usd || 0) * Number(saleData.exchange_rate || 1))
-            });
-          }
-
-          setData({
-            id: saleData.id,
-            doc_type: saleData.doc_type || 'FACTURA',
-            doc_number: saleData.doc_number || saleData.id.slice(0, 8),
-            created_at: saleData.created_at,
-            customer_name: customerName,
-            customer_doc: customerDoc,
-            customer_phone: customerPhone,
-            status: saleData.status || 'COMPLETADA',
-            exchange_rate: Number(saleData.exchange_rate) || 1,
-            total_usd: Number(saleData.total_usd) || 0,
-            total_ves: Number(saleData.total_ves) || (Number(saleData.total_usd || 0) * Number(saleData.exchange_rate || 1)),
-            items,
-            payments
-          });
-          setIsLoading(false);
-          return;
-        }
+           setData({
+             id: saleData.id,
+             doc_type: saleData.doc_type || 'FACTURA',
+             doc_number: saleData.doc_number || saleData.id.slice(0, 8),
+             created_at: saleData.created_at,
+             customer_name: customerName,
+             customer_doc: customerDoc,
+             customer_phone: customerPhone,
+             status: saleData.status || 'COMPLETADA',
+             exchange_rate: Number(saleData.exchange_rate) || 1,
+             total_usd: Number(saleData.total_usd) || 0,
+             total_ves: Number(saleData.total_ves) || (Number(saleData.total_usd || 0) * Number(saleData.exchange_rate || 1)),
+             items,
+             payments
+           });
+           setIsLoading(false);
+           return;
+         }
 
         // 2. Si no es de 'sales', buscar en /api/orders o datos locales de pedidos web
         const ordersRes = await fetch('/api/orders');

@@ -1,3 +1,10 @@
+## Auditoría de patrones Supabase (2026-10-30)
+- Instalada skill `supabase-postgres-best-practices` (supabase/agent-skills) en `.agents/skills/`.
+- `SaleDetailModal.tsx`: waterfall de 5 queries secuenciales → `Promise.all` + joins embebidos (1 round-trip).
+- `db.ts` compra interna: bucle N+1 (3N queries) → batch: 1 SELECT + UPDATEs paralelos + 1 INSERT.
+- Eliminados todos los `select('*')` de `db.ts` y `SaleDetailModal.tsx` → proyecciones explícitas.
+- Añadido filtro `organization_id` a consultas directas de suppliers, products y bank_accounts.
+- Build y lint limpios.
 ## Documentación y constitución (2026-10-29)
 - Actualizado `docs/sales.md` con la funcionalidad «Contacto por WhatsApp» en el detalle de pedidos (plantillas + mensaje editable).
 - Generada y ratificada `02-DOCS/wiki/sdd/constitution.md` (v1.0.0) con principios de stack, calidad, convenciones, dominio, entrega, seguridad, UX, performance y conocimiento; creado `CLAUDE.md` con puntero a la constitución.
