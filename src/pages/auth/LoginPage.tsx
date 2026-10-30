@@ -49,6 +49,10 @@ export function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (user) {
+      setError('Tienes otra sesión abierta. Ciérrala para continuar.');
+      return;
+    }
     setError(null);
     setSuccessMessage(null);
 
@@ -117,7 +121,61 @@ export function LoginPage() {
 
   return (
     <main className="auth-page">
-      {/* Botón Volver al Catálogo */}
+      {user && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.6)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 1200,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16
+          }}
+        >
+          <div
+            style={{
+              width: 'min(420px, 100%)',
+              background: '#fff',
+              borderRadius: 16,
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+              padding: 24,
+              textAlign: 'center'
+            }}
+          >
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800, color: '#0f172a' }}>Tienes otra sesión abierta</h3>
+            <p style={{ margin: '0 0 16px', fontSize: 13, color: '#64748b', lineHeight: 1.4 }}>
+              {user?.user_metadata?.full_name || user?.email || 'Usuario'} tiene una sesión activa. Ciérrala para poder ingresar con otra cuenta.
+            </p>
+            <button
+              type="button"
+              onClick={async () => {
+                await signOut();
+                setError(null);
+                setSuccessMessage('Sesión cerrada. Ya puedes iniciar sesión nuevamente.');
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '10px 16px',
+                borderRadius: 8,
+                background: '#fef2f2',
+                border: '1px solid #fca5a5',
+                color: '#dc2626',
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              <LogOut size={14} /> Cerrar sesión
+            </button>
+          </div>
+        </div>
+      )}
       <Link to="/" className="auth-back-link">
         <ArrowLeft className="w-4 h-4" />
         <span>Volver a la tienda</span>
@@ -154,55 +212,6 @@ export function LoginPage() {
               <span>{successMessage}</span>
             </div>
           )}
-
-           {user && (
-             <div
-               style={{
-                 background: '#f8fafc',
-                 border: '1.5px solid #e2e8f0',
-                 borderRadius: 12,
-                 padding: '12px 14px',
-                 marginBottom: 16,
-                 display: 'flex',
-                 alignItems: 'center',
-                 justifyContent: 'space-between',
-                 gap: 10
-               }}
-             >
-               <div style={{ minWidth: 0 }}>
-                 <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Sesión actualmente abierta:</div>
-                 <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                   {user?.user_metadata?.full_name || user?.email || 'Usuario'}
-                 </div>
-                 <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>Cierra la sesión para ingresar con otra cuenta.</div>
-               </div>
-               <button
-                 type="button"
-                 onClick={async () => {
-                   await signOut();
-                   setError(null);
-                   setSuccessMessage('Sesión cerrada. Ya puedes iniciar sesión nuevamente.');
-                 }}
-                 style={{
-                   display: 'flex',
-                   alignItems: 'center',
-                   gap: 6,
-                   padding: '7px 12px',
-                   borderRadius: 8,
-                   background: '#fef2f2',
-                   border: '1px solid #fca5a5',
-                   color: '#dc2626',
-                   fontSize: 12,
-                   fontWeight: 700,
-                   cursor: 'pointer',
-                   whiteSpace: 'nowrap'
-                 }}
-                 title="Cerrar esta sesión para ingresar con otra cuenta"
-               >
-                 <LogOut size={14} /> Cerrar sesión
-               </button>
-             </div>
-           )}
 
 
           {/* --- FORMULARIO CON CORREO / CONTRASEÑA --- */}
