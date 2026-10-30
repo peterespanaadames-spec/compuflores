@@ -1,5 +1,5 @@
 export type Currency = 'USD' | 'VES';
-export type SaleStatus = 'Pagada' | 'Pendiente' | 'Anulada';
+type SaleStatus = 'Pagada' | 'Pendiente' | 'Anulada';
 
 export type DeliveryStatus =
   | 'RECIBIDO'
@@ -36,7 +36,7 @@ export interface Product {
   image_url?: string;
 }
 
-export interface Customer {
+interface Customer {
   id: string;
   name: string;
   email: string;
@@ -45,14 +45,14 @@ export interface Customer {
   status: 'Activo' | 'Moroso';
 }
 
-export interface OrderActivityLog {
+interface OrderActivityLog {
   timestamp: string;
   action: string;
   description: string;
   user: string;
 }
 
-export interface DbOrderItem {
+interface DbOrderItem {
   id?: string;
   order_id?: string;
   product_id?: string;

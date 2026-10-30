@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-export const DEFAULT_SUPABASE_URL = 'https://knyqrwpaksawuxoqcayu.supabase.co';
+const DEFAULT_SUPABASE_URL = 'https://knyqrwpaksawuxoqcayu.supabase.co';
 
 /**
  * El navegador NUNCA recibe una credencial de Supabase.
@@ -14,7 +14,7 @@ export const hasBrowserSupabaseClient = false;
 
 /** Estado informado por el servidor. Se actualiza con refreshSupabaseStatus(). */
 export let isSupabaseConfigured = false;
-export let SUPABASE_URL = DEFAULT_SUPABASE_URL;
+let SUPABASE_URL = DEFAULT_SUPABASE_URL;
 
 export interface SupabaseServerStatus {
   supabaseConfigured: boolean;
@@ -25,7 +25,7 @@ export interface SupabaseServerStatus {
   credentialsSource: string;
 }
 
-export let supabaseServerStatus: SupabaseServerStatus = {
+let supabaseServerStatus: SupabaseServerStatus = {
   supabaseConfigured: false,
   supabaseConnected: false,
   missingTables: [],
@@ -81,8 +81,4 @@ export async function refreshSupabaseStatus(): Promise<SupabaseServerStatus> {
   }
 }
 
-/** Verifica la conexion consultando al servidor (no se usa la clave del navegador). */
-export const isSupabaseConnected = async (): Promise<boolean> => {
-  const status = await refreshSupabaseStatus();
-  return status.supabaseConnected;
-};
+

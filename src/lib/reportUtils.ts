@@ -36,7 +36,7 @@ export const getReportFooterHtml = (additionalText?: string): string => {
 /**
  * Construye filas de encabezado de Excel con el perfil del negocio
  */
-export function buildExcelHeaderRows(reportTitle: string): any[][] {
+function buildExcelHeaderRows(reportTitle: string): any[][] {
   const b = getBusinessProfile();
   return [
     [b.businessName],
@@ -72,7 +72,7 @@ export function createWorksheetWithBusinessHeader(
 /**
  * Genera un documento HTML completo para exportación .XLS con el membrete fiscal del negocio
  */
-export function buildXlsHtmlReport(options: {
+function buildXlsHtmlReport(options: {
   title: string;
   tableHtml: string;
 }): string {

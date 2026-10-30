@@ -96,7 +96,7 @@ export interface DbSale {
   created_at?: string;
 }
 
-export interface DbQuoteItem {
+interface DbQuoteItem {
   id?: string;
   sale_id: string;
   product_id?: string;
@@ -559,36 +559,6 @@ export async function updateSupplierInSupabase(id: string, updates: Partial<DbSu
   return true;
 }
 
-export async function deleteSupplierFromSupabase(id: string): Promise<boolean> {
-  try {
-    const res = await authenticatedFetch(`/api/suppliers/${encodeURIComponent(id)}`, {
-      method: 'DELETE'
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success) return true;
-    }
-  } catch {
-    // ignore
-  }
-
-  if (!isSupabaseConfigured) return true;
-
-  try {
-    const { error } = await supabase
-      .from('suppliers')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.warn('Aviso eliminando proveedor de Supabase:', error.message);
-    }
-    return true;
-  } catch (err) {
-    console.warn('Network notice deleting supplier from Supabase:', err);
-    return true;
-  }
-}
 
 export async function getActiveOrgId(): Promise<string | null> {
   // 1. Organizacion de la sesion activa (la resuelve el servidor con las RLS)
@@ -691,71 +661,6 @@ export async function fetchProductsFromSupabase(): Promise<DbProduct[]> {
   }
 }
 
-export async function fetchProductBySkuFromSupabase(sku: string): Promise<DbProduct | null> {
-  if (!sku) return null;
-  // 1. Try local server proxy
-  try {
-    const res = await fetch(`/api/products/${encodeURIComponent(sku)}`);
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && json.data) {
-        return json.data;
-      }
-    }
-  } catch {
-    // fallback
-  }
-
-  // 2. Direct Supabase
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('id, sku, name, description, price_usd, cost_usd, stock, min_stock, category, unit, status')
-      .eq('sku', sku)
-      .limit(1);
-
-    if (!error && Array.isArray(data) && data.length > 0) {
-      return data[0];
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-export async function fetchProductStockFromSupabase(sku: string): Promise<number> {
-  if (!sku) {
-    return 0;
-  }
-
-  // 1. Try server proxy
-  try {
-    const res = await fetch(`/api/products/${encodeURIComponent(sku)}/stock`);
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && typeof json.stock === 'number') {
-        return json.stock;
-      }
-    }
-  } catch {
-    // fallback
-  }
-
-  // 2. Direct Supabase
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('stock')
-      .eq('sku', sku)
-      .limit(1);
-
-    if (!error && Array.isArray(data) && data.length > 0) {
-      return Number(data[0].stock) || 0;
-    }
-  } catch {}
-
-  return 0;
-}
 
 export function isValidUuid(val?: string | null): boolean {
   if (!val || typeof val !== 'string') return false;
@@ -2081,7 +1986,7 @@ export async function deleteBankAccountInSupabase(
 // 9. COMPRAS E INGRESO DE INVENTARIO
 // ---------------------------------------------------------------------------
 
-export interface DbPurchaseItem {
+interface DbPurchaseItem {
   id?: string;
   purchase_id?: string;
   product_id?: string;
@@ -2557,7 +2462,6 @@ export async function createPurchaseInSupabase(input: {
 // 12. SEDES Y ALMACENES (BRANCHES)
 // ---------------------------------------------------------------------------
 
-export const DEFAULT_INITIAL_BRANCHES: DbBranch[] = [];
 
 const LEGACY_MOCK_BRANCH_CODES = new Set(['SP-01', 'SUC-02', 'SUC-03', 'SUC-04']);
 const LEGACY_MOCK_BRANCH_NAMES = new Set(['Tienda Bella Vista', 'Almacén Agua Dulce', 'Tienda Online - Almacén', 'luis bella vista']);
@@ -2813,7 +2717,7 @@ export type ExpenseFrequency =
   | 'ANUAL';
 export type ExpenseStatus = 'PENDIENTE' | 'PAGADO' | 'VENCIDO';
 
-export interface DbExpenseCategory {
+interface DbExpenseCategory {
   id: string;
   organization_id?: string;
   name: string;
@@ -2842,7 +2746,7 @@ export interface DbExpense {
   updated_at?: string;
 }
 
-export interface DbExpensePayment {
+interface DbExpensePayment {
   id: string;
   expense_id: string;
   organization_id?: string;

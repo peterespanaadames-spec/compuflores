@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { formatUSD, formatVES } from '../../../lib/currency';
 
-export interface CustomerPortalOrderItem {
+interface CustomerPortalOrderItem {
   sku?: string;
   name?: string;
   quantity?: number;

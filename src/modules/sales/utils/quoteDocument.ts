@@ -34,7 +34,7 @@ export interface QuoteDocumentData {
 /**
  * Genera el HTML formateado profesional de la cotización para impresión o archivo descargable
  */
-export function buildQuoteHTML(data: QuoteDocumentData): string {
+function buildQuoteHTML(data: QuoteDocumentData): string {
   const business = getBusinessProfile();
   const issueDate = data.createdAt ? new Date(data.createdAt).toLocaleDateString('es-VE', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString('es-VE');
   const validUntil = data.expiresAt ? new Date(data.expiresAt).toLocaleDateString('es-VE', { year: 'numeric', month: 'long', day: 'numeric' }) : `${data.validityDays || 7} días continuos`;

@@ -1,3 +1,16 @@
+## Limpieza de código (2026-10-30)
+- Eliminados 6 archivos de código muerto: Kpi.tsx, SupabaseConnectionModal.tsx, SalesCharts.tsx, SalesFilters.tsx, SalesKPIs.tsx, SalesTransactionsTable.tsx (confirmados por Knip y documentación).
+- Eliminadas 8 dependencias no usadas de package.json: @tanstack/react-query, csstype, eventemitter3, react-hook-form, react-redux, redux, reselect, zod.
+- currency.ts: eliminados 5 exports no usados (getDualPrice, calculateWeightedAverageCost, determineEffectiveRate, calculateDebtPayment, classifyExpenseConcept); DEFAULT_EXCHANGE_RATE e isFutureRateTime ahora no exportados.
+- roles.ts: INTERNAL_ROLES y ALL_MODULE_PERMISSIONS ahora no exportados.
+- client.ts: DEFAULT_SUPABASE_URL, SUPABASE_URL, supabaseServerStatus ahora no exportados; eliminado isSupabaseConnected.
+- db.ts: eliminadas 4 funciones no usadas (deleteSupplierFromSupabase, fetchProductBySkuFromSupabase, fetchProductStockFromSupabase, DEFAULT_INITIAL_BRANCHES); 4 interfaces ahora no exportadas (DbQuoteItem, DbPurchaseItem, DbExpenseCategory, DbExpensePayment).
+- reportUtils.ts: buildExcelHeaderRows y buildXlsHtmlReport ahora no exportados.
+- quoteDocument.ts: buildQuoteHTML ahora no exportado.
+- domain.ts: SaleStatus, Customer, OrderActivityLog, DbOrderItem ahora no exportados.
+- AuthContext.tsx: AuthErrorLike ahora no exportado.
+- CustomerPortal.tsx: CustomerPortalOrderItem ahora no exportado.
+- Build y lint limpios. Knip ahora solo reporta 3 entry points/scripts y 1 duplicate export (patrón normal).
 ## Auditoría de patrones Supabase (2026-10-30)
 - Instalada skill `supabase-postgres-best-practices` (supabase/agent-skills) en `.agents/skills/`.
 - `SaleDetailModal.tsx`: waterfall de 5 queries secuenciales → `Promise.all` + joins embebidos (1 round-trip).

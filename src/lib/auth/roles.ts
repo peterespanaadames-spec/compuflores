@@ -1,6 +1,6 @@
 // Lista única de roles internos del ERP.
 // Cualquier otro rol (por ejemplo 'cliente' o 'customer') es usuario de la tienda.
-export const INTERNAL_ROLES = [
+const INTERNAL_ROLES = [
   'gerente',
   'administrador',
   'admin',
@@ -23,7 +23,7 @@ export function isInternalRole(role?: string | null): boolean {
 }
 
 // Permiso por módulo (mismo vocabulario que usa el Sidebar en permissionKey).
-export const ALL_MODULE_PERMISSIONS = ['ventas', 'inventario', 'finanzas', 'reportes', 'usuarios'];
+const ALL_MODULE_PERMISSIONS = ['ventas', 'inventario', 'finanzas', 'reportes', 'usuarios'];
 
 /**
  * Permisos por defecto según el rol, mismo vocabulario del servidor

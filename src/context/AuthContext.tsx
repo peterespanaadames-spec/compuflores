@@ -33,7 +33,7 @@ export interface AuthSession {
   mode?: 'supabase' | 'local';
 }
 
-export interface AuthErrorLike {
+interface AuthErrorLike {
   message: string;
 }
 
