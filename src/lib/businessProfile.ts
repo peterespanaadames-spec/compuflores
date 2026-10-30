@@ -1,3 +1,5 @@
+import { authenticatedFetch } from './supabase/api';
+
 export interface BusinessProfile {
   businessName: string;
   slogan: string;
@@ -10,6 +12,21 @@ export interface BusinessProfile {
   favicon: string | null;
 }
 
+export async function refreshBusinessProfileFromServer(): Promise<BusinessProfile> {
+  try {
+    const res = await authenticatedFetch('/api/business-profile');
+    if (res.ok) {
+      const json = await res.json();
+      if (json?.success && json?.data) {
+        return saveBusinessProfile(json.data);
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return getBusinessProfile();
+}
+
 export function getBusinessProfile(): BusinessProfile {
   try {
     const raw = localStorage.getItem('frenyer_business_profile');
@@ -20,7 +37,7 @@ export function getBusinessProfile(): BusinessProfile {
     // ignore
   }
   return {
-    businessName: 'CompuRepuestos, C.A.',
+    businessName: 'Frenyer',
     slogan: 'Gestión empresarial inteligente',
     rif: 'J-123456789',
     email: 'contacto@frenyer.com',

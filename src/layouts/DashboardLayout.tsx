@@ -4,8 +4,9 @@ import { Menu, Sparkles, RefreshCw, Edit3, AlertCircle, ArrowUpRight, Check, X, 
 import { Sidebar } from '../components/ui/Sidebar';
 import { ManualBcvRateModal } from '../components/modals/ManualBcvRateModal';
 import { getActiveExchangeRate, setActiveExchangeRate, isFutureExchangeRate } from '../lib/currency';
-import { getBusinessProfile, BusinessProfile } from '../lib/businessProfile';
+import { getBusinessProfile, BusinessProfile, refreshBusinessProfileFromServer } from '../lib/businessProfile';
 import { useAuth } from '../context/AuthContext';
+import { InactivityLock } from '../components/auth/InactivityLock';
 import { isInternalRole, defaultPermissionsForRole } from '../lib/auth/roles';
 
 export function DashboardLayout() {
@@ -32,6 +33,10 @@ export function DashboardLayout() {
       window.removeEventListener('frenyer:business-profile-updated', handleProfileSync);
       window.removeEventListener('storage', handleProfileSync);
     };
+  }, []);
+
+  useEffect(() => {
+    refreshBusinessProfileFromServer().then((p) => setBusinessProfile(p)).catch(() => {});
   }, []);
 
   // Estado de la sesion activa: solo se usa para el guard de rol
@@ -243,7 +248,13 @@ export function DashboardLayout() {
           >
             {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <div className="topbar-title">{businessProfile.businessName || 'Frenyer'}</div>
+          <div className="topbar-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {businessProfile.logo ? (
+              <img src={businessProfile.logo} alt={businessProfile.businessName} style={{ maxHeight: 28, maxWidth: 120, objectFit: 'contain' }} />
+            ) : (
+              businessProfile.businessName || 'Frenyer'
+            )}
+          </div>
 
           {/* Right Header Area with BCV Pill & Actions */}
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
@@ -465,6 +476,8 @@ export function DashboardLayout() {
           setRateSource(src);
         }}
       />
+      {/* Bloqueo por inactividad (60 s) */}
+      <InactivityLock />
     </div>
   );
 }

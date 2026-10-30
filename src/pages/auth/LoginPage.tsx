@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { isInternalRole } from '../../lib/auth/roles';
@@ -35,6 +35,16 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [logo, setLogo] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/public/config')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json?.success && json?.data?.logo) setLogo(json.data.logo);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,11 +125,15 @@ export function LoginPage() {
       <section className="auth-container">
         {/* Cabecera */}
         <header className="auth-header">
-          <div className="auth-logo-icon">
-            <Sparkles className="w-6 h-6" />
-          </div>
+          {logo ? (
+            <img src={logo} alt="Frenyer" style={{ maxWidth: 220, maxHeight: 120, objectFit: 'contain', margin: '0 auto 14px' }} />
+          ) : (
+            <div className="auth-logo-icon">
+              <Sparkles className="w-6 h-6" />
+            </div>
+          )}
           <h2 className="auth-title">
-            {isRegister ? 'Crear Cuenta' : 'CompuRepuesto Flores Inversiones'}
+            {isRegister ? 'Crear Cuenta' : 'Frenyer'}
           </h2>
         </header>
 

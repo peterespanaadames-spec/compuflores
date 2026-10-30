@@ -24,6 +24,7 @@ import {
   MapPin,
   Phone,
   Monitor,
+  Printer,
   Copy,
   Eye,
   EyeOff
@@ -35,6 +36,7 @@ import { getActiveExchangeRate, setActiveExchangeRate, formatUSD, formatVES } fr
 import { authenticatedFetch } from '../../../lib/supabase/api';
 import { refreshSupabaseStatus } from '../../../lib/supabase/client';
 import { getBusinessProfile, saveBusinessProfile } from '../../../lib/businessProfile';
+import { getPrintSettings, savePrintSettings, refreshPrintSettingsFromServer } from '../../../lib/printSettings';
 import {
   DbBranch,
   fetchBranchesFromSupabase,
@@ -96,8 +98,33 @@ interface PaymentMethodRecord {
 }
 
 export function ConfigPage() {
+  const [deliveryRetiroEnabled, setDeliveryRetiroEnabled] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem('frenyer_delivery_methods');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return parsed?.retiro !== false;
+      }
+    } catch {}
+    return true;
+  });
+  const [deliveryDomicilioEnabled, setDeliveryDomicilioEnabled] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem('frenyer_delivery_methods');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return parsed?.domicilio === true;
+      }
+    } catch {}
+    return false;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('frenyer_delivery_methods', JSON.stringify({ retiro: deliveryRetiroEnabled, domicilio: deliveryDomicilioEnabled }));
+    } catch {}
+  }, [deliveryRetiroEnabled, deliveryDomicilioEnabled]);
   const [activeTab, setActiveTab] = useState<'negocio' | 'almacen' | 'usuarios' | 'auditoria' | 'respaldo'>('negocio');
-  // --- RESPALDO (descargas) ---
   const [isBackupLoading, setIsBackupLoading] = useState<'excel' | 'json' | null>(null);
   const [backupMessage, setBackupMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
 
@@ -719,6 +746,23 @@ export function ConfigPage() {
   const [mainCurrency, setMainCurrency] = useState('VES');
   const [stockAlert, setStockAlert] = useState(5);
   const [ticketFooter, setTicketFooter] = useState('¡Gracias por su compra!');
+  const [defaultPrintFormat, setDefaultPrintFormat] = useState('ticket80');
+  const [cashDrawerTrigger, setCashDrawerTrigger] = useState(true);
+  const [headerMessage, setHeaderMessage] = useState('¡Gracias por su compra en Bella Vista!');
+
+  useEffect(() => {
+    const ps = getPrintSettings();
+    setDefaultPrintFormat(ps.defaultFormat);
+    setCashDrawerTrigger(ps.cashDrawerTrigger);
+    setHeaderMessage(ps.headerMessage);
+    setTicketFooter(ps.footerMessage);
+    refreshPrintSettingsFromServer().then((s) => {
+      setDefaultPrintFormat(s.defaultFormat);
+      setCashDrawerTrigger(s.cashDrawerTrigger);
+      setHeaderMessage(s.headerMessage);
+      setTicketFooter(s.footerMessage);
+    }).catch(() => {});
+  }, []);
 
   // --- ASSOCIATED USERS & RBAC STATE ---
   const [users, setUsers] = useState<AssociatedUser[]>([]);
@@ -1458,15 +1502,103 @@ export function ConfigPage() {
                 />
               </div>
 
-              <div className="field full">
-                <label>Mensaje al pie del ticket</label>
-                <textarea
+            </div>
+          </Card>
+
+          {/* Section 4: Impresion, tickets y perifericos */}
+          <Card>
+            <div style={{ marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Printer size={18} /> IMPRESIÓN, TICKETS Y PERIFÉRICOS
+              </h3>
+              <span className="muted small">
+                Defina el formato por defecto de los comprobantes y administre las impresoras de tickets conectadas.
+              </span>
+            </div>
+
+            <div className="form-grid">
+              <div className="field">
+                <label>FORMATO DE COMPROBANTE POR DEFECTO</label>
+                <select
                   className="input"
-                  style={{ height: 80, padding: 12, resize: 'vertical' }}
-                  value={ticketFooter}
-                  onChange={(e) => setTicketFooter(e.target.value)}
+                  value={defaultPrintFormat}
+                  onChange={(e) => setDefaultPrintFormat(e.target.value)}
+                >
+                  <option value="ticket58">Ticket Térmico (58mm - Compacto)</option>
+                  <option value="ticket80">Ticket Térmico (80mm - Estándar)</option>
+                  <option value="carta">Documento Carta (Para cotizaciones)</option>
+                  <option value="pdf">Descargar PDF Automatizado</option>
+                </select>
+              </div>
+
+              <div className="field" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <div>
+                  <label style={{ margin: 0 }}>Disparo de Cajón Monedero</label>
+                  <span className="muted small" style={{ display: 'block', marginTop: 2 }}>
+                    Envía la señal de apertura de gaveta automáticamente al imprimir comprobante.
+                  </span>
+                </div>
+                <div className="switch-container" onClick={() => setCashDrawerTrigger(!cashDrawerTrigger)}>
+                  <div className={`switch-track ${cashDrawerTrigger ? 'active' : ''}`}>
+                    <div className="switch-thumb" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="field">
+                <label>MENSAJE DE ENCABEZADO / BIENVENIDA</label>
+                <input
+                  className="input"
+                  value={headerMessage}
+                  onChange={(e) => setHeaderMessage(e.target.value)}
+                  placeholder="¡Gracias por su compra en Bella Vista!"
                 />
               </div>
+
+              <div className="field">
+                <label>GARANTÍA / TÉRMINOS DE COMPRA (PIE)</label>
+                <input
+                  className="input"
+                  value={ticketFooter}
+                  onChange={(e) => setTicketFooter(e.target.value)}
+                  placeholder="Conserve su ticket para cambios dentro de las 48 horas."
+                />
+              </div>
+            </div>
+
+            <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+              <div style={{ marginBottom: 10 }}>
+                <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>HARDWARE E IMPRESORAS TÉRMICAS</h4>
+                <span className="muted small">
+                  Haga clic en "Buscar Impresoras" para escanear dispositivos térmicos USB, LAN o Bluetooth en la red local.
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button type="button" variant="primary" style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px' }}>
+                  <Printer size={14} /> Buscar Impresoras
+                </Button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+              <Button type="button" variant="primary" style={{ display: 'flex', alignItems: 'center', gap: 6, height: 40, padding: '0 20px' }} onClick={async () => {
+                const updated = savePrintSettings({
+                  defaultFormat: defaultPrintFormat as any,
+                  cashDrawerTrigger,
+                  headerMessage,
+                  footerMessage: ticketFooter
+                });
+                try {
+                  await authenticatedFetch('/api/print-settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updated)
+                  });
+                } catch {}
+                alert('Configuración de impresión guardada.');
+              }}>
+                <Save size={16} /> Guardar configuración de impresión
+              </Button>
             </div>
           </Card>
 
@@ -1476,7 +1608,32 @@ export function ConfigPage() {
       {/* Tab: Almacén y Sedes (Matching Image 2) */}
       {activeTab === 'almacen' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Header matching Image 2 */}
+          {/* Métodos de entrega habilitados */}
+          <Card>
+            <div style={{ marginBottom: 12 }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Métodos de entrega</h3>
+              <span className="muted small">Habilita los métodos disponibles en la tienda y en los pedidos.</span>
+            </div>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={deliveryRetiroEnabled}
+                  onChange={(e) => setDeliveryRetiroEnabled(e.target.checked)}
+                />
+                Retiro en tienda
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={deliveryDomicilioEnabled}
+                  onChange={(e) => setDeliveryDomicilioEnabled(e.target.checked)}
+                />
+                Entrega a Domicilio
+              </label>
+            </div>
+          </Card>
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
               <div style={{ color: '#0066f5', marginTop: 2 }}>

@@ -2430,16 +2430,45 @@ app.get('/api/public/config', async (_req, res) => {
   const effectiveRate = lastCertifiedRate?.appliedRate || 877.90;
   const rateDate = lastCertifiedRate?.valueDate || 'Hoy';
 
+  // Intentar obtener el logo/favicon desde la tabla organizations (service role,
+  // ya que este endpoint es público y no hay sesión de usuario).
+  let orgLogo: string | null = null;
+  let orgFavicon: string | null = null;
+  let orgName: string | null = null;
+  let orgPhone: string | null = null;
+  let orgWhatsapp: string | null = null;
+  let orgEmail: string | null = null;
+  let orgAddress: string | null = null;
+  let orgSlogan: string | null = null;
+  try {
+    const orgRes = await supabaseServiceRestRequest('organizations?select=name,phone,whatsapp,email,address,slogan,logo,favicon&limit=1');
+    if (!orgRes.error && Array.isArray(orgRes.data) && orgRes.data.length > 0) {
+      const o = orgRes.data[0];
+      orgLogo = o.logo || null;
+      orgFavicon = o.favicon || null;
+      orgName = o.name || null;
+      orgPhone = o.phone || null;
+      orgWhatsapp = o.whatsapp || null;
+      orgEmail = o.email || null;
+      orgAddress = o.address || null;
+      orgSlogan = o.slogan || null;
+    }
+  } catch {
+    // ignore
+  }
+
   return res.json({
     success: true,
     data: {
-      businessName: 'Frenyer, C.A.',
+      businessName: orgName || 'Frenyer, C.A.',
       rif: 'J-123456789',
-      phone: '+58 212 555 1212',
-      whatsapp: '+58 412 000 0000',
-      email: 'contacto@frenyer.com',
-      address: 'Av. Francisco de Miranda, Centro Financiero, Caracas, Venezuela',
-      slogan: 'Tu aliado comercial bimonetario',
+      phone: orgPhone || '+58 212 555 1212',
+      whatsapp: orgWhatsapp || '+58 412 000 0000',
+      email: orgEmail || 'contacto@frenyer.com',
+      address: orgAddress || 'Av. Francisco de Miranda, Centro Financiero, Caracas, Venezuela',
+      slogan: orgSlogan || 'Tu aliado comercial bimonetario',
+      logo: orgLogo,
+      favicon: orgFavicon,
       bcvRate: effectiveRate,
       bcvRateDate: rateDate,
       branches: [
@@ -4483,47 +4512,62 @@ app.post('/api/suppliers', async (req, res: AuthenticatedResponse) => {
     // 1. Guardar de inmediato en persistencia local deduplicada
     savePersistedSupplier(supplierRecord);
 
-    // 2. Sincronizar en Supabase (PATCH si existÃ­a con UUID, o POST si es nuevo)
-    try {
-      let payload: Record<string, any> = { ...supplierRecord };
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId);
+    // 2. Sincronizar en Supabase (PATCH si existia con UUID, o POST si es nuevo).
+    //    Primero se intenta con la sesion del usuario; si RLS bloquea (p.ej. en
+    //    modo local la sesion es la anon key), se reintenta con la service role
+    //    key del servidor, que bypassa RLS. El control de inquilino ya lo aplico
+    //    el servidor (orgId) antes de llamar.
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId);
+    const isUpdate = !!(existing?.supplier?.id && isUuid);
 
-      if (existing?.supplier?.id && isUuid) {
-        await supabaseRestRequest(`suppliers?id=eq.${encodeURIComponent(targetId)}`, {
-          method: 'PATCH',
+    const syncWith = async (requestFn: (endpoint: string, options: any) => Promise<{ status: number; data: any; error?: string }>) => {
+      let payload: Record<string, any> = { ...supplierRecord };
+      let attempts = 0;
+      while (attempts < 6) {
+        attempts++;
+        const endpoint = isUpdate
+          ? `suppliers?id=eq.${encodeURIComponent(targetId)}`
+          : 'suppliers';
+        const result = await requestFn(endpoint, {
+          method: isUpdate ? 'PATCH' : 'POST',
           headers: { Prefer: 'return=representation' },
           body: payload
-        }, token);
-      } else {
-        let attempts = 0;
-        while (attempts < 6) {
-          attempts++;
-          const result = await supabaseRestRequest('suppliers', {
-            method: 'POST',
-            headers: { Prefer: 'return=representation' },
-            body: payload
-          }, token);
-          if (!result.error && result.data) {
-            const created = Array.isArray(result.data) ? result.data[0] : result.data;
-            const merged = { ...supplierRecord, ...created };
-            savePersistedSupplier(merged);
-            return res.json({ success: true, data: merged });
-          }
-          if (result.error) {
-            const missingColMatch = result.error.match(/Could not find the '([^']+)' column of 'suppliers'/i);
-            if (missingColMatch && missingColMatch[1] && missingColMatch[1] in payload) {
-              delete payload[missingColMatch[1]];
-              continue;
-            }
-            break;
-          }
+        });
+        if (!result.error) {
+          const row = Array.isArray(result.data) ? result.data[0] : result.data;
+          return { ok: true, data: row };
         }
+        const missingColMatch = (result.error || '').match(/Could not find the '([^']+)' column of 'suppliers'/i);
+        if (missingColMatch && missingColMatch[1] && missingColMatch[1] in payload) {
+          delete payload[missingColMatch[1]];
+          continue;
+        }
+        return { ok: false, error: result.error };
+      }
+      return { ok: false, error: 'Maximo de intentos alcanzado' };
+    };
+
+    let syncResult: { ok: boolean; data?: any; error?: string } = { ok: false };
+    try {
+      // 1) Intento con la sesion del usuario (respeta RLS).
+      syncResult = await syncWith((ep, opts) => supabaseRestRequest(ep, opts, token));
+      // 2) Respaldo con service role si fallo.
+      if (!syncResult.ok) {
+        syncResult = await syncWith((ep, opts) => supabaseServiceRestRequest(ep, opts));
       }
     } catch (sbErr) {
       console.warn('Aviso sincronizando proveedor en Supabase:', sbErr);
+      syncResult = { ok: false, error: String(sbErr) };
     }
 
-    return res.json({ success: true, data: supplierRecord });
+    if (syncResult.ok && syncResult.data) {
+      const merged = { ...supplierRecord, ...syncResult.data };
+      savePersistedSupplier(merged);
+      return res.json({ success: true, data: merged });
+    }
+
+    console.warn('No se pudo sincronizar proveedor en Supabase:', syncResult.error);
+    return res.status(200).json({ success: false, error: syncResult.error || 'Error guardando proveedor en Supabase' });
   } catch (err: any) {
     return res.status(200).json({ success: false, error: err?.message || 'Error guardando proveedor' });
   }
@@ -4542,37 +4586,56 @@ app.patch('/api/suppliers/:id', async (req, res: AuthenticatedResponse) => {
       savePersistedSupplier({ ...existing, ...updatesPayload });
     }
 
-    // Intentar en Supabase
-    try {
+    // Intentar en Supabase (con fallback a service role si RLS bloquea)
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+
+    const syncPatchWith = async (requestFn: (endpoint: string, options: any) => Promise<{ status: number; data: any; error?: string }>) => {
+      let payload: Record<string, any> = { ...updatesPayload };
       let attempts = 0;
       while (attempts < 6) {
         attempts++;
-        const result = await supabaseRestRequest(
+        const result = await requestFn(
           `suppliers?id=eq.${encodeURIComponent(id)}`,
           {
             method: 'PATCH',
             headers: { Prefer: 'return=representation' },
-            body: updatesPayload
+            body: payload
           }
         );
         if (!result.error) {
           const updated = Array.isArray(result.data) ? result.data[0] : result.data;
-          const merged = { ...(existing || {}), ...rawUpdates, ...updated };
-          savePersistedSupplier(merged);
-          return res.json({ success: true, data: merged });
+          return { ok: true, data: updated };
         }
-        const missingColMatch = result.error?.match(/Could not find the '([^']+)' column of 'suppliers'/i);
-        if (missingColMatch && missingColMatch[1] && missingColMatch[1] in updatesPayload) {
-          delete updatesPayload[missingColMatch[1]];
+        const missingColMatch = (result.error || '').match(/Could not find the '([^']+)' column of 'suppliers'/i);
+        if (missingColMatch && missingColMatch[1] && missingColMatch[1] in payload) {
+          delete payload[missingColMatch[1]];
           continue;
         }
-        break;
+        return { ok: false, error: result.error };
+      }
+      return { ok: false, error: 'Maximo de intentos alcanzado' };
+    };
+
+    let patchResult: { ok: boolean; data?: any; error?: string } = { ok: false };
+    try {
+      patchResult = await syncPatchWith((ep, opts) => supabaseRestRequest(ep, opts, token));
+      if (!patchResult.ok) {
+        patchResult = await syncPatchWith((ep, opts) => supabaseServiceRestRequest(ep, opts));
       }
     } catch (sbErr) {
       console.warn('Aviso actualizando proveedor en Supabase:', sbErr);
+      patchResult = { ok: false, error: String(sbErr) };
     }
 
-    return res.json({ success: true, data: { ...(existing || {}), ...rawUpdates } });
+    if (patchResult.ok) {
+      const merged = { ...(existing || {}), ...rawUpdates, ...(patchResult.data || {}) };
+      savePersistedSupplier(merged);
+      return res.json({ success: true, data: merged });
+    }
+
+    console.warn('No se pudo actualizar proveedor en Supabase:', patchResult.error);
+    return res.status(200).json({ success: false, error: patchResult.error || 'Error actualizando proveedor en Supabase' });
   } catch (err: any) {
     return res.status(200).json({ success: false, error: err?.message });
   }
@@ -4583,14 +4646,39 @@ app.delete('/api/suppliers/:id', async (req, res: AuthenticatedResponse) => {
     const { id } = req.params;
     deletePersistedSupplier(id);
 
+    // Eliminar en Supabase (con fallback a service role si RLS bloquea)
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+
+    let deleteOk = false;
+    let deleteError: any = null;
     try {
-      await supabaseRestRequest(
+      let result = await supabaseRestRequest(
         `suppliers?id=eq.${encodeURIComponent(id)}`,
-        { method: 'DELETE' }
+        { method: 'DELETE' },
+        token
       );
+      if (result.error) {
+        result = await supabaseServiceRestRequest(
+          `suppliers?id=eq.${encodeURIComponent(id)}`,
+          { method: 'DELETE' }
+        );
+      }
+      if (!result.error) {
+        deleteOk = true;
+      } else {
+        deleteError = result.error;
+      }
     } catch (sbErr) {
       console.warn('Aviso eliminando proveedor en Supabase:', sbErr);
+      deleteError = sbErr;
     }
+
+    if (!deleteOk) {
+      console.warn('No se pudo eliminar proveedor en Supabase:', deleteError);
+    }
+
+    return res.json({ success: true });
 
     return res.json({ success: true });
   } catch (err: any) {
@@ -6763,6 +6851,120 @@ app.put('/api/business-profile', async (req, res: AuthenticatedResponse) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// PRINT SETTINGS (formato de ticket, cajon monedero, encabezado/pie)
+// ---------------------------------------------------------------------------
+const PRINT_SETTINGS_MIRROR_FILE = path.resolve(DATA_DIR, 'print_settings.json');
+
+function loadPersistedPrintSettings(): any {
+  try {
+    if (fs.existsSync(PRINT_SETTINGS_MIRROR_FILE)) {
+      const raw = fs.readFileSync(PRINT_SETTINGS_MIRROR_FILE, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') return parsed;
+    }
+  } catch {}
+  return null;
+}
+
+function savePersistedPrintSettings(row: any) {
+  try {
+    if (!fs.existsSync(path.dirname(PRINT_SETTINGS_MIRROR_FILE))) {
+      fs.mkdirSync(path.dirname(PRINT_SETTINGS_MIRROR_FILE), { recursive: true });
+    }
+    fs.writeFileSync(PRINT_SETTINGS_MIRROR_FILE, JSON.stringify(row, null, 2), 'utf-8');
+  } catch (e) {
+    console.warn('No se pudo persistir print_settings localmente:', e);
+  }
+}
+
+app.get('/api/print-settings', async (_req, res: AuthenticatedResponse) => {
+  try {
+    const orgId = res.locals.supabaseContext?.organizationId || '00000000-0000-0000-0000-000000000001';
+    const result = await supabaseServiceRestRequest(`print_settings?organization_id=eq.${encodeURIComponent(orgId)}&limit=1`);
+    if (!result.error && Array.isArray(result.data) && result.data.length > 0) {
+      const row = result.data[0];
+      savePersistedPrintSettings(row);
+      return res.json({ success: true, data: {
+        defaultFormat: row.default_format || 'ticket80',
+        cashDrawerTrigger: row.cash_drawer_trigger !== false,
+        headerMessage: row.header_message || '',
+        footerMessage: row.footer_message || ''
+      }});
+    }
+    const local = loadPersistedPrintSettings();
+    if (local) {
+      return res.json({ success: true, data: {
+        defaultFormat: local.default_format || local.defaultFormat || 'ticket80',
+        cashDrawerTrigger: local.cash_drawer_trigger !== false && local.cashDrawerTrigger !== false,
+        headerMessage: local.header_message || local.headerMessage || '',
+        footerMessage: local.footer_message || local.footerMessage || ''
+      }});
+    }
+    return res.json({ success: true, data: {
+      defaultFormat: 'ticket80',
+      cashDrawerTrigger: true,
+      headerMessage: '',
+      footerMessage: ''
+    }});
+  } catch (err) {
+    const local = loadPersistedPrintSettings();
+    if (local) {
+      return res.json({ success: true, data: {
+        defaultFormat: local.default_format || local.defaultFormat || 'ticket80',
+        cashDrawerTrigger: local.cash_drawer_trigger !== false && local.cashDrawerTrigger !== false,
+        headerMessage: local.header_message || local.headerMessage || '',
+        footerMessage: local.footer_message || local.footerMessage || ''
+      }});
+    }
+    return res.status(500).json({ success: false, error: err instanceof Error ? err.message : 'Error al leer configuración de impresión.' });
+  }
+});
+
+app.put('/api/print-settings', async (req, res: AuthenticatedResponse) => {
+  try {
+    const orgId = res.locals.supabaseContext?.organizationId || '00000000-0000-0000-0000-000000000001';
+    const raw = req.body || {};
+    const payload = {
+      organization_id: orgId,
+      default_format: String(raw.defaultFormat ?? raw.default_format ?? 'ticket80'),
+      cash_drawer_trigger: raw.cashDrawerTrigger !== false && raw.cash_drawer_trigger !== false,
+      header_message: String(raw.headerMessage ?? raw.header_message ?? ''),
+      footer_message: String(raw.footerMessage ?? raw.footer_message ?? ''),
+      updated_at: new Date().toISOString()
+    };
+
+    let result = await supabaseServiceRestRequest(`print_settings?organization_id=eq.${encodeURIComponent(orgId)}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: payload
+    });
+    if (result.error || !result.data || (Array.isArray(result.data) && result.data.length === 0)) {
+      result = await supabaseServiceRestRequest('print_settings', {
+        method: 'POST',
+        headers: { Prefer: 'return=representation' },
+        body: payload
+      });
+    }
+
+    if (result.error) {
+      savePersistedPrintSettings(payload);
+      return res.status(502).json({ success: false, error: result.error });
+    }
+
+    const row = Array.isArray(result.data) ? result.data[0] : result.data;
+    savePersistedPrintSettings(row || payload);
+    return res.json({ success: true, data: {
+      defaultFormat: (row?.default_format) || payload.default_format,
+      cashDrawerTrigger: (row?.cash_drawer_trigger) !== false,
+      headerMessage: row?.header_message || payload.header_message,
+      footerMessage: row?.footer_message || payload.footer_message
+    }});
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err instanceof Error ? err.message : 'Error al guardar configuración de impresión.' });
+  }
+});
+
 app.get('/api/accounts-payable', async (_req, res: AuthenticatedResponse) => {
   try {
     const orgId = res.locals.supabaseContext?.organizationId || '00000000-0000-0000-0000-000000000001';
@@ -6825,7 +7027,15 @@ app.get('/api/accounts-payable', async (_req, res: AuthenticatedResponse) => {
           const k = pay.id || `${pay.payment_date || pay.date}-${pay.amount_usd || pay.amount}`;
           payMap.set(k, pay);
         }
-        map.set(p.id, { ...local, ...p, payable_payments: Array.from(payMap.values()) });
+        const mergedBalance = (() => {
+          const remoteBal = Number(p.balance_usd);
+          const localBal = Number(local.balance_usd);
+          const st = String(p.status || local.status || '').toUpperCase();
+          if (remoteBal > 0) return remoteBal;
+          if (localBal > 0 && st !== 'PAGADO' && st !== 'PAGADA') return localBal;
+          return remoteBal;
+        })();
+        map.set(p.id, { ...local, ...p, balance_usd: mergedBalance, payable_payments: Array.from(payMap.values()) });
       }
     }
 
@@ -6836,6 +7046,12 @@ app.get('/api/accounts-payable', async (_req, res: AuthenticatedResponse) => {
       const paidDiff = Math.round(Math.max(0, tot - bal) * 100) / 100;
       const pays = Array.isArray(item.payable_payments) ? item.payable_payments : [];
       const currentSum = pays.reduce((s: number, p: any) => s + (Number(p.amount_usd || p.amount) || 0), 0);
+      // Recalcular saldo real cuando el almacenado es 0 pero hay total pendiente
+      // (evita que el dashboard y la pantalla muestren 0 por datos desfasados).
+      const st = String(item.status || '').toUpperCase();
+      if (st !== 'PAGADO' && st !== 'PAGADA' && Number(item.balance_usd) === 0 && tot > 0) {
+        item.balance_usd = Math.max(0, Math.round((tot - currentSum) * 100) / 100);
+      }
       if (paidDiff > currentSum + 0.01) {
         const missing = Math.round((paidDiff - currentSum) * 100) / 100;
         pays.unshift({

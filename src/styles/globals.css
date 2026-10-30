@@ -1988,12 +1988,11 @@ button {
   height: 52px;
   margin: 0 auto 14px;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--brand-500) 0%, #6366f1 100%);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  box-shadow: 0 8px 20px rgba(139, 120, 232, 0.3);
+  color: var(--text);
 }
 
 .auth-title {
@@ -2673,16 +2672,16 @@ button {
   .inv-sheet-actions button {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
-    height: 44px;
+    height: 40px;
     padding: 0 12px;
     border: 1px solid var(--border);
     border-radius: 10px;
     background: #fff;
     color: var(--text);
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 600;
     text-align: left;
     cursor: pointer;
   }
@@ -2690,6 +2689,53 @@ button {
   .inv-sheet-actions button svg { color: #64748b; flex: 0 0 auto; }
 }
 
+  /* Historial de movimientos: tabla en escritorio, una línea por movimiento en móvil */
+  .inv-history-mobile { display: none; }
+
+  @media (max-width: 640px) {
+    .inv-history-desktop { display: none !important; }
+    .inv-history-mobile { display: block; }
+.inv-hist-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.inv-hist-header span { flex: 0 0 auto; }
+.inv-hist-header span:nth-child(3) { flex: 1 1 auto; min-width: 0; }
+    .inv-hist-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 4px;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .inv-hist-row:last-child { border-bottom: none; }
+    .inv-hist-date { color: var(--muted); flex: 0 0 auto; }
+    .inv-hist-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+      flex: 0 0 auto;
+    }
+    .inv-hist-badge.in { background: #dcfce7; color: #15803d; }
+    .inv-hist-badge.out { background: #fee2e2; color: #dc2626; }
+    .inv-hist-doc { font-weight: 600; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .inv-hist-io { color: var(--muted); flex: 0 0 auto; }
+    .inv-hist-qty { font-weight: 700; flex: 0 0 auto; }
+    .inv-hist-qty.in { color: #15803d; }
+    .inv-hist-qty.out { color: #dc2626; }
+  }
 @keyframes inv-sheet-up {
   from { transform: translateY(14px); opacity: 0.6; }
   to { transform: translateY(0); opacity: 1; }
