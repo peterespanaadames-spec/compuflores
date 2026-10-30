@@ -1,117 +1,49 @@
 import { createBrowserRouter } from 'react-router-dom';
-import { ShopPage } from '../../modules/shop/pages/ShopPage';
 import { DashboardLayout } from '../../layouts/DashboardLayout';
-import { Dashboard } from '../../pages/Dashboard';
-import { Sales } from '../../modules/sales/pages/Sales';
-import { Inventory } from '../../modules/inventory/pages/Inventory';
-import { Finance } from '../../modules/finance/pages/Finance';
-import { Accounts } from '../../modules/accounts-receivable/pages/Accounts';
-import { Customers } from '../../modules/customers/pages/Customers';
-import { Alma } from '../../modules/alma/pages/Alma';
-
-// High-fidelity domain modules
-import { OrdersPage } from '../../modules/sales/pages/Orders';
-import { QuotesPage } from '../../modules/sales/pages/Quotes';
-import { SalesReportPage } from '../../modules/sales/pages/SalesReport';
-import { SaleDetailPage } from '../../modules/sales/pages/SaleDetailPage';
-import { InternalPurchasesPage } from '../../modules/inventory/pages/InternalPurchases';
-import { MovementsPage } from '../../modules/inventory/pages/Movements';
-import { DailyInventoryReportPage } from '../../modules/inventory/pages/DailyInventoryReport';
-import { CashPage } from '../../modules/finance/pages/Cash';
-import { BankAccountsPage } from '../../modules/finance/pages/BankAccounts';
-import { AccountsReportPage } from '../../modules/finance/pages/AccountsReport';
-import { ExpensesPage } from '../../modules/finance/pages/Expenses';
-import { SuppliersPage } from '../../modules/customers/pages/Suppliers';
-import { MarketingPage } from '../../modules/customers/pages/Marketing';
-import { CompanyHealthPage } from '../../modules/finance/pages/CompanyHealth';
-import { ProfitLossPage } from '../../modules/finance/pages/ProfitLoss';
-import { AccountsPayable } from '../../modules/finance/pages/AccountsPayable';
-import { ConfigPage } from '../../modules/alma/pages/Config';
-import { LoginPage } from '../../pages/auth/LoginPage';
-import { AuthCallback } from '../../pages/auth/AuthCallback';
 import { ProtectedRoute } from '../../components/auth/ProtectedRoute';
 
 export const router = createBrowserRouter([
-  // 1. Rutas públicas: Tienda/Landing, Login, Registro y Callback de OAuth
+  { path: '/', lazy: () => import('../../modules/shop/pages/ShopPage').then(m => ({ Component: m.ShopPage })) },
+  { path: '/login', lazy: () => import('../../pages/auth/LoginPage').then(m => ({ Component: m.LoginPage })) },
+  { path: '/registro', lazy: () => import('../../pages/auth/LoginPage').then(m => ({ Component: m.LoginPage })) },
+  { path: '/auth/callback', lazy: () => import('../../pages/auth/AuthCallback').then(m => ({ Component: m.AuthCallback })) },
   {
-    path: '/',
-    element: <ShopPage />,
-  },
-  {
-    path: '/login',
-    element: <LoginPage />,
-  },
-  {
-    path: '/registro',
-    element: <LoginPage />,
-  },
-  {
-    path: '/auth/callback',
-    element: <AuthCallback />,
-  },
-
-  // 2. Panel administrativo y de gestión empresarial (Protegido con ProtectedRoute)
-  {
-    element: (
-      <ProtectedRoute>
-        <DashboardLayout />
-      </ProtectedRoute>
-    ),
+    element: <ProtectedRoute><DashboardLayout /></ProtectedRoute>,
     children: [
-      { path: 'dashboard', element: <Dashboard /> },
-      { path: 'admin', element: <Dashboard /> },
-
-      // Ventas Flash
-      { path: 'ventas-flash/ventas', element: <Sales /> },
-      { path: 'ventas-flash/pedidos', element: <OrdersPage /> },
-      { path: 'ventas-flash/cotizaciones', element: <QuotesPage /> },
-      { path: 'ventas-flash/reporte', element: <SalesReportPage /> },
-      { path: 'ventas-flash/reporte/:id', element: <SaleDetailPage /> },
-
-      // Inventarios
-      { path: 'inventarios/productos', element: <Inventory /> },
-      { path: 'inventarios/compras', element: <InternalPurchasesPage /> },
-      { path: 'inventarios/movimientos', element: <MovementsPage /> },
-      { path: 'inventarios/reporte-diario', element: <DailyInventoryReportPage /> },
-
-      // Cuentas
-      { path: 'cuentas/caja', element: <CashPage /> },
-      { path: 'cuentas/bancos', element: <BankAccountsPage /> },
-      { path: 'cuentas/cobrar', element: <Accounts /> },
-      { path: 'cuentas/pagar', element: <AccountsPayable /> },
-      { path: 'cuentas/reporte', element: <AccountsReportPage /> },
-
-      // Gastos
-      { path: 'gastos', element: <ExpensesPage /> },
-
-      // Gestión de Contactos
-      { path: 'contactos/clientes', element: <Customers /> },
-      { path: 'contactos/proveedores', element: <SuppliersPage /> },
-      { path: 'contactos/proveedores/nuevo', element: <SuppliersPage /> },
-
-      // Marketing
-      { path: 'marketing', element: <MarketingPage /> },
-
-      // Finanzas
-      { path: 'finanzas/salud', element: <CompanyHealthPage /> },
-      { path: 'finanzas/salud-del-negocio', element: <CompanyHealthPage /> },
-      { path: 'finanzas/ganancias-perdidas', element: <ProfitLossPage /> },
-
-      // Configuración
-      { path: 'configuracion', element: <ConfigPage /> },
-
-      // Alma Copilot
-      { path: 'alma', element: <Alma /> },
-
-      // Rutas de compatibilidad histórica
-      { path: 'pedidos', element: <OrdersPage /> },
-      { path: 'ventas', element: <Sales /> },
-      { path: 'inventario', element: <Inventory /> },
-      { path: 'finanzas', element: <Finance /> },
-      { path: 'cuentas', element: <Accounts /> },
-      { path: 'cuentas-por-pagar', element: <AccountsPayable /> },
-      { path: 'finanzas/cuentas-por-pagar', element: <AccountsPayable /> },
-      { path: 'clientes', element: <Customers /> },
+      { path: 'dashboard', lazy: () => import('../../pages/Dashboard').then(m => ({ Component: m.Dashboard })) },
+      { path: 'admin', lazy: () => import('../../pages/Dashboard').then(m => ({ Component: m.Dashboard })) },
+      { path: 'ventas-flash/ventas', lazy: () => import('../../modules/sales/pages/Sales').then(m => ({ Component: m.Sales })) },
+      { path: 'ventas-flash/pedidos', lazy: () => import('../../modules/sales/pages/Orders').then(m => ({ Component: m.OrdersPage })) },
+      { path: 'ventas-flash/cotizaciones', lazy: () => import('../../modules/sales/pages/Quotes').then(m => ({ Component: m.QuotesPage })) },
+      { path: 'ventas-flash/reporte', lazy: () => import('../../modules/sales/pages/SalesReport').then(m => ({ Component: m.SalesReportPage })) },
+      { path: 'ventas-flash/reporte/:id', lazy: () => import('../../modules/sales/pages/SaleDetailPage').then(m => ({ Component: m.SaleDetailPage })) },
+      { path: 'inventarios/productos', lazy: () => import('../../modules/inventory/pages/Inventory').then(m => ({ Component: m.Inventory })) },
+      { path: 'inventarios/compras', lazy: () => import('../../modules/inventory/pages/InternalPurchases').then(m => ({ Component: m.InternalPurchasesPage })) },
+      { path: 'inventarios/movimientos', lazy: () => import('../../modules/inventory/pages/Movements').then(m => ({ Component: m.MovementsPage })) },
+      { path: 'inventarios/reporte-diario', lazy: () => import('../../modules/inventory/pages/DailyInventoryReport').then(m => ({ Component: m.DailyInventoryReportPage })) },
+      { path: 'cuentas/caja', lazy: () => import('../../modules/finance/pages/Cash').then(m => ({ Component: m.CashPage })) },
+      { path: 'cuentas/bancos', lazy: () => import('../../modules/finance/pages/BankAccounts').then(m => ({ Component: m.BankAccountsPage })) },
+      { path: 'cuentas/cobrar', lazy: () => import('../../modules/accounts-receivable/pages/Accounts').then(m => ({ Component: m.Accounts })) },
+      { path: 'cuentas/pagar', lazy: () => import('../../modules/finance/pages/AccountsPayable').then(m => ({ Component: m.AccountsPayable })) },
+      { path: 'cuentas/reporte', lazy: () => import('../../modules/finance/pages/AccountsReport').then(m => ({ Component: m.AccountsReportPage })) },
+      { path: 'gastos', lazy: () => import('../../modules/finance/pages/Expenses').then(m => ({ Component: m.ExpensesPage })) },
+      { path: 'contactos/clientes', lazy: () => import('../../modules/customers/pages/Customers').then(m => ({ Component: m.Customers })) },
+      { path: 'contactos/proveedores', lazy: () => import('../../modules/customers/pages/Suppliers').then(m => ({ Component: m.SuppliersPage })) },
+      { path: 'contactos/proveedores/nuevo', lazy: () => import('../../modules/customers/pages/Suppliers').then(m => ({ Component: m.SuppliersPage })) },
+      { path: 'marketing', lazy: () => import('../../modules/customers/pages/Marketing').then(m => ({ Component: m.MarketingPage })) },
+      { path: 'finanzas/salud', lazy: () => import('../../modules/finance/pages/CompanyHealth').then(m => ({ Component: m.CompanyHealthPage })) },
+      { path: 'finanzas/salud-del-negocio', lazy: () => import('../../modules/finance/pages/CompanyHealth').then(m => ({ Component: m.CompanyHealthPage })) },
+      { path: 'finanzas/ganancias-perdidas', lazy: () => import('../../modules/finance/pages/ProfitLoss').then(m => ({ Component: m.ProfitLossPage })) },
+      { path: 'configuracion', lazy: () => import('../../modules/alma/pages/Config').then(m => ({ Component: m.ConfigPage })) },
+      { path: 'alma', lazy: () => import('../../modules/alma/pages/Alma').then(m => ({ Component: m.Alma })) },
+      { path: 'pedidos', lazy: () => import('../../modules/sales/pages/Orders').then(m => ({ Component: m.OrdersPage })) },
+      { path: 'ventas', lazy: () => import('../../modules/sales/pages/Sales').then(m => ({ Component: m.Sales })) },
+      { path: 'inventario', lazy: () => import('../../modules/inventory/pages/Inventory').then(m => ({ Component: m.Inventory })) },
+      { path: 'finanzas', lazy: () => import('../../modules/finance/pages/Finance').then(m => ({ Component: m.Finance })) },
+      { path: 'cuentas', lazy: () => import('../../modules/accounts-receivable/pages/Accounts').then(m => ({ Component: m.Accounts })) },
+      { path: 'cuentas-por-pagar', lazy: () => import('../../modules/finance/pages/AccountsPayable').then(m => ({ Component: m.AccountsPayable })) },
+      { path: 'finanzas/cuentas-por-pagar', lazy: () => import('../../modules/finance/pages/AccountsPayable').then(m => ({ Component: m.AccountsPayable })) },
+      { path: 'clientes', lazy: () => import('../../modules/customers/pages/Customers').then(m => ({ Component: m.Customers })) },
     ],
   },
 ]);
