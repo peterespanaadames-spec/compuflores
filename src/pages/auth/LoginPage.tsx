@@ -12,13 +12,14 @@ import {
   ArrowLeft,
   AlertCircle,
   CheckCircle2,
-  Loader2
+  Loader2,
+  LogOut
 } from 'lucide-react';
 
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signInWithEmail, signUpWithEmail } = useAuth();
+  const { signInWithEmail, signUpWithEmail, user, signOut } = useAuth();
 
   // Modo inicial: login o registro
   const isRegisterInitial = location.pathname.includes('registro');
@@ -153,6 +154,56 @@ export function LoginPage() {
               <span>{successMessage}</span>
             </div>
           )}
+
+           {user && (
+             <div
+               style={{
+                 background: '#f8fafc',
+                 border: '1.5px solid #e2e8f0',
+                 borderRadius: 12,
+                 padding: '12px 14px',
+                 marginBottom: 16,
+                 display: 'flex',
+                 alignItems: 'center',
+                 justifyContent: 'space-between',
+                 gap: 10
+               }}
+             >
+               <div style={{ minWidth: 0 }}>
+                 <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Sesión actualmente abierta:</div>
+                 <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                   {user?.user_metadata?.full_name || user?.email || 'Usuario'}
+                 </div>
+                 <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>Cierra la sesión para ingresar con otra cuenta.</div>
+               </div>
+               <button
+                 type="button"
+                 onClick={async () => {
+                   await signOut();
+                   setError(null);
+                   setSuccessMessage('Sesión cerrada. Ya puedes iniciar sesión nuevamente.');
+                 }}
+                 style={{
+                   display: 'flex',
+                   alignItems: 'center',
+                   gap: 6,
+                   padding: '7px 12px',
+                   borderRadius: 8,
+                   background: '#fef2f2',
+                   border: '1px solid #fca5a5',
+                   color: '#dc2626',
+                   fontSize: 12,
+                   fontWeight: 700,
+                   cursor: 'pointer',
+                   whiteSpace: 'nowrap'
+                 }}
+                 title="Cerrar esta sesión para ingresar con otra cuenta"
+               >
+                 <LogOut size={14} /> Cerrar sesión
+               </button>
+             </div>
+           )}
+
 
           {/* --- FORMULARIO CON CORREO / CONTRASEÑA --- */}
           <form className="auth-form" onSubmit={handleSubmit}>
