@@ -31,7 +31,8 @@ import {
   Building,
   User,
   CreditCard,
-  Printer
+  Printer,
+  MessageCircle
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
@@ -98,6 +99,23 @@ function playNotificationChime() {
   }
 }
 
+function buildWhatsAppMessage(template: string, order: DbOrder): string {
+  const business = getBusinessProfile();
+  const items = (order.items || []).map(i => `- ${i.name} x${i.quantity}`).join('\n');
+  const total = `${formatUSD(order.total_usd)} / ${formatVES(order.total_ves)}`;
+  switch (template) {
+    case 'availability':
+      return `Hola ${order.customer_name},\n\nTe informamos sobre la disponibilidad de los productos de tu pedido #${order.order_number}:\n${items || '- (sin detalle)'}\n\nTodo está disponible para tu despacho o retiro. Avísanos si tienes alguna duda.\n\n${business.businessName}`;
+    case 'payment':
+      return `Hola ${order.customer_name},\n\nTe confirmamos que el pago de tu pedido #${order.order_number} ha sido verificado y aprobado exitosamente.\n\nTotal pagado: ${total}\n\nPronto procesaremos tu entrega. Gracias.\n${business.businessName}`;
+    case 'issue':
+      return `Hola ${order.customer_name},\n\nTe contactamos de ${business.businessName} por un inconveniente con tu pedido #${order.order_number}.\n\n[Describe aquí el inconveniente]\n\nDisculpa las molestias, estamos trabajando para resolverlo.\n\nGracias.`;
+    case 'default':
+    default:
+      return `Hola ${order.customer_name},\n\nTe contactamos de ${business.businessName} respecto a tu pedido #${order.order_number}.\n\nResumen:\n${items || '- (sin detalle)'}\nTotal: ${total}\n\nPor favor envíanos el comprobante de pago (capture) para validar tu orden.\n\nGracias.`;
+  }
+}
+
 export function OrdersPage() {
   const navigate = useNavigate();
 
@@ -122,6 +140,31 @@ export function OrdersPage() {
   // --- MODAL: ORDER DETAILS (SECCIÓN 8.7) ---
   const [selectedOrder, setSelectedOrder] = useState<DbOrder | null>(null);
 
+  // --- MODAL: CONTACTAR POR WHATSAPP (PEDIDO) ---
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
+  const [whatsAppTemplate, setWhatsAppTemplate] = useState('default');
+  const [whatsAppMessage, setWhatsAppMessage] = useState('');
+
+  const openWhatsAppModal = (order: DbOrder) => {
+    setWhatsAppTemplate('default');
+    setWhatsAppMessage(buildWhatsAppMessage('default', order));
+    setIsWhatsAppModalOpen(true);
+  };
+
+  const handleWhatsAppTemplateChange = (tpl: string, order: DbOrder) => {
+    setWhatsAppTemplate(tpl);
+    setWhatsAppMessage(buildWhatsAppMessage(tpl, order));
+  };
+
+  const handleSendWhatsApp = (order: DbOrder) => {
+    const business = getBusinessProfile();
+    const rawPhone = order.customer_phone || business.whatsapp || business.phone || '';
+    const cleanPhone = String(rawPhone).replace(/\D/g, '');
+    const phoneWithCode = cleanPhone.startsWith('58') ? cleanPhone : `58${cleanPhone.replace(/^0/, '')}`;
+    const url = `https://wa.me/${phoneWithCode}?text=${encodeURIComponent(whatsAppMessage)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+    setIsWhatsAppModalOpen(false);
+  };
   // --- MODAL: CREATE MANUAL ORDER ---
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [availableProducts, setAvailableProducts] = useState<any[]>([]);
@@ -1329,6 +1372,16 @@ export function OrdersPage() {
                 <button
                   type="button"
                   className="btn"
+                  onClick={() => selectedOrder && openWhatsAppModal(selectedOrder)}
+                  style={{ gap: 6, background: '#25D366', color: '#fff', border: 'none' }}
+                  title="Contactar al cliente por WhatsApp"
+                >
+                  <MessageCircle size={15} />
+                  <span>Contactar por WhatsApp</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn"
                   onClick={() => window.print()}
                   style={{ gap: 6 }}
                 >
@@ -1343,6 +1396,88 @@ export function OrdersPage() {
           </div>
         </div>
       )}
+      {/* MODAL: CONTACTAR POR WHATSAPP */}
+      {isWhatsAppModalOpen && selectedOrder && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.6)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 1200,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16
+          }}
+          onClick={() => setIsWhatsAppModalOpen(false)}
+        >
+          <div
+            style={{
+              width: 'min(640px, 100%)',
+              background: 'var(--surface)',
+              borderRadius: 'var(--radius-lg)',
+              border: '1px solid var(--border)',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+              overflow: 'hidden'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--sidebar)' }}>
+              <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <MessageCircle size={18} style={{ color: '#25D366' }} />
+                Contactar por WhatsApp
+              </h3>
+              <button type="button" onClick={() => setIsWhatsAppModalOpen(false)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--muted)' }}>
+                <X size={18} />
+              </button>
+            </div>
+            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, display: 'block', marginBottom: 6 }}>Plantilla de Mensaje (WhatsApp)</label>
+                <select
+                  className="input"
+                  value={whatsAppTemplate}
+                  onChange={e => handleWhatsAppTemplateChange(e.target.value, selectedOrder)}
+                  style={{ width: '100%', height: 36, fontSize: 13 }}
+                >
+                  <option value="default">Predeterminado (Datos + Capture)</option>
+                  <option value="availability">Disponibilidad de Producto</option>
+                  <option value="payment">Validación de Pago Exitoso</option>
+                  <option value="issue">Reportar Inconveniente</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, display: 'block', marginBottom: 6 }}>Mensaje (editable)</label>
+                <textarea
+                  className="input"
+                  value={whatsAppMessage}
+                  onChange={e => setWhatsAppMessage(e.target.value)}
+                  rows={14}
+                  style={{ width: '100%', fontSize: 14, lineHeight: 1.5, resize: 'vertical', minHeight: 260 }}
+                />
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--muted)' }}>
+                Se abrirá WhatsApp con el número del cliente {selectedOrder.customer_phone || '(sin teléfono, se usará el de la empresa)'}.
+              </div>
+            </div>
+            <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8, background: 'var(--sidebar)' }}>
+              <Button variant="secondary" onClick={() => setIsWhatsAppModalOpen(false)}>Cancelar</Button>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => handleSendWhatsApp(selectedOrder)}
+                style={{ gap: 6, background: '#25D366', color: '#fff', border: 'none' }}
+              >
+                <MessageCircle size={15} />
+                <span>Abrir WhatsApp</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
 
       {/* MODAL: NUEVO PEDIDO MANUAL */}
       {isCreateModalOpen && (

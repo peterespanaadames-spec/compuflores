@@ -95,3 +95,6 @@ workspace/
 .opencode/commands/specify.md
 .opencode/commands/tasks.md
 .opencode/commands/verify.md
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.opencode/rsc/ux

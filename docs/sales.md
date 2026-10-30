@@ -55,6 +55,7 @@ cotizaciones y reportes de venta. Es el módulo con mayor densidad funcional del
 - Filtros por estado de entrega, estado de pago, método de entrega, fecha y búsqueda.
 - Vista en **tabla ⇄ kanban** (`viewMode`, `Sales/Orders.tsx:116`).
 - Detalle del pedido, alta manual y exportación XLSX.
+- **Contacto por WhatsApp**: en el detalle del pedido, botón «Contactar por WhatsApp» abre un modal con plantillas (Predeterminado Datos+Capture, Disponibilidad de Producto, Validación de Pago Exitoso, Reportar Inconveniente) y mensaje editable; al enviar abre `wa.me` con el teléfono del cliente (fallback al WhatsApp del negocio en Config) y el texto codificado.
 - Campana sonora (Web Audio) cuando entra un pedido nuevo, con preferencia persistida en
   `frenyer_order_sound`.
 

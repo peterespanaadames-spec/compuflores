@@ -1,3 +1,12 @@
+## Documentación y constitución (2026-10-29)
+- Actualizado `docs/sales.md` con la funcionalidad «Contacto por WhatsApp» en el detalle de pedidos (plantillas + mensaje editable).
+- Generada y ratificada `02-DOCS/wiki/sdd/constitution.md` (v1.0.0) con principios de stack, calidad, convenciones, dominio, entrega, seguridad, UX, performance y conocimiento; creado `CLAUDE.md` con puntero a la constitución.
+
+
+## Contactar por WhatsApp en Pedidos (2026-10-29)
+- En `Orders.tsx` modal de detalle se agregó botón «Contactar por WhatsApp» (verde) que abre un modal con selector de plantilla (Predeterminado Datos+Capture, Disponibilidad de Producto, Validación de Pago Exitoso, Reportar Inconveniente) y textarea editable. Al abrir WhatsApp se usa el teléfono del cliente (fallback al WhatsApp del negocio en Config) con el mensaje codificado. Build y ESLint limpios.
+
+
 # MEMORY.md — FRENYER
 
 ## Bloqueo por inactividad en el panel ERP (2026-10-28)
