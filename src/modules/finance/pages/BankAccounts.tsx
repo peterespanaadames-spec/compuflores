@@ -1399,7 +1399,7 @@ export function BankAccountsPage() {
               <ArrowLeft size={16} /> Volver a cuentas
             </button>
 
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="bank-head-actions" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 onClick={() => {
                   setDpTargetId(selectedAccountForMovements.id);
@@ -1420,7 +1420,7 @@ export function BankAccountsPage() {
                   cursor: 'pointer'
                 }}
               >
-                <PlusCircle size={13} /> Ingresar saldo
+                <PlusCircle size={13} /> <span className="bank-btn-long">Ingresar saldo</span><span className="bank-btn-short">Ingresar</span>
               </button>
               <button
                 onClick={() => {
@@ -1442,7 +1442,7 @@ export function BankAccountsPage() {
                   cursor: 'pointer'
                 }}
               >
-                <MinusCircle size={13} /> Retirar saldo
+                <MinusCircle size={13} /> <span className="bank-btn-long">Retirar saldo</span><span className="bank-btn-short">Retirar</span>
               </button>
               <button
                 onClick={() => {
@@ -1466,7 +1466,7 @@ export function BankAccountsPage() {
                   boxShadow: '0 2px 6px rgba(45, 46, 50,0.25)'
                 }}
               >
-                <ArrowLeftRight size={13} /> Transferir entre Cuentas
+                <ArrowLeftRight size={13} /> <span className="bank-btn-long">Transferir entre Cuentas</span><span className="bank-btn-short">Transferir</span>
               </button>
             </div>
           </div>
@@ -1474,7 +1474,7 @@ export function BankAccountsPage() {
           {/* Account Detail Header */}
           <div className="card bank-acct-head" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <div style={{ width: 44, height: 44, borderRadius: 10, background: 'var(--brand-accent)', color: '#111827', border: '1px solid #FDF06F', display: 'grid', placeItems: 'center' }}>
+              <div className="bank-acct-avatar" style={{ width: 44, height: 44, borderRadius: 10, background: 'var(--brand-accent)', color: '#111827', border: '1px solid #FDF06F', display: 'grid', placeItems: 'center' }}>
                 <Building size={20} />
               </div>
               <div>
@@ -1501,7 +1501,7 @@ export function BankAccountsPage() {
             {/* Current Balance Indicator */}
             <div style={{ textAlign: 'right' }}>
               <span className="muted small" style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', color: '#94a3b8' }}>Saldo Actual</span>
-              <div style={{ fontSize: 26, fontWeight: 900, color: '#0f172a', lineHeight: 1 }}>
+              <div style={{ fontSize: 26, fontWeight: 900, color: '#0f172a', lineHeight: 1 }} className="bank-bal-value">
                 {selectedAccountForMovements.currency === 'VES' 
                   ? formatVES(selectedAccountForMovements.balance) 
                   : formatUSD(selectedAccountForMovements.balance, '$ ')}
@@ -1516,7 +1516,7 @@ export function BankAccountsPage() {
 
           {/* Table Toolbar / Controls */}
           <div className="card bank-mov-toolbar" style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 12 }}>
-            <div style={{ display: 'flex', gap: 6 }}>
+            <div className="bank-mov-tabs" style={{ display: 'flex', gap: 6 }}>
               {[
                 { id: 'Todos', label: `Todos (${filteredMovementsList.length})` },
                 { id: 'EsteMes', label: 'Este Mes' },
@@ -1573,7 +1573,7 @@ export function BankAccountsPage() {
               />
             </div>
 
-            <div style={{ display: 'flex', gap: 6 }}>
+            <div className="bank-mov-actions" style={{ display: 'flex', gap: 6 }}>
               <button
                 onClick={loadAllData}
                 style={{ height: 32, padding: '0 12px', borderRadius: 6, border: '1px solid #2D2E32', background: '#fff', color: '#2D2E32', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}
@@ -1593,7 +1593,7 @@ export function BankAccountsPage() {
           {/* Movements Table */}
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <div className="table-wrap" style={{ margin: 0, border: 'none', borderRadius: 0 }}>
-              <table className="table" style={{ fontSize: 12 }}>
+              <table className="table bank-mov-table" style={{ fontSize: 12 }}>
                 <thead>
                   <tr style={{ background: '#0a2540', color: '#fff' }}>
                     <th className="mov-col-oculta" style={{ color: '#fff', fontSize: 11 }}>CUENTA</th>
@@ -1620,14 +1620,17 @@ export function BankAccountsPage() {
                       return (
                         <tr key={mov.id}>
                           <td className="mov-col-oculta"><b>{selectedAccountForMovements.bank_name}</b></td>
-                          <td>{new Date(mov.created_at).toLocaleString('es-VE', { hour12: true })}</td>
+                          <td>
+                            <span className="mov-date-full">{new Date(mov.created_at).toLocaleString('es-VE', { hour12: true })}</span>
+                            <span className="mov-date-short">{new Date(mov.created_at).toLocaleDateString('es-VE')}</span>
+                          </td>
                           <td className="mov-col-oculta">{mov.user_name}</td>
                           <td>
                             <Badge tone={mov.type === 'ENTRADA' ? 'success' : 'danger'}>
                               {mov.type}
                             </Badge>
                           </td>
-                          <td>
+                          <td className="bank-mov-detail">
                             <div style={{ fontWeight: 600, color: '#334155' }}>{mov.concept}</div>
                             <span className="muted small" style={{ fontSize: 10 }}>Ref: {mov.reference}</span>
                           </td>

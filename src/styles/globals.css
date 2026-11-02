@@ -2456,6 +2456,8 @@ button {
    ===================================================================== */
 /* En escritorio solo se ven las etiquetas largas de los botones bancarios */
 .bank-btn-short { display: none; }
+/* En escritorio el detalle de movimientos muestra fecha completa; en móvil, corta */
+.mov-date-short { display: none; }
 
 @media (max-width: 900px) {
   /* CxC / CxP: listado y panel lateral se apilan en una sola columna */
@@ -2570,6 +2572,57 @@ button {
   .bank-mov-table td:nth-child(2),
   .report-table td:nth-child(1) {
     white-space: nowrap;
+  }
+  /* --- Movimientos: fecha corta en móvil (la completa solo vive en escritorio) --- */
+  .mov-date-full { display: none !important; }
+  .mov-date-short { display: inline; }
+
+  /* Movimientos — cabecera reducida */
+  .bank-acct-head { padding: 12px 14px !important; margin-bottom: 10px !important; gap: 10px !important; }
+  .bank-acct-avatar { width: 36px !important; height: 36px !important; border-radius: 8px !important; }
+  .bank-acct-avatar svg { width: 16px; height: 16px; }
+  .bank-acct-head h2 { font-size: 15px !important; }
+  .bank-acct-head .badge { font-size: 9px; }
+  .bank-bal-value { font-size: 20px !important; }
+
+  /* Movimientos — toolbar compacta */
+  .bank-mov-toolbar { padding: 8px 10px !important; margin-bottom: 10px !important; gap: 6px !important; }
+  .bank-mov-tabs button { flex: 1 1 0; min-width: 0; padding: 5px 6px !important; font-size: 10px !important; white-space: nowrap; }
+  .bank-mov-toolbar input[type="date"] { width: 38vw !important; }
+  .bank-mov-toolbar .bank-mov-search input { height: 30px; font-size: 11px !important; }
+  .bank-mov-actions button {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    height: 30px !important;
+    padding: 0 8px !important;
+    font-size: 10.5px !important;
+    white-space: nowrap;
+  }
+  .bank-mov-actions button svg { flex: 0 0 auto; }
+
+  /* Movimientos — tabla ajustada al ancho del celular */
+  .bank-mov-table { font-size: 10.5px; table-layout: fixed; }
+  /* Proporciones pensadas para el ancho: detalle flexible, monto completo */
+  .bank-mov-table th:nth-child(2) { width: 21%; }  /* fecha */
+  .bank-mov-table th:nth-child(4) { width: 17%; }  /* tipo */
+  .bank-mov-table th:nth-child(5) { width: 34%; }  /* detalle */
+  .bank-mov-table th:nth-child(8) { width: 28%; }  /* monto */
+  .bank-mov-table td:last-child { white-space: nowrap; text-align: right; }
+  .bank-mov-table th {
+    padding: 5px 6px !important;
+    font-size: 8.5px !important;
+    white-space: nowrap;
+  }
+  .bank-mov-table td { padding: 7px 6px !important; vertical-align: middle; overflow: hidden; }
+  .bank-mov-table td:nth-child(4) .badge { font-size: 8.5px !important; padding: 2px 5px !important; }
+  .bank-mov-table td.bank-mov-detail { max-width: 42vw; }
+  .bank-mov-table td.bank-mov-detail > div,
+  .bank-mov-table td.bank-mov-detail .muted.small {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
