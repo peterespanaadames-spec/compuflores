@@ -50,8 +50,10 @@ export function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (user) {
-      setError('Tienes otra sesión abierta. Ciérrala para continuar.');
-      return;
+      // REEMPLAZO DE SESIÓN: enviar credenciales ES la intención explícita de
+      // entrar con otra cuenta. La sesión anterior se cierra de verdad
+      // (revoca en Supabase + cookies fuera) y sigue el flujo normal.
+      await signOut();
     }
     setError(null);
     setSuccessMessage(null);
@@ -125,7 +127,7 @@ export function LoginPage() {
         <div style={{ width: 'min(460px, 100%)', background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 20px 60px rgba(0,0,0,0.25)', padding: 28, textAlign: 'center' }}>
           <h3 style={{ margin: '0 0 10px', fontSize: 22, fontWeight: 800, color: '#0f172a' }}>Tienes otra sesión abierta</h3>
           <p style={{ margin: '0 0 20px', fontSize: 16, color: '#64748b', lineHeight: 1.5 }}>
-            {user?.user_metadata?.full_name || user?.email || 'Usuario'} tiene una sesión activa. Ciérrala para poder ingresar con otra cuenta.
+            {user?.user_metadata?.full_name || user?.email || 'Usuario'} tiene una sesión activa en este navegador. Puedes cerrarla aquí, o si introduces las credenciales de otra cuenta, esta sesión se reemplazará automáticamente.
           </p>
           <button
             type="button"
