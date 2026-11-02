@@ -39,6 +39,7 @@ import {
 } from '../../../lib/supabase/db';
 import { authenticatedFetch } from '../../../lib/supabase/api';
 import { getBusinessProfile } from '../../../lib/businessProfile';
+import { isDecimalUnit, roundQuantity2, parseQuantityInput } from '../../../lib/inventory/units';
 
 /**
  * Rotación real por SKU: unidades vendidas en las últimas 300 ventas
@@ -83,6 +84,8 @@ interface CartItem {
   quantity: number;
   image?: string;
   stock: number;
+  /** Unidad de venta (Kilogramo/Metro admiten cantidades decimales). */
+  unit?: string;
 }
 
 interface PosProduct {
@@ -92,6 +95,7 @@ interface PosProduct {
   priceUSD: number;
   stock: number;
   image?: string;
+  unit?: string;
 }
 
 interface ParkedInvoice {
@@ -343,7 +347,8 @@ export function Sales() {
         category: p.category || 'General',
         priceUSD: Number(p.price_usd) || 0,
         stock: Number(p.stock) || 0,
-        image: p.image_url
+        image: p.image_url,
+        unit: p.unit || 'Unidad'
       })));
 
     setCustomers((dbCusts || []).map(c => ({
@@ -458,7 +463,8 @@ export function Sales() {
           name: product.name,
           priceUSD: product.priceUSD,
           quantity: 1,
-          stock: product.stock
+          stock: product.stock,
+          unit: product.unit
         }
       ];
     });
@@ -470,8 +476,11 @@ export function Sales() {
         .map(item => {
           if (item.sku === sku) {
             const currentQty = Number(item.quantity) || 1;
-            const newQty = currentQty + delta;
-            if (newQty > item.stock) {
+            // Kilogramo/Metro: cantidades con decimales a 2 casillas
+            const newQty = isDecimalUnit(item.unit)
+              ? roundQuantity2(currentQty + delta)
+              : currentQty + delta;
+            if (newQty > item.stock + 0.0001) {
               setStockAlertModal({
                 isOpen: true,
                 productName: item.name,
@@ -496,6 +505,25 @@ export function Sales() {
         if (item.sku === sku) {
           if (rawVal === '') {
             return { ...item, quantity: '' as any };
+          }
+          // Kilogramo/Metro: cantidades fraccionadas (ej. 0.5 kg, 1.25 m)
+          if (isDecimalUnit(item.unit)) {
+            const parsed = parseQuantityInput(rawVal);
+            if (parsed <= 0) {
+              return { ...item, quantity: 0.01 };
+            }
+            if (parsed > item.stock + 0.0001) {
+              setStockAlertModal({
+                isOpen: true,
+                productName: item.name,
+                sku: item.sku,
+                availableStock: item.stock,
+                message: `No se pueden colocar ${parsed} ${item.unit?.toLowerCase()} de "${item.name}". El stock máximo disponible en inventario es de ${item.stock}.`
+              });
+              showToast(`⚠️ Stock máximo alcanzado (${item.stock}) para ${item.name}`, 'info');
+              return { ...item, quantity: item.stock };
+            }
+            return { ...item, quantity: parsed };
           }
           const parsed = parseInt(rawVal, 10);
           if (isNaN(parsed)) {
@@ -527,11 +555,15 @@ export function Sales() {
       prev.map(item => {
         if (item.sku === sku) {
           const qty = Number(item.quantity);
-          if (!qty || isNaN(qty) || qty < 1) {
-            return { ...item, quantity: 1 };
+          if (!qty || isNaN(qty) || qty <= 0) {
+            return { ...item, quantity: isDecimalUnit(item.unit) ? 0.01 : 1 };
           }
-          if (qty > item.stock) {
+          if (qty > item.stock + 0.0001) {
             return { ...item, quantity: item.stock };
+          }
+          // Kilogramo/Metro conservan sus decimales; el resto es entero
+          if (isDecimalUnit(item.unit)) {
+            return { ...item, quantity: roundQuantity2(qty) };
           }
           return { ...item, quantity: Math.floor(qty) };
         }
@@ -581,7 +613,8 @@ export function Sales() {
       cost_usd: 0,
       price_usd: price,
       stock: 9999,
-      min_stock: 0,
+      // El ítem de venta libre se crea igual que cualquier producto: aviso con stock mínimo 3
+      min_stock: 3,
       unit: 'unidad',
       status: 'Activo'
     }).catch(() => {});
@@ -606,8 +639,11 @@ export function Sales() {
 
     // Normalize and validate that no item in cart exceeds available stock or is out of stock
     for (const item of cart) {
-      const q = Math.max(1, Number(item.quantity) || 1);
-      if (item.stock <= 0 || q > item.stock) {
+      // Kilogramo/Metro: cantidades a partir de 0.01; el resto a partir de 1
+      const q = isDecimalUnit(item.unit)
+        ? Math.max(0.01, Number(item.quantity) || 0.01)
+        : Math.max(1, Number(item.quantity) || 1);
+      if (item.stock <= 0 || q > item.stock + 0.0001) {
         setStockAlertModal({
           isOpen: true,
           productName: item.name,
@@ -1505,7 +1541,8 @@ export function Sales() {
                             </button>
                             <input
                               type="number"
-                              min="1"
+                              min={isDecimalUnit(item.unit) ? '0.01' : '1'}
+                              step={isDecimalUnit(item.unit) ? '0.01' : '1'}
                               max={item.stock}
                               value={item.quantity === ('' as any) ? '' : item.quantity}
                               onChange={(e) => setManualQuantity(item.sku, e.target.value)}
@@ -1517,7 +1554,7 @@ export function Sales() {
                                 }
                               }}
                               style={{
-                                width: 44,
+                                width: 48,
                                 height: 26,
                                 textAlign: 'center',
                                 border: 'none',

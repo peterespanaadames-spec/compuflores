@@ -28,6 +28,7 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { getActiveExchangeRate, convertUSDtoVES, formatVES } from '../../../lib/currency';
+import { isDecimalUnit, roundQuantity2, parseQuantityInput } from '../../../lib/inventory/units';
 import { getBusinessProfile } from '../../../lib/businessProfile';
 import { createWorksheetWithBusinessHeader } from '../../../lib/reportUtils';
 import {
@@ -307,8 +308,8 @@ export function Inventory() {
   const [newCost, setNewCost] = useState('0');
   const [newPrice, setNewPrice] = useState('0');
   const [newIva, setNewIva] = useState('General (16%)');
-  const [newStock, setNewStock] = useState('0');
-  const [newMinStock, setNewMinStock] = useState('0');
+  const [newStock, setNewStock] = useState('3');
+  const [newMinStock, setNewMinStock] = useState('3');
   const [newStatus, setNewStatus] = useState('Activo');
   const [newExpiry, setNewExpiry] = useState('');
   const [newLocation, setNewLocation] = useState('—');
@@ -445,8 +446,8 @@ export function Inventory() {
     setNewCost('0');
     setNewPrice('0');
     setNewIva('General (16%)');
-    setNewStock('0');
-    setNewMinStock('0');
+    setNewStock('3');
+    setNewMinStock('3');
     setNewStatus('Activo');
     setNewExpiry('');
     setNewLocation('—');
@@ -514,8 +515,9 @@ export function Inventory() {
       unit: newUnit || 'Unidad',
       cost_usd: parseFloat(newCost) || 0,
       price_usd: parseFloat(newPrice) || 0,
-      stock: parseInt(newStock) || 0,
-      min_stock: parseInt(newMinStock) || 0,
+      // Kilogramo/Metro admiten existencia con decimales (ej. 1.25 kg)
+      stock: isDecimalUnit(newUnit) ? parseQuantityInput(newStock) : (parseInt(newStock) || 0),
+      min_stock: isDecimalUnit(newUnit) ? parseQuantityInput(newMinStock) : (parseInt(newMinStock) || 0),
       status: newStatus,
       image_url: imageUrl || undefined
     };
@@ -613,11 +615,15 @@ export function Inventory() {
   // 7. Stock adjustment
   const handleSaveAdjustment = async () => {
     if (!adjustingProduct) return;
-    const amount = parseInt(adjustAmount, 10);
-    if (isNaN(amount) || amount < 0) {
+    // Kilogramo/Metro admiten ajuste con decimales (ej. +0.5 kg)
+    const numberAmount = isDecimalUnit(adjustingProduct.unit)
+      ? parseQuantityInput(adjustAmount)
+      : parseInt(adjustAmount, 10);
+    if (isNaN(numberAmount) || numberAmount < 0) {
       showToast('Ingrese una cantidad válida.', 'info');
       return;
     }
+    const amount = numberAmount;
     let finalStock = adjustingProduct.stock;
     let adjType: 'ENTRADA' | 'SALIDA' | 'CORRECCION' = 'CORRECCION';
     let qtyForMov = amount;
@@ -635,6 +641,9 @@ export function Inventory() {
       adjType = 'CORRECCION';
       qtyForMov = amount;
     }
+
+    // Kilogramo/Metro: evita colas flotantes (4.500000001) al sumar decimales
+    finalStock = roundQuantity2(finalStock);
 
     // Actualizar directamente en base de datos y registrar en Kárdex
     const res = await recordInventoryAdjustmentInSupabase({
@@ -1628,10 +1637,11 @@ export function Inventory() {
                   <input
                     className="input"
                     type="number"
+                    step={isDecimalUnit(newUnit) ? '0.01' : '1'}
                     style={{ height: 38, fontSize: 13 }}
                     value={newStock}
                     onChange={(e) => setNewStock(e.target.value)}
-                    placeholder="0"
+                    placeholder={isDecimalUnit(newUnit) ? '0.00' : '0'}
                     disabled={!!editingSku}
                   />
                 </div>
@@ -1646,10 +1656,11 @@ export function Inventory() {
                   <input
                     className="input"
                     type="number"
+                    step={isDecimalUnit(newUnit) ? '0.01' : '1'}
                     style={{ height: 38, fontSize: 13 }}
                     value={newMinStock}
                     onChange={(e) => setNewMinStock(e.target.value)}
-                    placeholder="0"
+                    placeholder={isDecimalUnit(newUnit) ? '0.00' : '0'}
                   />
                 </div>
 
@@ -2232,6 +2243,7 @@ export function Inventory() {
                 <input
                   type="number"
                   className="input"
+                  step={isDecimalUnit(adjustingProduct.unit) ? '0.01' : '1'}
                   value={adjustAmount}
                   onChange={(e) => setAdjustAmount(e.target.value)}
                 />
