@@ -2763,6 +2763,123 @@ button {
   to { transform: translateY(0); opacity: 1; }
 }
 
+/* =====================================================================
+   RESPONSIVE REPORTE DE VENTAS MÓVIL — /ventas-flash/reporte
+   Solo pantallas angostas (≤640px); el escritorio no cambia.
+   KPI en 2 tarjetas por fila, botones compactos y el detalle de
+   transacciones en una sola línea: fecha · comprobante · tipo ·
+   monto USD · acción (cliente, método, VES y estado quedan fuera).
+   ===================================================================== */
+/* En escritorio solo se ven las etiquetas largas del tipo de comprobante */
+.rep-short { display: none; }
+/* Punto de estado junto al monto: solo en móvil (la columna Estado se retira) */
+.rep-dot {
+  display: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  margin-right: 5px;
+  vertical-align: 1px;
+}
+
+@media (max-width: 640px) {
+  /* --- KPI: 2 tarjetas por fila, compactas --- */
+  .rep-sales-root .grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  .rep-sales-root .grid-4 .card { padding: 10px 8px !important; border-radius: 10px; }
+  .rep-sales-root .grid-4 .kpi-label { font-size: 9px; line-height: 1.15; }
+  .rep-sales-root .grid-4 .kpi-value { font-size: 14px; margin: 2px 0 0; }
+  .rep-sales-root .grid-4 .muted.small { display: none !important; }
+
+  /* --- Cabecera: título y botones minimizados --- */
+  .rep-sales-root .page-head h1 { font-size: 18px; }
+  .rep-sales-root .rep-head-actions {
+    width: 100%;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+  }
+  .rep-sales-root .rep-head-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 32px !important;
+    padding: 0 8px !important;
+    font-size: 11px !important;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  .rep-sales-root .rep-head-actions .btn svg { flex: 0 0 auto; }
+  .rep-sales-root .rep-head-actions .btn span { overflow: hidden; text-overflow: ellipsis; }
+  /* Sincronizar queda en icono puro (ya es uno de dos botones) */
+  .rep-sales-root .rep-sync-btn span { display: none !important; }
+
+  /* --- Toolbar de periodo y filtros: compactos, en 2 columnas --- */
+  .rep-sales-root .toolbar { padding: 10px !important; gap: 6px !important; margin-bottom: 12px !important; }
+  .rep-sales-root .toolbar .btn {
+    height: 30px !important;
+    padding: 0 8px !important;
+    font-size: 10.5px !important;
+  }
+  .rep-sales-root .toolbar input[type="date"] {
+    width: min(120px, 38vw) !important;
+    height: 32px !important;
+    font-size: 11px !important;
+  }
+  /* Búsqueda + los dos selectores comparten línea en parejas */
+  .rep-sales-root .toolbar select {
+    width: auto !important;
+    min-width: 0 !important;
+    flex: 1 1 46% !important;
+    height: 32px !important;
+    font-size: 11px !important;
+  }
+  .rep-sales-root .toolbar .search { max-width: none !important; flex: 1 1 100% !important; }
+  .rep-sales-root .toolbar .search .input { height: 32px !important; font-size: 11px !important; }
+
+  /* --- Tipo de comprobante: etiquetas abreviadas --- */
+  .rep-sales-root .rep-long { display: none !important; }
+  .rep-sales-root .rep-short { display: inline !important; }
+
+  /* --- Detalle de transacciones: una sola línea por fila --- */
+  .rep-sales-root .rep-sales-table { font-size: 10.5px; }
+  .rep-sales-root .rep-sales-table thead { display: table-row; }
+  .rep-sales-root .rep-sales-table th {
+    padding: 5px 5px !important;
+    font-size: 8.5px !important;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .rep-sales-root .rep-sales-table td {
+    padding: 7px 5px !important;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  /* Columnas fuera de la línea móvil: cliente, método, monto VES y estado */
+  .rep-sales-root .rep-sales-table .rep-col-oculta { display: none !important; }
+  /* Punto de estado visible junto al monto */
+  .rep-sales-root .rep-sales-table .rep-dot { display: inline-block; }
+  /* Fecha y monto compactos; comprobante prominente */
+  .rep-sales-root .rep-sales-table td:first-child { color: var(--muted); font-size: 10px; }
+  .rep-sales-root .rep-sales-table td:nth-child(2) {
+    max-width: 92px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rep-sales-root .rep-sales-table .badge {
+    font-size: 9px !important;
+    padding: 2px 6px !important;
+  }
+  .rep-sales-root .rep-sales-table .btn.ghost {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 6px !important;
+  }
+  .rep-sales-root .rep-sales-table .btn.ghost svg { width: 13px; height: 13px; }
+  /* Sin scroll lateral: la línea completa cabe */
+  .rep-sales-root .table-wrap { overflow-x: hidden; }
+}
+
 @media print {
   @page {
     size: letter;

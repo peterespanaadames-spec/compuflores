@@ -685,27 +685,39 @@ export const SalesReportPage = () => {
   const renderDocTypeBadge = (type: string) => {
     switch (type.toUpperCase()) {
       case 'FACTURA':
-        return <Badge tone="success">📄 Factura</Badge>;
+        return <Badge tone="success">📄 <span>Factura</span></Badge>;
       case 'NOTA':
-        return <Badge tone="warning">🚚 Nota Entrega</Badge>;
+        // En móvil la etiqueta se abrevia (Notas ocupan la línea del detalle)
+        return (
+          <Badge tone="warning">
+            🚚 <span className="rep-long">Nota Entrega</span>
+            <span className="rep-short">Nota</span>
+          </Badge>
+        );
       case 'PEDIDO':
       case 'PEDIDO_WEB':
-        return <Badge tone="brand">🌐 Pedido Web</Badge>;
+        return (
+          <Badge tone="brand">
+            🌐 <span className="rep-long">Pedido Web</span>
+            <span className="rep-short">Ped. Web</span>
+          </Badge>
+        );
       default:
         return <Badge tone="brand">{type}</Badge>;
     }
   };
 
   return (
-    <div className="content">
+    <div className="content rep-sales-root">
       {/* Header */}
       <div className="page-head">
         <div>
           <h1>Reporte de Ventas</h1>
         </div>
-        <div className="actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Button 
-            variant="secondary" 
+        <div className="actions rep-head-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Button
+            className="rep-sync-btn"
+            variant="secondary"
             onClick={fetchSalesReport}
             disabled={isLoading}
             title="Sincronizar comprobantes y ventas en tiempo real"
@@ -991,18 +1003,18 @@ export const SalesReportPage = () => {
               <div className="empty">No se encontraron ventas para los filtros seleccionados.</div>
             ) : (
               <div className="table-wrap">
-                <table className="table">
+                <table className="table rep-sales-table">
                   <thead>
                     <tr>
                       <th>Fecha</th>
                       <th>N° Comprobante</th>
                       <th>Tipo</th>
-                      <th>Cliente</th>
-                      <th>Método / Cuenta de Pago</th>
+                      <th className="rep-col-oculta">Cliente</th>
+                      <th className="rep-col-oculta">Método / Cuenta de Pago</th>
                       <th className="num">Monto USD</th>
-                      <th className="num">Monto VES</th>
-                      <th>Estado</th>
-                      <th className="num">Acciones</th>
+                      <th className="num rep-col-oculta">Monto VES</th>
+                      <th className="rep-col-oculta">Estado</th>
+                      <th className="num">Acción</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1011,7 +1023,7 @@ export const SalesReportPage = () => {
                         <td className="muted">{new Date(mov.created_at).toLocaleDateString()}</td>
                         <td className="font-bold">{mov.display_number}</td>
                         <td>{renderDocTypeBadge(mov.doc_type)}</td>
-                        <td>
+                        <td className="rep-col-oculta">
                           <div>
                             <div className="font-semibold">{mov.customer_name}</div>
                             {mov.customer_doc && mov.customer_doc !== 'N/A' && (
@@ -1019,14 +1031,26 @@ export const SalesReportPage = () => {
                             )}
                           </div>
                         </td>
-                        <td>
+                        <td className="rep-col-oculta">
                           <span className="badge" style={{ background: '#f0f1f6', color: '#5f6572' }}>
                             {mov.payment_method}
                           </span>
                         </td>
-                        <td className="num font-bold">{formatUSD(Number(mov.total_usd))}</td>
-                        <td className="num muted">{formatVES(Number(mov.total_usd) * exchangeRate)}</td>
-                        <td>
+                        <td className="num font-bold">
+                          <span
+                            aria-hidden="true"
+                            className="rep-dot"
+                            style={{
+                              background:
+                                mov.status === 'COMPLETADA' || mov.status === 'ENTREGADO' || mov.status === 'PAGADO'
+                                  ? '#22c55e'
+                                  : '#f59e0b'
+                            }}
+                          />
+                          {formatUSD(Number(mov.total_usd))}
+                        </td>
+                        <td className="num muted rep-col-oculta">{formatVES(Number(mov.total_usd) * exchangeRate)}</td>
+                        <td className="rep-col-oculta">
                           <span className={`badge ${mov.status === 'COMPLETADA' || mov.status === 'ENTREGADO' || mov.status === 'PAGADO' ? 'success' : 'warning'}`}>
                             {mov.status}
                           </span>
