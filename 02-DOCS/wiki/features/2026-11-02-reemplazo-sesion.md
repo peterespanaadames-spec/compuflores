@@ -7,13 +7,12 @@ tags: [sesiones, login, ux]
 ---
 
 # Reemplazo de sesión en el login
-
 ## Intención
 Durante las pruebas del bloque de seguridad, el usuario encontró fricción: al abrir `/login` con una sesión activa (p. ej. `fotocopiasfyp@gmail.com`), el sistema bloqueaba el ingreso de otra cuenta con un modal obligatorio («Tienes otra sesión abierta»). La auditoría original de sesiones dejaba abierto el diseño de la «política de reemplazo»; esta decisión la ratifica: **nuevo inicio = reemplazo automático**.
 
 ## Alcance
 - `LoginPage.handleSubmit`: si hay sesión activa al presionar «Entrar/Registrarse», se llama `signOut()` (revoca la sesión real en Supabase, borra cookies y limpia identidad local) y continúa el flujo con las credenciales escritas. El texto de error bloqueante fue retirado.
-- El modal informativo sigue apareciendo al VISITAR `/login` con sesión activa (con texto actualizado que avisa que introducir credenciales reemplaza automáticamente). El botón «Cerrar sesión» se mantiene para cerrarlo sin iniciar sesión.
+- **Modal eliminado por completo (2.ª iteración)**: el bloque `if (user) { return ... }` que renderizaba «Tienes otra sesión abierta» se retiró; visitar `/login` con sesión activa muestra el formulario directamente. Cero avisos: solo reemplazo silencioso.
 - No se cambian endpoints: la revocación real ya existía (`POST /api/auth/logout`, 2026-11-02).
 
 ## Comportamientos garantizados
