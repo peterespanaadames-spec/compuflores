@@ -7814,7 +7814,13 @@ const sessionActivity = new Map<string, SessionActivityEntry>();
 const lastSessionsSyncAt = new Map<string, number>();
 /** null = aun no verificado; false = tabla no disponible; true = operativa. */
 let appSessionsTableReady: boolean | null = null;
+let appSessionsTableReadyAt = 0;
 let warnedAppSessionsUnavailable = false;
+/**
+ * Si la migración 0029 se aplica DESPUÉS de arrancar el servidor, el estado
+ * "no disponible" se revisa cada 5 min para recuperarse sin reiniciar.
+ */
+const APP_SESSIONS_REPROBE_MS = 5 * 60_000;
 
 function isClienteRole(role: string): boolean {
   return !role || role === 'cliente';
@@ -7839,6 +7845,11 @@ async function fetchTrackedAppSession(
   tokenHash: string,
   accessToken: string
 ): Promise<{ lastSeen: number; revokedAt: number } | null | 'unknown'> {
+  // Autorecuperación: si la tabla se aplica a mitad de sesión, se reintenta.
+  if (appSessionsTableReady === false && Date.now() - appSessionsTableReadyAt > APP_SESSIONS_REPROBE_MS) {
+    appSessionsTableReady = null;
+    warnedAppSessionsUnavailable = false;
+  }
   const result = await supabaseRestRequest(
     `app_sessions?select=last_seen,revoked_at&token_hash=eq.${tokenHash}&limit=1`,
     {},
@@ -7846,6 +7857,7 @@ async function fetchTrackedAppSession(
   );
   if (result.status === 404) {
     appSessionsTableReady = false;
+    appSessionsTableReadyAt = Date.now();
     return 'unknown';
   }
   if (result.error || !Array.isArray(result.data)) {
@@ -7906,6 +7918,7 @@ async function syncTrackedAppSession(
     }
     if (write.error || write.status === 404) {
       appSessionsTableReady = false;
+      appSessionsTableReadyAt = Date.now();
     }
   } catch (err) {
     if (!warnedAppSessionsUnavailable) {
