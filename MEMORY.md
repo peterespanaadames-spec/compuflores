@@ -1,3 +1,14 @@
+## Sesiones y autorización en servidor (2026-11-02) — SDD aprobado
+- Spec aprobada en `02-DOCS/wiki/sdd/spec-sesiones-autorizacion.md`. Implementado en orden A0→A1→A2→A5→B.
+- **A0 (crítico)**: eliminadas las claves literales de respaldo en `/api/auth/local-login`; ahora la clave es ÚNICA (`FRENYER_ACCESS_KEY`). Condición antes: comparaba claves literales en el código → cualquiera con esa memoria podía entrar como admin.
+- **A1 RBAC en servidor** (`authenticateSupabaseRequest`): tras validar sesión ahora examina el rol. Listas: `authRequiredPrefixes` (montaje), `staffRestrictedPrefixes` (clasificación staff, incluye `/api/orders` GET/PUT/DELETE e `/api/inventory-movements` con montaje propio), `clienteReadableApi` (portal `/api/customer/*` completo y `GET /api/business-profile`), `adminOnlyPrefixes` (`/api/users`, `/api/backup` solo familia admin). Cliente con sesión → 403 `code=ROLE_FORBIDDEN`. PostgREST DELETE 204-con-RLS-bloqueado no aplica aquí porque el middleware es propio.
+- **A2 logout real**: `POST /api/auth/logout` ahora llama a `auth/v1/logout` con el token (solo si no es local), purga `sessionCache`/`sessionInflight`/`sessionActivity`. Verificado E2E con usuario QA real: tras logout, `Directa /auth/v1/user` 403 "Session … does not exist" y el proxy devuelve 401 al instante.
+- **A5 rate limit por correo**: claves `login-email:${email}` (5/15 min + penalización hasta 15 min) junto al límite por IP; éxito de login reinicia el contador del correo; logs `LOGIN_LIMITADO` distinguen motivo ip/correo. Verificado: 6 fallos con IP rotada → 429 con IPv6×6.
+- **B seguimiento de sesiones**: migración `0029_app_sessions_tracking.sql` (PENDIENTE de aplicar en SQL Editor; el bundle `/api/supabase/migrations-bundle` ya la incluye). Tabla `app_sessions(user_id, token_hash SHA-256, device_label, last_seen, revoked_at)`. Servidor: `syncTrackedAppSession` (upsert/throttle 60 s), inactividad server-side (personal 30 min, cliente 2 h; mapas en memoria por instancia, limitación Vercel serverless documentada), `POST /api/auth/logout-all` (revoca registro + purga memoria + revoca token actual; mod local solo limpia equipo). Sin la 0029 todo degrada con aviso (`appSessionsTableReady=false`).
+- **UI**: Config → Respaldo → tarjeta «Sesión» con botón «Cerrar sesión en todos los dispositivos» (confirmación keyword, llama `/api/auth/logout-all` y redirige a /login).
+- **Herramienta**: vitest ya no escanea `node_modules` (include `src/**`, `passWithNoTests`): el proyecto NO tenía tests propios — los "1415 pasados" eran pruebas de dependencias. ESLint ahora ignora las carpetas ` * - copia`.
+- **Lección de QA**: los tokens locales (`local.` HMAC) son SIN ESTADO: el logout solo los invalida vía cookie — no sirve para probar revocación; para eso usar login real de Supabase + usuario temporal creado/destruido con service role (patrón ya usado en este run). `X-Forwarded-For` es controlado por el cliente (limitación documentada del rate limit por IP en localhost).
+
 ## Limpieza de código (2026-10-30)
 - Eliminados 6 archivos de código muerto: Kpi.tsx, SupabaseConnectionModal.tsx, SalesCharts.tsx, SalesFilters.tsx, SalesKPIs.tsx, SalesTransactionsTable.tsx (confirmados por Knip y documentación).
 - Eliminadas 8 dependencias no usadas de package.json: @tanstack/react-query, csstype, eventemitter3, react-hook-form, react-redux, redux, reselect, zod.
@@ -260,7 +271,7 @@
 
 ## Configuración de credenciales (2026-10-22)
 - Credenciales Supabase cargadas en `.env.local` (URL del proyecto `knyqrwpaksawuxoqcayu.supabase.co`, clave anon public, service role, `FRENYER_ACCESS_KEY` y secreto de sesión). Estado `/api/supabase/status`: `configured:true, connected:true`.
-- El modo de login local (`/api/auth/local-login`) queda habilitado con la `FRENYER_ACCESS_KEY` (claves maestras de respaldo: `admin123` y `frenyer123`).
+- El modo de login local (`/api/auth/local-login`) funciona SOLO con la `FRENYER_ACCESS_KEY` (desde 2026-11-02, sin claves de respaldo literales; los valores no se documentan — regla de seguridad).
 - Nunca realizar consultas directas a la API REST de Supabase desde los componentes cliente React; todas las peticiones deben pasar por `/api/*` con `authenticatedFetch`.
 - Nunca bloquear la carga de paneles con verificaciones de estado rígidas si los endpoints del servidor manejan respaldos locales automáticos.
 - Mantener sincronizados `metadata.json` e `index.html`.

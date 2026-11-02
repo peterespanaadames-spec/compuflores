@@ -98,3 +98,9 @@ workspace/
 
 # rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .opencode/rsc/ux
+.opencode/rsc/tidy
+
+# Copias de respaldo del workspace (nunca subir: contienen variables de entorno,
+# credenciales e históricos; el proyecto solo se versiona limpio)
+* - copia/
+* - copia.*

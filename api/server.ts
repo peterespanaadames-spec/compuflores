@@ -223,6 +223,11 @@ interface RateLimitEntry {
 
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
+/** Cancela el contador de un limite (por ejemplo tras un login exitoso). */
+function resetRateLimit(key: string): void {
+  rateLimitStore.delete(key);
+}
+
 function getClientIp(req: Request): string {
   const forwarded = req.headers['x-forwarded-for'];
   if (typeof forwarded === 'string' && forwarded.length > 0) {
@@ -423,6 +428,79 @@ const tenantScopedTables = new Set([
   'inventory_movements'
 ]);
 
+// ---------------------------------------------------------------------------
+// RBAC EN SERVIDOR (capa 2: despues de validar la sesion)
+// Sesión valida NO es sinonimo de personal: un comprador con su cookie no
+// puede leer bancos, gastos, proveedores ni respaldos aunque su token sea
+// auténtico. El portal del comprador mantiene rutas propias.
+// ---------------------------------------------------------------------------
+/** Rutas que exigen sesión (independiente del rol) y se montan de una vez. */
+const authRequiredPrefixes = [
+  '/api/bcv/rates/manual',
+  '/api/exchange-rates/history',
+  '/api/reports/process-transactions',
+  '/api/customers',
+  '/api/bank-accounts',
+  '/api/payment-methods',
+  '/api/bank-movements',
+  '/api/bank-transfers',
+  '/api/suppliers',
+  '/api/quotes',
+  '/api/sales',
+  '/api/accounts-receivable',
+  '/api/accounts-payable',
+  '/api/purchases',
+  '/api/branches',
+  '/api/expenses',
+  '/api/expense-categories',
+  '/api/customer',
+  '/api/business-profile',
+  '/api/users',
+  '/api/backup'
+];
+
+/**
+ * Clasificación "solo personal": la lista de montaje MÁS las rutas con
+ * montaje propio (pedidos en GET/PUT/DELETE e inventario), que por su
+ * naturaleza no pueden ser consultadas por un comprador.
+ */
+const staffRestrictedPrefixes = [
+  ...authRequiredPrefixes,
+  '/api/orders',
+  '/api/inventory-movements'
+];
+
+/** Excepciones: recursos de la lista que el comprador SI consulta con su sesión. */
+const clienteReadableApi: Array<{ prefix: string; methods: string[] }> = [
+  // El portal del comprador (pedidos/compras/deseos/perfil) es suyo.
+  { prefix: '/api/customer', methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] },
+  // La tienda lee la marca (nombre/logo/RIF) para banners y comprobantes.
+  { prefix: '/api/business-profile', methods: ['GET'] }
+];
+
+/** Rutas reservadas a la familia administrativa (Configuración y respaldos). */
+const adminOnlyPrefixes = new Set(['/api/users', '/api/backup']);
+const adminFamilyRoles = new Set(['admin', 'administrador', 'superadmin', 'propietario', 'gerente', 'director']);
+
+function isStaffOnlyApiPath(originalPath: string, method: string): boolean {
+  const pathOnly = originalPath.split('?')[0] || originalPath;
+  for (const prefix of staffRestrictedPrefixes) {
+    if (!pathOnly.startsWith(`${prefix}/`) && pathOnly !== prefix && !pathOnly.startsWith(`${prefix}?`)) continue;
+    const readable = clienteReadableApi.find((entry) => pathOnly === entry.prefix || pathOnly.startsWith(`${entry.prefix}/`));
+    if (readable && readable.methods.map((m) => m.toUpperCase()).includes(method.toUpperCase())) return false;
+    return true;
+  }
+  return false;
+}
+
+function isAdminOnlyApiPath(originalPath: string): boolean {
+  const pathOnly = originalPath.split('?')[0] || originalPath;
+  for (const prefix of adminOnlyPrefixes) {
+    if (pathOnly === prefix || pathOnly.startsWith(`${prefix}/`) || pathOnly.startsWith(`${prefix}?`)) return true;
+  }
+  return false;
+}
+
 /** Lee el token de sesion desde la cookie httpOnly o la cabecera Authorization. */
 function readSessionToken(req: Request): string {
   const fromCookie = readCookie(req, SESSION_COOKIE);
@@ -518,6 +596,32 @@ async function authenticateSupabaseRequest(
     return;
   }
 
+  // RBAC: la sesion solo acredita identidad; el rol decide el alcance.
+  const roleForAccess = (session.local?.role || session.remote?.role || '').trim().toLowerCase();
+  const originalPath = req.originalUrl || req.url || '';
+
+  // Familia administrativa: solo gerencia/superior pasa.
+  if (isAdminOnlyApiPath(originalPath) && !adminFamilyRoles.has(roleForAccess)) {
+    logAuthEvent('ACCESO_DENEGADO', getClientIp(req), `rol=${roleForAccess || 'desconocido'} ruta=${originalPath.split('?')[0]}`);
+    res.status(403).json({
+      success: false,
+      error: 'No tienes autorizaciÃ³n para administrar esta secciÃ³n.',
+      code: 'ROLE_FORBIDDEN'
+    });
+    return;
+  }
+
+  // Personal: el comprador web queda fuera de los recursos del ERP.
+  if (isClienteRole(roleForAccess) && isStaffOnlyApiPath(originalPath, req.method)) {
+    logAuthEvent('ACCESO_DENEGADO', getClientIp(req), `rol=${roleForAccess || 'desconocido'} ruta=${originalPath.split('?')[0]}`);
+    res.status(403).json({
+      success: false,
+      error: 'Este recurso es exclusivo del personal del negocio.',
+      code: 'ROLE_FORBIDDEN'
+    });
+    return;
+  }
+
   applySessionContext(res, session);
   next();
 }
@@ -533,32 +637,7 @@ function requireAuthForMethods(methods: string[]) {
   };
 }
 
-app.use([
-  '/api/bcv/rates/manual',
-  '/api/exchange-rates/history',
-  '/api/reports/process-transactions',
-  '/api/customers',
-  '/api/bank-accounts',
-  '/api/payment-methods',
-  '/api/bank-movements',
-  '/api/bank-transfers',
-  '/api/suppliers',
-  '/api/quotes',
-  '/api/sales',
-  '/api/accounts-receivable',
-  '/api/accounts-payable',
-  '/api/purchases',
-  '/api/branches',
-  '/api/expenses',
-  '/api/expense-categories',
-  '/api/customer',
-  '/api/business-profile',
-  // Usuarios asociados: solo con sesion. Protege perfiles y habilita el
-  // respaldo service-role para que el administrador vea TODOS los usuarios.
-  '/api/users',
-  // Respaldo general (descarga Excel/JSON): contiene datos de todo el negocio.
-  '/api/backup'
-], authenticateSupabaseRequest);
+app.use(authRequiredPrefixes, authenticateSupabaseRequest);
 
 // Lectura y actualizacion de pedidos quedan protegidas; el POST y el rastreo /track siguen publicos
 // para permitir la compra y el seguimiento por numero de pedido.
@@ -1057,18 +1136,21 @@ function supabaseServiceRestRequest(
 /**
  * Llamada directa a la API de autenticacion de Supabase usando la credencial
  * que solo existe en el servidor. El navegador nunca la ve.
+ * accessToken: cuando se pasa, la peticion viaja identificada con ese token
+ * (necesario para revocar la sesion exacta, p. ej. en el logout).
  */
 function supabaseAuthRequest(
   endpoint: string,
   body: any,
-  method: 'POST' | 'GET' = 'POST'
+  method: 'POST' | 'GET' = 'POST',
+  accessToken?: string
 ): Promise<{ status: number; data: any; error?: string }> {
   return new Promise((resolve) => {
     const url = new URL(`${SUPABASE_URL}/auth/v1/${endpoint.replace(/^\//, '')}`);
     const bodyStr = body ? JSON.stringify(body) : null;
     const headers: Record<string, string> = {
       'apikey': SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`,
       'Accept': 'application/json'
     };
 
@@ -7710,6 +7792,154 @@ const sessionCache = new Map<string, CachedSession>();
 type ResolvedRemoteSession = { user: any; role: string; organizationId: string };
 const sessionInflight = new Map<string, Promise<ResolvedRemoteSession | null>>();
 
+// ---------------------------------------------------------------------------
+// SEGUIMIENTO DE SESIONES (requiere migracion 0029_app_sessions_tracking.sql)
+// Tabla app_sessions: fila por token activo (hash SHA-256, nunca el token),
+// con ultima actividad y revoca. Todo el acceso se hace via PostgREST con el
+// token del propio usuario; si la tabla no existe (migracion pendiente), el
+// sistema degrada con un aviso y las sesiones siguen funcionando como antes.
+// ---------------------------------------------------------------------------
+const APP_SESSIONS_SYNC_MIN_MS = 60_000; // cadencia de escritura/verificacion
+const IDLE_LIMIT_INTERNAL_MS = 30 * 60_000; // rol interno: 30 min de inactividad
+const IDLE_LIMIT_CLIENTE_MS = 2 * 60 * 60_000; // comprador web: 2 horas
+
+interface SessionActivityEntry {
+  lastSeen: number;
+  role: string;
+  userId: string;
+}
+
+/** Actividad por token (en esta instancia de proceso). */
+const sessionActivity = new Map<string, SessionActivityEntry>();
+const lastSessionsSyncAt = new Map<string, number>();
+/** null = aun no verificado; false = tabla no disponible; true = operativa. */
+let appSessionsTableReady: boolean | null = null;
+let warnedAppSessionsUnavailable = false;
+
+function isClienteRole(role: string): boolean {
+  return !role || role === 'cliente';
+}
+
+function idleLimitForRole(role: string): number {
+  return isClienteRole(role) ? IDLE_LIMIT_CLIENTE_MS : IDLE_LIMIT_INTERNAL_MS;
+}
+
+function hashSessionToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+/** Etiqueta de dispositivo para el seguimiento de sesiones (User-Agent). */
+function deviceLabelOf(req: Request): string {
+  const raw = String((req.headers['user-agent'] as string | undefined) || '').trim();
+  return (raw.slice(0, 120) || 'Dispositivo desconocido');
+}
+
+/** Lee la fila de seguimiento del token. 'unknown' = tabla no disponible. */
+async function fetchTrackedAppSession(
+  tokenHash: string,
+  accessToken: string
+): Promise<{ lastSeen: number; revokedAt: number } | null | 'unknown'> {
+  const result = await supabaseRestRequest(
+    `app_sessions?select=last_seen,revoked_at&token_hash=eq.${tokenHash}&limit=1`,
+    {},
+    accessToken
+  );
+  if (result.status === 404) {
+    appSessionsTableReady = false;
+    return 'unknown';
+  }
+  if (result.error || !Array.isArray(result.data)) {
+    return 'unknown';
+  }
+  appSessionsTableReady = true;
+  const row = result.data[0] as { last_seen?: string; revoked_at?: string } | undefined;
+  if (!row) return null;
+  return {
+    lastSeen: Date.parse(row.last_seen || '') || Date.now(),
+    revokedAt: row.revoked_at ? Date.parse(row.revoked_at) : 0
+  };
+}
+
+/** Crea o actualiza la fila de seguimiento y detecta la revocacion remota. */
+async function syncTrackedAppSession(
+  accessToken: string,
+  tokenHash: string,
+  userId: string,
+  role: string,
+  deviceLabel: string
+): Promise<{ revoked: boolean }> {
+  if (appSessionsTableReady === false) return { revoked: false };
+
+  try {
+    const nowMs = Date.now();
+    const tracked = await fetchTrackedAppSession(tokenHash, accessToken);
+    if (tracked === 'unknown') return { revoked: false };
+    if (tracked?.revokedAt > 0) return { revoked: true };
+
+    if (nowMs - (lastSessionsSyncAt.get(tokenHash) || 0) < APP_SESSIONS_SYNC_MIN_MS) {
+      return { revoked: false };
+    }
+    lastSessionsSyncAt.set(tokenHash, nowMs);
+
+    let write = { status: 200, data: null as any, error: undefined as string | undefined };
+    if (tracked) {
+      write = await supabaseRestRequest(
+        `app_sessions?token_hash=eq.${tokenHash}`,
+        { method: 'PATCH', body: { last_seen: new Date(nowMs).toISOString() } },
+        accessToken
+      );
+    } else {
+      write = await supabaseRestRequest(
+        'app_sessions?on_conflict=token_hash',
+        {
+          method: 'POST',
+          body: {
+            user_id: userId,
+            token_hash: tokenHash,
+            device_label: deviceLabel,
+            last_seen: new Date(nowMs).toISOString()
+          },
+          headers: { Prefer: 'resolution=merge-duplicates' }
+        },
+        accessToken
+      );
+    }
+    if (write.error || write.status === 404) {
+      appSessionsTableReady = false;
+    }
+  } catch (err) {
+    if (!warnedAppSessionsUnavailable) {
+      warnedAppSessionsUnavailable = true;
+      console.warn('Aviso: el seguimiento de sesiones no esta disponible (migracion 0029 pendiente):', err);
+    }
+  }
+  return { revoked: false };
+}
+
+/** Marca un token como revocado en la tabla de seguimiento (best effort). */
+async function revokeTrackedAppSession(tokenHash: string, accessToken: string): Promise<void> {
+  if (appSessionsTableReady === false) return;
+  try {
+    await supabaseRestRequest(
+      `app_sessions?token_hash=eq.${tokenHash}`,
+      { method: 'PATCH', body: { revoked_at: new Date().toISOString() } },
+      accessToken
+    );
+  } catch {
+    // Best effort: la memoria local ya quedo purgada.
+  }
+}
+
+/** Purga la memoria local de todas las sesiones de un usuario. */
+function purgeSessionMemoryByUser(userId: string): void {
+  for (const [tokenHash, entry] of sessionActivity.entries()) {
+    if (entry.userId === userId) sessionActivity.delete(tokenHash);
+  }
+  for (const [token, entry] of sessionCache.entries()) {
+    if (entry.userId === userId) sessionCache.delete(token);
+  }
+}
+
 function resolveRemoteSession(token: string): Promise<ResolvedRemoteSession | null> {
   let inflight = sessionInflight.get(token);
   if (!inflight) {
@@ -7750,8 +7980,40 @@ async function resolveRequestSession(
 
   if (!isSupabaseConfigured) return null;
 
+  const tokenHash = hashSessionToken(token);
+
+  // Expiracion por inactividad supervisada en ESTA instancia (instantanea).
+  const activity = sessionActivity.get(tokenHash);
+  if (activity) {
+    const idleMs = Date.now() - activity.lastSeen;
+    if (idleMs > idleLimitForRole(activity.role)) {
+      sessionActivity.delete(tokenHash);
+      sessionCache.delete(token);
+      sessionInflight.delete(token);
+      void revokeTrackedAppSession(tokenHash, token);
+      logAuthEvent('SESION_INACTIVA', getClientIp(req), `usuario=${activity.userId} inactividadMin=${Math.round(idleMs / 60_000)}`);
+      return null;
+    }
+    activity.lastSeen = Date.now();
+  }
+
   const cached = sessionCache.get(token);
   if (cached && cached.expiresAt > Date.now()) {
+    // Verificacion periodica del registro (revocacion remota + ultima actividad).
+    if (appSessionsTableReady !== false && Date.now() - (lastSessionsSyncAt.get(tokenHash) || 0) >= APP_SESSIONS_SYNC_MIN_MS) {
+      const tracked = await syncTrackedAppSession(
+        token,
+        tokenHash,
+        cached.userId,
+        cached.role,
+        deviceLabelOf(req)
+      );
+      if (tracked.revoked) {
+        purgeSessionMemoryByToken(token);
+        logAuthEvent('SESION_REVOCADA', getClientIp(req), `usuario=${cached.userId}`);
+        return null;
+      }
+    }
     return {
       token,
       local: null,
@@ -7773,6 +8035,21 @@ async function resolveRequestSession(
       userId: resolved.user.id || '',
       expiresAt: Math.min(tokenExpiry || Date.now() + 5 * 60_000, Date.now() + 5 * 60_000)
     });
+
+    // Registrar la sesion en el seguimiento (crea/actualiza la fila).
+    const tracked = await syncTrackedAppSession(
+      token,
+      tokenHash,
+      resolved.user.id || '',
+      resolved.role,
+      deviceLabelOf(req)
+    );
+    if (tracked.revoked) {
+      purgeSessionMemoryByToken(token);
+      logAuthEvent('SESION_REVOCADA', getClientIp(req), `usuario=${resolved.user.id || ''}`);
+      return null;
+    }
+    sessionActivity.set(tokenHash, { lastSeen: Date.now(), role: resolved.role, userId: resolved.user.id || '' });
     return { token, local: null, remote: resolved };
   }
 
@@ -7788,6 +8065,15 @@ async function resolveRequestSession(
       }
       const resolvedAfter = await resolveRemoteSession(newToken);
       if (resolvedAfter) {
+        const newTokenHash = hashSessionToken(newToken);
+        await syncTrackedAppSession(
+          newToken,
+          newTokenHash,
+          resolvedAfter.user.id || '',
+          resolvedAfter.role,
+          deviceLabelOf(req)
+        );
+        sessionActivity.set(newTokenHash, { lastSeen: Date.now(), role: resolvedAfter.role, userId: resolvedAfter.user.id || '' });
         return { token: newToken, local: null, remote: resolvedAfter };
       }
     }
@@ -7849,6 +8135,7 @@ app.post('/api/auth/login', async (req, res) => {
   const ip = getClientIp(req);
   const limit = checkRateLimit(`login:${ip}`, 5, 15 * 60_000);
   if (!limit.allowed) {
+    logAuthEvent('LOGIN_LIMITADO', ip, `motivo=ip espera=${limit.retryAfterSeconds}s`);
     return res.status(429).json({
       success: false,
       error: `Demasiados intentos fallidos. Espera ${limit.retryAfterSeconds} segundos antes de reintentar.`
@@ -7865,6 +8152,16 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(503).json({ success: false, error: 'Supabase no estÃ¡ configurado en el servidor.' });
   }
 
+  // Segundo contador por CORREO: rotar IP o cabeceras no evade el limite.
+  const emailLimit = checkRateLimit(`login-email:${cleanEmail}`, 5, 15 * 60_000);
+  if (!emailLimit.allowed) {
+    logAuthEvent('LOGIN_LIMITADO', ip, `email=${cleanEmail} motivo=correo espera=${emailLimit.retryAfterSeconds}s`);
+    return res.status(429).json({
+      success: false,
+      error: `Demasiados intentos fallidos para este correo. Espera ${emailLimit.retryAfterSeconds} segundos antes de reintentar.`
+    });
+  }
+
   const result = await supabaseAuthRequest('token?grant_type=password', {
     email: cleanEmail,
     password: String(password)
@@ -7874,6 +8171,9 @@ app.post('/api/auth/login', async (req, res) => {
     logAuthEvent('LOGIN_FALLIDO', ip, `email=${cleanEmail} motivo=${result.error || 'sin token'}`);
     return res.status(401).json({ success: false, error: 'Correo o contraseÃ±a incorrectos.' });
   }
+
+  // Credencial valida: el contador por correo de este usuario se reinicia.
+  resetRateLimit(`login-email:${cleanEmail}`);
 
   setSessionCookie(res, SESSION_COOKIE, result.data.access_token, SESSION_MAX_AGE_MS);
   if (result.data.refresh_token) {
@@ -8021,13 +8321,84 @@ app.get('/api/auth/session', async (req, res) => {
   });
 });
 
+/** Invalida todo rastro en memoria de un token de sesion. */
+function purgeSessionMemoryByToken(token: string): void {
+  sessionCache.delete(token);
+  sessionInflight.delete(token);
+  sessionActivity.delete(hashSessionToken(token));
+}
+
 /** Cierre de sesion. */
 app.post('/api/auth/logout', async (req, res) => {
   const ip = getClientIp(req);
+  const token = readSessionToken(req);
+
+  if (token && !verifyLocalSessionToken(token) && isSupabaseConfigured) {
+    // Revocar la sesion ACTIVA en Supabase: el JWT y su refresh quedan anulos.
+    try {
+      await supabaseAuthRequest('logout', {}, 'POST', token);
+    } catch (err) {
+      logAuthEvent('LOGOUT_AVISO', ip, `revocacion supabase=${err instanceof Error ? err.message : 'error'}`);
+    }
+  }
+
+  if (token) purgeSessionMemoryByToken(token);
   clearSessionCookie(res, SESSION_COOKIE);
   clearSessionCookie(res, REFRESH_COOKIE);
-  logAuthEvent('LOGOUT', ip, 'sesion cerrada');
+  logAuthEvent('LOGOUT', ip, 'sesion cerrada y token revocado');
   res.json({ success: true });
+});
+
+/** Cierra TODAS las sesiones activas del usuario en todos sus dispositivos. */
+app.post('/api/auth/logout-all', async (req, res) => {
+  const ip = getClientIp(req);
+  const session = await resolveRequestSession(req, res as AuthenticatedResponse);
+  if (!session) {
+    return res.status(401).json({ success: false, error: 'SesiÃ³n requerida. Inicia sesiÃ³n para acceder a esta informaciÃ³n.' });
+  }
+
+  if (session.local) {
+    // El modo local no registra sesiones en servidor: solo limpia este equipo.
+    clearSessionCookie(res, SESSION_COOKIE);
+    clearSessionCookie(res, REFRESH_COOKIE);
+    logAuthEvent('LOGOUT_ALL', ip, `modo=local email=${session.local.email}`);
+    return res.json({ success: true, data: { mode: 'local', scope: 'este dispositivo (el modo local no registra sesiones en servidor)' } });
+  }
+
+  const userId = session.remote?.user?.id || '';
+  if (!userId) {
+    return res.status(401).json({ success: false, error: 'SesiÃ³n requerida. Inicia sesiÃ³n para acceder a esta informaciÃ³n.' });
+  }
+
+  // 1) Revocar la sesion activa de ESTE dispositivo en Supabase.
+  if (isSupabaseConfigured) {
+    try {
+      await supabaseAuthRequest('logout', {}, 'POST', session.token);
+    } catch (err) {
+      logAuthEvent('LOGOUT_AVISO', ip, `revocacion supabase=${err instanceof Error ? err.message : 'error'}`);
+    }
+  }
+
+  // 2) Revocar el registro de TODAS las sesiones del usuario (best effort;
+  // requiere la migracion 0029). Las demas instancias detectan la marca en <=60 s.
+  if (appSessionsTableReady !== false) {
+    try {
+      await supabaseRestRequest(
+        `app_sessions?user_id=eq.${userId}&revoked_at=is.null`,
+        { method: 'PATCH', body: { revoked_at: new Date().toISOString() } },
+        session.token
+      );
+    } catch (err) {
+      logAuthEvent('LOGOUT_AVISO', ip, `revocacion registro=${err instanceof Error ? err.message : 'error'}`);
+    }
+  }
+
+  // 3) Purgar la memoria de esta instancia y limpiar cookies de este equipo.
+  purgeSessionMemoryByUser(userId);
+  clearSessionCookie(res, SESSION_COOKIE);
+  clearSessionCookie(res, REFRESH_COOKIE);
+  logAuthEvent('LOGOUT_ALL', ip, `usuario=${userId}`);
+  res.json({ success: true, data: { mode: 'supabase', scope: 'todas las sesiones del usuario' } });
 });
 
 /** Ingreso con clave de acceso (modo local, sin Supabase). */
@@ -8055,7 +8426,9 @@ app.post('/api/auth/local-login', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Ingresa la clave de acceso.' });
   }
 
-  const isMasterKeyMatch = (ACCESS_KEY && safeCompare(candidate, ACCESS_KEY)) || candidate === 'admin123' || candidate === 'frenyer123';
+  // La clave de acceso es UNA sola y vive en una variable de entorno
+  // (FRENYER_ACCESS_KEY). Nunca aceptar claves literales de respaldo.
+  const isMasterKeyMatch = ACCESS_KEY && safeCompare(candidate, ACCESS_KEY);
   if (!isMasterKeyMatch) {
     logAuthEvent('ACCESO_LOCAL_FALLIDO', ip, 'clave incorrecta');
     return res.status(401).json({ success: false, error: 'Clave de acceso incorrecta.' });

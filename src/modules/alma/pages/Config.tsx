@@ -32,6 +32,7 @@ import {
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
+import { useAuth } from '../../../context/AuthContext';
 import { getActiveExchangeRate, setActiveExchangeRate, formatUSD, formatVES } from '../../../lib/currency';
 import { authenticatedFetch } from '../../../lib/supabase/api';
 import { refreshSupabaseStatus } from '../../../lib/supabase/client';
@@ -126,6 +127,35 @@ export function ConfigPage() {
   }, [deliveryRetiroEnabled, deliveryDomicilioEnabled]);
   const [activeTab, setActiveTab] = useState<'negocio' | 'almacen' | 'usuarios' | 'auditoria' | 'respaldo'>('negocio');
   const [isBackupLoading, setIsBackupLoading] = useState<'excel' | 'json' | null>(null);
+  // Cierre de sesión en todos los dispositivos (revoca el registro de sesiones)
+  const { signOut } = useAuth();
+  const [isClosingAllSessions, setIsClosingAllSessions] = useState(false);
+  const [logoutAllMessage, setLogoutAllMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+
+  const handleCloseAllSessions = async () => {
+    const confirmed = window.confirm(
+      'Se cerrarÃ¡ tu sesiÃ³n en TODOS los dispositivos (computadoras y mÃ³viles) al momento. Otros equipos que entraron con tu cuenta quedarÃ¡n fuera en un mÃ¡ximo de 1 minuto. Â¿Continuar?'
+    );
+    if (!confirmed) return;
+    setIsClosingAllSessions(true);
+    setLogoutAllMessage(null);
+    try {
+      const res = await fetch('/api/auth/logout-all', { method: 'POST', credentials: 'include' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.success) {
+        setLogoutAllMessage({ tone: 'error', text: data?.error || 'No se pudo completar el cierre de sesiones.' });
+        setIsClosingAllSessions(false);
+        return;
+      }
+      setLogoutAllMessage({ tone: 'ok', text: 'Sesiones cerradas. Redirigiendo al inicio de sesiÃ³n...' });
+      await signOut();
+      window.location.href = '/login';
+    } catch {
+      setLogoutAllMessage({ tone: 'error', text: 'Error de red al cerrar las sesiones. Intenta de nuevo.' });
+      setIsClosingAllSessions(false);
+    }
+  };
+
   const [backupMessage, setBackupMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
 
   /** Descarga el respaldo del servidor como archivo (Excel o JSON). */
@@ -3704,6 +3734,44 @@ GRANT ALL ON TABLE public.branches TO anon;`}</pre>
                 }}
               >
                 {backupMessage.text}
+              </div>
+            )}
+          </Card>
+
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <Shield size={20} style={{ color: '#2D2E32' }} />
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>SesiÃ³n</h3>
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: '#475569' }}>
+              Si perdiste un dispositivo o dudas de una conexiÃ³n, cierra TODAS tus sesiones activas
+              (computadoras y mÃ³viles) de una sola vez. Este equipo tambiÃ©n debe iniciar sesiÃ³n de nuevo.
+            </p>
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 14 }}>
+              <Button
+                variant="primary"
+                onClick={handleCloseAllSessions}
+                disabled={isClosingAllSessions}
+                style={{ minWidth: 260, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                title="Revoca todas las sesiones activas de tu usuario"
+              >
+                <Shield size={16} /> {isClosingAllSessions ? 'Cerrando sesiones...' : 'Cerrar sesiÃ³n en todos los dispositivos'}
+              </Button>
+            </div>
+            {logoutAllMessage && (
+              <div
+                style={{
+                  marginTop: 14,
+                  padding: '10px 14px',
+                  borderRadius: 8,
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  border: logoutAllMessage.tone === 'ok' ? '1px solid #bbf7d0' : '1px solid #fecaca',
+                  background: logoutAllMessage.tone === 'ok' ? '#f0fdf4' : '#fef2f2',
+                  color: logoutAllMessage.tone === 'ok' ? '#15803D' : '#DC2626'
+                }}
+              >
+                {logoutAllMessage.text}
               </div>
             )}
           </Card>
