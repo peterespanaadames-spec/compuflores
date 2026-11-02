@@ -2951,8 +2951,8 @@ button {
   .rep-sales-root .rep-sales-table .btn.ghost svg { width: 13px; height: 13px; }
   /* Sin scroll lateral: la ficha completa cabe */
   .rep-sales-root .table-wrap { overflow-x: hidden; }
-  /* «Desde / Hasta» en una misma línea, sin etiquetas que desplacen */
-  .rep-date-label { display: none !important; }
+  /* «Desde/Hasta» en móvil se leen como «Fec inicio / Fecha final» */
+  .rep-date-label { font-size: 9px !important; }
   .rep-sales-root .toolbar input[type="date"] {
     width: auto !important;
     flex: 1 1 38% !important;

@@ -872,7 +872,10 @@ export const SalesReportPage = () => {
         {/* Búsqueda por fechas: Estilo unificado ERP (Desde [input] hasta [input]) */}
         <div className="flex items-end gap-2 flex-nowrap" style={{ display: 'flex', alignItems: 'flex-end', flexWrap: 'wrap', rowGap: 8 }}>
           <div className="flex items-center gap-1.5">
-            <span className="rep-date-label text-xs font-bold uppercase tracking-wider text-muted whitespace-nowrap">Desde:</span>
+            <span className="rep-date-label text-xs font-bold uppercase tracking-wider text-muted whitespace-nowrap">
+              <span className="rep-long">Desde:</span>
+              <span className="rep-short">Fec inicio:</span>
+            </span>
             <input
               type="date"
               value={startDate}
@@ -887,7 +890,10 @@ export const SalesReportPage = () => {
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="rep-date-label text-xs font-bold uppercase tracking-wider text-muted whitespace-nowrap">Hasta:</span>
+            <span className="rep-date-label text-xs font-bold uppercase tracking-wider text-muted whitespace-nowrap">
+              <span className="rep-long">Hasta:</span>
+              <span className="rep-short">Fecha final:</span>
+            </span>
             <input
               type="date"
               value={endDate}
