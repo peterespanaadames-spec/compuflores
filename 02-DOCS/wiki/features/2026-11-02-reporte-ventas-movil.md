@@ -13,7 +13,15 @@ El usuario pidió ajustar SOLO la versión móvil de `/ventas-flash/reporte`: bo
 minimizados, KPI en 2 tarjetas por fila y el detalle de transacciones con acabado agradable.
 
 ## 2.ª iteración (mismo día)
-- «Desde» / «Hasta» comparten línea completa; en móvil se leen como **«Fec inicio» / «Fecha final»** (patrón `rep-long/short`; escritorio conserva Desde/Hasta) y los calendarios reparten la línea. 
+## 2.ª iteración (mismo día)
+- «Desde» / «Hasta» comparten línea completa; en móvil se leen como **«Fec inicio» / «Fecha final»** (patrón `rep-long/short`; escritorio conserva Desde/Hasta) y los calendarios reparten la línea.
+
+## 3.ª iteración (mismo día)
+- Encabezado en una fila: **«Reporte de Ventas» con «Sinc» (renombrado, renombre corto)
+  y Exportar solo-icono al lado del título** (antes iban en una línea propia bajo el título).
+- Espaciados comprimidos en toda la vista: padding del contenido 12px, márgenes entre
+  secciones de 10px, toolbars de 8px y fichas del detalle con 5px de aire (gap 4px).
+- «Exportar» mantiene su menú desplegable intacto; solo cambia el botón (icono).
 - El detalle pasó de tabla a **fichas de 2 líneas** (`tr/td` en flex): línea 1 fecha ·
   comprobante · tipo · montoUSD(●) · acción; línea 2 cliente · método de pago.
   Cliente y Método VUELVEN a verse en móvil (se quitaron de `rep-col-oculta`; solo

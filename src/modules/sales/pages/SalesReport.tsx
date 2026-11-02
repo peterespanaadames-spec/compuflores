@@ -724,7 +724,8 @@ export const SalesReportPage = () => {
             style={{ height: 38, padding: '0 12px', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
           >
             <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-            <span>Sincronizar</span>
+            <span className="rep-long">Sincronizar</span>
+            <span className="rep-short">Sinc</span>
           </Button>
           
           {/* Dropdown Exportar con click interactivo y anclaje relativo */}
@@ -743,7 +744,7 @@ export const SalesReportPage = () => {
               }}
             >
               <FileDown size={15} />
-              <span>Exportar</span>
+              <span className="rep-long">Exportar</span>
               <ChevronDown size={14} style={{ transform: isExportMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </Button>
 

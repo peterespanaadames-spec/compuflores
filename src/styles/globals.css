@@ -2847,29 +2847,40 @@ button {
   .rep-sales-root .grid-4 .kpi-value { font-size: 14px; margin: 2px 0 0; }
   .rep-sales-root .grid-4 .muted.small { display: none !important; }
 
-  /* --- Cabecera: título y botones minimizados --- */
-  .rep-sales-root .page-head h1 { font-size: 18px; }
+  /* --- Cabecera: «Reporte de Ventas» con Sinc + icono Exportar al lado --- */
+  .rep-sales-root .page-head {
+    flex-direction: row !important;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px !important;
+  }
+  .rep-sales-root .page-head h1 { font-size: 15px; line-height: 1.2; margin: 0; }
   .rep-sales-root .rep-head-actions {
-    width: 100%;
+    width: auto;
+    flex: 0 0 auto;
     flex-wrap: nowrap !important;
     gap: 6px !important;
   }
   .rep-sales-root .rep-head-actions .btn {
-    flex: 1 1 0;
+    flex: 0 0 auto;
     min-width: 0;
-    height: 32px !important;
+    height: 30px !important;
     padding: 0 8px !important;
-    font-size: 11px !important;
+    font-size: 10px !important;
     justify-content: center;
     white-space: nowrap;
   }
   .rep-sales-root .rep-head-actions .btn svg { flex: 0 0 auto; }
   .rep-sales-root .rep-head-actions .btn span { overflow: hidden; text-overflow: ellipsis; }
-  /* Sincronizar queda en icono puro (ya es uno de dos botones) */
-  .rep-sales-root .rep-sync-btn span { display: none !important; }
+
+  /* --- Espaciados generales más compactos (solo móvil) --- */
+  .rep-sales-root .content { padding: 12px !important; }
+  .rep-sales-root .mb-4, .rep-sales-root .mb-6 { margin-bottom: 10px !important; }
 
   /* --- Toolbar de periodo y filtros: compactos, en 2 columnas --- */
-  .rep-sales-root .toolbar { padding: 10px !important; gap: 6px !important; margin-bottom: 12px !important; }
+  .rep-sales-root .toolbar { padding: 8px !important; gap: 5px !important; margin-bottom: 10px !important; }
   .rep-sales-root .toolbar .btn {
     height: 30px !important;
     padding: 0 8px !important;
@@ -2905,8 +2916,8 @@ button {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 6px;
-    padding: 8px 10px;
+    gap: 4px;
+    padding: 5px 8px;
     border-bottom: 1px solid var(--border);
   }
   .rep-sales-root .rep-sales-table tr:last-child { border-bottom: none; }
