@@ -35,7 +35,8 @@ Origen: `supabase/migrations/`. El usuario las aplica manualmente en el SQL Edit
 | 0026_business_profile_extensions | Email/WhatsApp/eslogan/logo/favicon en `organizations` |
 | 0027_complete_rls_unlock | Desactiva RLS también en `sale_items`, `payments`, `receivable_payments` (sustitue el toque de service role del servidor) |
 | 0028_bank_movements_payment_methods | Migración de datos históricos de `bank_movements` y `payment_methods` (aplicada 2026-10-26 en SQL Editor) |
-| **0029_app_sessions_tracking** | **Nueva (2026-11-02, PENDIENTE de aplicar)** — tabla `app_sessions`: una fila por sesión activa con el **hash SHA-256 del token** (nunca el token en claro), usuario, etiqueta de dispositivo, `last_seen` y `revoked_at`. Habilita la expiración por inactividad supervisada en servidor (personal 30 min, comprador 2 h) y «Cerrar sesión en todos los dispositivos». Aditiva e idempotente; si no está aplicada, el servidor degrada con un aviso y las sesiones funcionan como antes |
+| **0029_app_sessions_tracking** | **APLICADA por el usuario (2026-11-02)** — tabla `app_sessions`: una fila por sesión activa con el **hash SHA-256 del token** (nunca el token en claro), usuario, etiqueta de dispositivo, `last_seen` y `revoked_at`. Habilita la expiración por inactividad supervisada en servidor (personal 30 min, comprador 2 h) y «Cerrar sesión en todos los dispositivos». Aditiva e idempotente; si no está aplicada, el servidor degrada con un aviso y las sesiones funcionan como antes |
+| **0030_app_sessions_rls_policy** | **Pendiente de confirmar** — política RLS explícita en `app_sessions`: cada usuario autenticado solo ve/actualiza SUS sesiones (`user_id = auth.uid()`); service role no pasa por RLS. Nace porque la 0029 quedó con RLS activo sin políticas → el tracking fallaba 403 «row-level security policy»; sin 0030 el servidor degrada (aviso, funcionalidad de revocación remota reducida) |
 
 ## Estado de aplicación (último estado conocido — 2026-10-23)
 
