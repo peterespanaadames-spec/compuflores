@@ -13,7 +13,7 @@ El usuario pidió ajustar SOLO la versión móvil de `/ventas-flash/reporte`: bo
 minimizados, KPI en 2 tarjetas por fila y el detalle de transacciones con acabado agradable.
 
 ## 2.ª iteración (mismo día)
-- «Desde» / «Hasta» comparten línea completa (etiquetas ocultas `rep-date-label`, inputs flex). 
+- «Desde» / «Hasta» comparten línea completa; en móvil se leen como **«Fec inicio» / «Fecha final»** (patrón `rep-long/short`; escritorio conserva Desde/Hasta) y los calendarios reparten la línea. 
 - El detalle pasó de tabla a **fichas de 2 líneas** (`tr/td` en flex): línea 1 fecha ·
   comprobante · tipo · montoUSD(●) · acción; línea 2 cliente · método de pago.
   Cliente y Método VUELVEN a verse en móvil (se quitaron de `rep-col-oculta`; solo
