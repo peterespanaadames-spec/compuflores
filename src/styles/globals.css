@@ -2972,6 +2972,127 @@ button {
   .rep-sales-root .toolbar > div { flex: 1 1 100%; }
 }
 
+/* =====================================================================
+   RESPONSIVE REPORTE DIARIO DE INVENTARIO MÓVIL — /inventarios/reporte-diario
+   Solo pantallas angostas (≤640px); el escritorio no cambia.
+   Botones «Mov · Sinc · Exportar(icono)» junto al título en una línea,
+   KPI 2 por fila, filtros 2 por línea y la tabla como fichas de 2 líneas
+   con lo esencial: fecha · documento · tipo · monto [ojo] / producto ·
+   cantidad. Almacén, costo unitario y responsable quedan en escritorio.
+   ===================================================================== */
+@media (max-width: 640px) {
+  /* Espaciados generales compactos */
+  .rep-inv-root .content { padding: 12px !important; }
+  .rep-inv-root .mb-4, .rep-inv-root .mb-6 { margin-bottom: 10px !important; }
+  .rep-inv-root .card { padding: 12px !important; }
+
+  /* Cabecera: sin textos largos, botones junto al título */
+  .rep-inv-root .page-head {
+    flex-direction: row !important;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px !important;
+  }
+  .rep-inv-root .page-head h1 { font-size: 14.5px; line-height: 1.2; margin: 0; }
+  .rep-inv-root .page-head p { display: none !important; }
+  .rep-inv-root .rep-head-actions {
+    width: auto;
+    flex: 0 0 auto;
+    flex-wrap: nowrap !important;
+    gap: 5px !important;
+  }
+  .rep-inv-root .rep-head-actions .btn {
+    flex: 0 0 auto;
+    min-width: 0;
+    height: 30px !important;
+    padding: 0 7px !important;
+    font-size: 10px !important;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  .rep-inv-root .rep-head-actions .btn svg { flex: 0 0 auto; }
+  .rep-inv-root .rep-head-actions .btn span { overflow: hidden; text-overflow: ellipsis; }
+  /* Encabezados abreviados: Registrar Movimiento y Sincronizar, Exportar solo icono */
+  .rep-inv-root .rep-long { display: none !important; }
+  .rep-inv-root .rep-short { display: inline !important; }
+
+  /* KPI: 2 tarjetas por fila, sin subtítulos */
+  .rep-inv-root .grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  .rep-inv-root .grid-4 .card { padding: 10px 8px !important; border-radius: 10px; }
+  .rep-inv-root .grid-4 .kpi-label { font-size: 9px; line-height: 1.15; }
+  .rep-inv-root .grid-4 .kpi-value { font-size: 14px; margin: 2px 0 0; }
+  .rep-inv-root .grid-4 .muted.small { display: none !important; }
+  .rep-inv-root .grid-4 .kpi-value .small { font-size: 9px; }
+
+  /* Filtros: búsqueda completa, pestañas de periodo completas, selectores 2 por línea */
+  .rep-inv-root .card .table-wrap { margin: 0; }
+  .rep-inv-root [style*="flex: 1 1 280px"] { flex: 1 1 100% !important; min-width: 0 !important; }
+  .rep-inv-root .inv-period-tabs { flex: 1 1 100%; padding: 3px !important; }
+  .rep-inv-root .inv-period-tabs button { flex: 1 1 0; min-width: 0; padding: 5px 4px !important; font-size: 10px !important; }
+  .rep-inv-root .inv-filter-selects { flex: 1 1 100%; }
+  .rep-inv-root .inv-filter-selects select {
+    flex: 1 1 46% !important;
+    min-width: 0 !important;
+    width: auto !important;
+    height: 32px !important;
+    font-size: 11px !important;
+  }
+  .rep-inv-root .input { height: 34px; font-size: 12px; }
+  .rep-inv-root [style*="gap: 12"][style*="borderTop"] { flex-wrap: wrap; gap: 6px !important; }
+
+  /* Tabla de movimientos: fichas de 2 líneas con lo esencial */
+  .rep-inv-root .rep-inv-table { display: block; font-size: 11px; }
+  .rep-inv-root .rep-inv-table thead { display: none !important; }
+  .rep-inv-root .rep-inv-table tbody { display: block; }
+  .rep-inv-root .rep-inv-table tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rep-inv-root .rep-inv-table tr:last-child { border-bottom: none; }
+  .rep-inv-root .rep-inv-table td {
+    display: block;
+    padding: 0 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rep-inv-root .rep-inv-table td[colspan] {
+    flex: 1 1 100% !important;
+    padding: 20px !important;
+    text-align: center;
+  }
+  /* Selección fuera de ficha: costos unitarios, almacén y responsable son de consulta */
+  .rep-inv-root .rep-inv-table .rep-col-oculta { display: none !important; }
+  /* Línea 1: fecha · documento · tipo ........... monto [ojo] */
+  .rep-inv-root .rep-inv-table td:nth-child(1) { order: 1; flex: 0 0 auto; font-size: 9.5px; color: var(--muted); }
+  .rep-inv-root .rep-inv-table td:nth-child(2) { order: 2; flex: 0 1 auto; max-width: 92px; font-size: 10.5px; }
+  .rep-inv-root .rep-inv-table td:nth-child(3) { order: 3; flex: 0 0 auto; }
+  .rep-inv-root .rep-inv-table td:nth-child(8) { order: 4; flex: 0 0 auto; margin-left: auto; max-width: 104px; text-align: right; }
+  .rep-inv-root .rep-inv-table td:nth-child(8) > div { font-size: 10.5px; }
+  .rep-inv-root .rep-inv-table td:nth-child(8) div.muted.small { font-size: 8.5px; }
+  .rep-inv-root .rep-inv-table td:nth-child(10) { order: 5; flex: 0 0 auto; }
+  .rep-inv-root .rep-inv-table td:nth-child(10) .btn { height: 26px !important; padding: 0 6px !important; }
+  .rep-inv-root .rep-inv-table td:nth-child(10) .btn svg { width: 12px; height: 12px; }
+  /* Línea 2: producto (+SKU) · cantidad */
+  .rep-inv-root .rep-inv-table td:nth-child(4) { order: 6; flex: 1 1 62%; min-width: 0; }
+  .rep-inv-root .rep-inv-table td:nth-child(4) > div { font-size: 10.5px; }
+  .rep-inv-root .rep-inv-table td:nth-child(4) div.muted.small { font-size: 9px; }
+  .rep-inv-root .rep-inv-table td:nth-child(6) { order: 7; flex: 0 0 auto; margin-left: auto; font-size: 11px; }
+  /* Badge del tipo compacto */
+  .rep-inv-root .rep-inv-table .badge { font-size: 8.5px !important; padding: 2px 5px !important; }
+  /* Botones dentro de las tarjetas (paginación y limpiar fechas) compactos */
+  .rep-inv-root .card .btn { height: 30px !important; padding: 0 10px !important; font-size: 10.5px !important; }
+}
+
 @media print {
   @page {
     size: letter;

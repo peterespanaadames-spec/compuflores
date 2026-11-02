@@ -751,7 +751,7 @@ export function DailyInventoryReportPage() {
   };
 
   return (
-    <div className="content">
+    <div className="content rep-inv-root">
       {/* Toast Notificación */}
       {toast && (
         <div style={{
@@ -784,14 +784,15 @@ export function DailyInventoryReportPage() {
             Movimientos consolidados, rotación y valorización bimonetaria a tasa oficial BCV vigente ({activeRate.toFixed(2)} VES/USD).
           </p>
         </div>
-        <div className="actions">
+        <div className="actions rep-head-actions">
           <Button
             variant="primary"
             onClick={() => setIsNewMovementModalOpen(true)}
             title="Registrar nuevo movimiento de ajuste o entrada"
           >
             <Plus size={16} />
-            <span>Registrar Movimiento</span>
+            <span className="rep-long">Registrar Movimiento</span>
+            <span className="rep-short">Mov.</span>
           </Button>
 
           <Button
@@ -801,7 +802,8 @@ export function DailyInventoryReportPage() {
             title="Sincronizar movimientos"
           >
             <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-            <span>Sincronizar</span>
+            <span className="rep-long">Sincronizar</span>
+            <span className="rep-short">Sinc</span>
           </Button>
 
           {/* Botón y Menú Desplegable 'Exportar' idéntico a la imagen 1 */}
@@ -820,7 +822,7 @@ export function DailyInventoryReportPage() {
               }}
             >
               <FileDown size={15} />
-              <span>Exportar</span>
+              <span className="rep-long">Exportar</span>
               <ChevronDown
                 size={14}
                 style={{
@@ -1024,7 +1026,7 @@ export function DailyInventoryReportPage() {
           </div>
 
           {/* Selector de Periodo */}
-          <div style={{ display: 'flex', gap: 4, background: '#f0f1f6', padding: 4, borderRadius: 'var(--radius-sm)' }}>
+          <div className="inv-period-tabs" style={{ display: 'flex', gap: 4, background: '#f0f1f6', padding: 4, borderRadius: 'var(--radius-sm)' }}>
             {(['HOY', 'SEMANA', 'MES', 'HISTORICO'] as PeriodFilter[]).map((p) => {
               const labels: Record<PeriodFilter, string> = {
                 HOY: 'Hoy',
@@ -1078,7 +1080,7 @@ export function DailyInventoryReportPage() {
           </div>
 
           {/* Filtros Dropdown */}
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="inv-filter-selects" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <select
               className="input"
               value={movementTypeFilter}
@@ -1178,18 +1180,18 @@ export function DailyInventoryReportPage() {
         ) : (
           <>
             <div className="table-wrap">
-              <table className="table">
+              <table className="table rep-inv-table">
                 <thead>
                   <tr>
                     <th>Fecha / Hora</th>
                     <th>Documento</th>
                     <th>Tipo</th>
                     <th>Producto</th>
-                    <th>Almacén</th>
+                    <th className="rep-col-oculta">Almacén</th>
                     <th className="num">Cantidad</th>
-                    <th className="num">Costo Unit.</th>
+                    <th className="num rep-col-oculta">Costo Unit.</th>
                     <th className="num">Total (USD / VES)</th>
-                    <th>Responsable</th>
+                    <th className="rep-col-oculta">Responsable</th>
                     <th style={{ textAlign: 'center' }}>Acciones</th>
                   </tr>
                 </thead>
@@ -1231,7 +1233,7 @@ export function DailyInventoryReportPage() {
                             <div className="muted small" style={{ fontFamily: 'monospace' }}>SKU: {m.sku}</div>
                           </div>
                         </td>
-                        <td className="muted small">
+                        <td className="rep-col-oculta muted small">
                           {(m as any).warehouseName || 'Almacén Principal'}
                         </td>
                         <td className="num" style={{ fontWeight: 700, fontFamily: 'monospace' }}>
@@ -1239,7 +1241,7 @@ export function DailyInventoryReportPage() {
                             {qty > 0 ? `+${qty}` : qty}
                           </span>
                         </td>
-                        <td className="num" style={{ fontFamily: 'monospace' }}>
+                        <td className="rep-col-oculta num" style={{ fontFamily: 'monospace' }}>
                           {formatUSD(unitCost)}
                         </td>
                         <td className="num">
@@ -1248,7 +1250,7 @@ export function DailyInventoryReportPage() {
                             ≈ Bs. {totalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </div>
                         </td>
-                        <td className="muted small">
+                        <td className="rep-col-oculta muted small">
                           {(m as any).responsable || 'Sistema'}
                         </td>
                         <td style={{ textAlign: 'center' }}>
