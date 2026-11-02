@@ -872,7 +872,7 @@ export const SalesReportPage = () => {
         {/* Búsqueda por fechas: Estilo unificado ERP (Desde [input] hasta [input]) */}
         <div className="flex items-end gap-2 flex-nowrap" style={{ display: 'flex', alignItems: 'flex-end', flexWrap: 'wrap', rowGap: 8 }}>
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted whitespace-nowrap">Desde:</span>
+            <span className="rep-date-label text-xs font-bold uppercase tracking-wider text-muted whitespace-nowrap">Desde:</span>
             <input
               type="date"
               value={startDate}
@@ -887,7 +887,7 @@ export const SalesReportPage = () => {
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted whitespace-nowrap">Hasta:</span>
+            <span className="rep-date-label text-xs font-bold uppercase tracking-wider text-muted whitespace-nowrap">Hasta:</span>
             <input
               type="date"
               value={endDate}
@@ -1009,8 +1009,8 @@ export const SalesReportPage = () => {
                       <th>Fecha</th>
                       <th>N° Comprobante</th>
                       <th>Tipo</th>
-                      <th className="rep-col-oculta">Cliente</th>
-                      <th className="rep-col-oculta">Método / Cuenta de Pago</th>
+                      <th>Cliente</th>
+                      <th>Método / Cuenta de Pago</th>
                       <th className="num">Monto USD</th>
                       <th className="num rep-col-oculta">Monto VES</th>
                       <th className="rep-col-oculta">Estado</th>
@@ -1023,15 +1023,13 @@ export const SalesReportPage = () => {
                         <td className="muted">{new Date(mov.created_at).toLocaleDateString()}</td>
                         <td className="font-bold">{mov.display_number}</td>
                         <td>{renderDocTypeBadge(mov.doc_type)}</td>
-                        <td className="rep-col-oculta">
-                          <div>
-                            <div className="font-semibold">{mov.customer_name}</div>
-                            {mov.customer_doc && mov.customer_doc !== 'N/A' && (
-                              <div className="small muted">{mov.customer_doc}</div>
-                            )}
-                          </div>
+                        <td className="rep-customer">
+                          <div className="font-semibold">{mov.customer_name}</div>
+                          {mov.customer_doc && mov.customer_doc !== 'N/A' && (
+                            <div className="small muted">{mov.customer_doc}</div>
+                          )}
                         </td>
-                        <td className="rep-col-oculta">
+                        <td className="rep-method">
                           <span className="badge" style={{ background: '#f0f1f6', color: '#5f6572' }}>
                             {mov.payment_method}
                           </span>

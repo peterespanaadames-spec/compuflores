@@ -2819,9 +2819,10 @@ button {
 /* =====================================================================
    RESPONSIVE REPORTE DE VENTAS MÓVIL — /ventas-flash/reporte
    Solo pantallas angostas (≤640px); el escritorio no cambia.
-   KPI en 2 tarjetas por fila, botones compactos y el detalle de
-   transacciones en una sola línea: fecha · comprobante · tipo ·
-   monto USD · acción (cliente, método, VES y estado quedan fuera).
+   KPI en 2 tarjetas por fila, botones compactos, «Desde/Hasta» en una
+   línea y el detalle de transacciones como fichas de 2 respiros:
+   fecha · comprobante · tipo · monto ● [acción] / cliente · método.
+   Solo el monto VES y el estado quedan fuera (el punto lo resume).
    ===================================================================== */
 /* En escritorio solo se ven las etiquetas largas del tipo de comprobante */
 .rep-short { display: none; }
@@ -2894,31 +2895,50 @@ button {
   .rep-sales-root .rep-long { display: none !important; }
   .rep-sales-root .rep-short { display: inline !important; }
 
-  /* --- Detalle de transacciones: una sola línea por fila --- */
-  .rep-sales-root .rep-sales-table { font-size: 10.5px; }
-  .rep-sales-root .rep-sales-table thead { display: table-row; }
-  .rep-sales-root .rep-sales-table th {
-    padding: 5px 5px !important;
-    font-size: 8.5px !important;
-    letter-spacing: 0.02em;
-    white-space: nowrap;
+  /* --- Detalle de transacciones: ficha de 2 líneas por venta ---
+     Línea 1: fecha · comprobante · tipo ........... monto ● [acción]
+     Línea 2: cliente · método de pago             */
+  .rep-sales-root .rep-sales-table { display: block; font-size: 11px; }
+  .rep-sales-root .rep-sales-table thead { display: none !important; }
+  .rep-sales-root .rep-sales-table tbody { display: block; }
+  .rep-sales-root .rep-sales-table tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
   }
+  .rep-sales-root .rep-sales-table tr:last-child { border-bottom: none; }
   .rep-sales-root .rep-sales-table td {
-    padding: 7px 5px !important;
-    vertical-align: middle;
+    display: block;
+    padding: 0 !important;
     white-space: nowrap;
-  }
-  /* Columnas fuera de la línea móvil: cliente, método, monto VES y estado */
-  .rep-sales-root .rep-sales-table .rep-col-oculta { display: none !important; }
-  /* Punto de estado visible junto al monto */
-  .rep-sales-root .rep-sales-table .rep-dot { display: inline-block; }
-  /* Fecha y monto compactos; comprobante prominente */
-  .rep-sales-root .rep-sales-table td:first-child { color: var(--muted); font-size: 10px; }
-  .rep-sales-root .rep-sales-table td:nth-child(2) {
-    max-width: 92px;
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  /* El mensaje de «sin ventas» ocupa la ficha completa */
+  .rep-sales-root .rep-sales-table td[colspan] {
+    flex: 1 1 100% !important;
+    padding: 20px !important;
+    text-align: center;
+  }
+  /* Línea 1 */
+  .rep-sales-root .rep-sales-table td:nth-child(1) { order: 1; flex: 0 0 auto; font-size: 9.5px; color: var(--muted); }
+  .rep-sales-root .rep-sales-table td:nth-child(2) { order: 2; flex: 0 1 auto; max-width: 92px; font-weight: 800; font-size: 11.5px; }
+  .rep-sales-root .rep-sales-table td:nth-child(3) { order: 3; flex: 0 0 auto; }
+  .rep-sales-root .rep-sales-table td:nth-child(6) { order: 4; flex: 0 0 auto; margin-left: auto; font-weight: 800; }
+  .rep-sales-root .rep-sales-table td:nth-child(9) { order: 5; flex: 0 0 auto; }
+  /* Línea 2: cliente y método comparten fila, sin cortes molestos */
+  .rep-sales-root .rep-sales-table td:nth-child(4) { order: 6; flex: 1 1 56%; min-width: 0; }
+  .rep-sales-root .rep-sales-table td:nth-child(4) > div { font-size: 10.5px; font-weight: 600; color: #334155; }
+  .rep-sales-root .rep-sales-table td:nth-child(4) div.small { font-size: 9px; }
+  .rep-sales-root .rep-sales-table td:nth-child(5) { order: 7; flex: 1 1 40%; min-width: 0; text-align: right; }
+  .rep-sales-root .rep-sales-table td:nth-child(5) .badge { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  /* Solo el monto VES y el estado quedan fuera de la ficha móvil */
+  .rep-sales-root .rep-sales-table .rep-col-oculta { display: none !important; }
+  /* Punto de estado visible junto al monto */
+  .rep-sales-root .rep-sales-table .rep-dot { display: inline-block; }
   .rep-sales-root .rep-sales-table .badge {
     font-size: 9px !important;
     padding: 2px 6px !important;
@@ -2929,8 +2949,16 @@ button {
     border-radius: 6px !important;
   }
   .rep-sales-root .rep-sales-table .btn.ghost svg { width: 13px; height: 13px; }
-  /* Sin scroll lateral: la línea completa cabe */
+  /* Sin scroll lateral: la ficha completa cabe */
   .rep-sales-root .table-wrap { overflow-x: hidden; }
+  /* «Desde / Hasta» en una misma línea, sin etiquetas que desplacen */
+  .rep-date-label { display: none !important; }
+  .rep-sales-root .toolbar input[type="date"] {
+    width: auto !important;
+    flex: 1 1 38% !important;
+    min-width: 0 !important;
+  }
+  .rep-sales-root .toolbar > div { flex: 1 1 100%; }
 }
 
 @media print {

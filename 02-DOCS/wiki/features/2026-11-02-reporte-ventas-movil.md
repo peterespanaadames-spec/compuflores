@@ -10,8 +10,16 @@ tags: [ventas, reportes, movil]
 
 ## Intención
 El usuario pidió ajustar SOLO la versión móvil de `/ventas-flash/reporte`: botones
-minimizados, KPI en 2 tarjetas por fila y el detalle de transacciones en una sola
-línea (fecha · comprobante · tipo · monto · acción), con acabado agradable.
+minimizados, KPI en 2 tarjetas por fila y el detalle de transacciones con acabado agradable.
+
+## 2.ª iteración (mismo día)
+- «Desde» / «Hasta» comparten línea completa (etiquetas ocultas `rep-date-label`, inputs flex). 
+- El detalle pasó de tabla a **fichas de 2 líneas** (`tr/td` en flex): línea 1 fecha ·
+  comprobante · tipo · montoUSD(●) · acción; línea 2 cliente · método de pago.
+  Cliente y Método VUELVEN a verse en móvil (se quitaron de `rep-col-oculta`; solo
+  quedan fuera el monto VES y el Estado, resumido por el punto de color). Motivo del
+  reporte: con `overflow-x: hidden` y 5 columnas en línea, los datos no entraban y no
+  se presentaban; la ficha muestra TODA la información sin scroll.
 
 ## Alcance (todas las reglas son solo ≤640px; escritorio intacto)
 - `SalesReport.tsx`: raíz con clase `rep-sales-root`, cabecera con `rep-head-actions`,
