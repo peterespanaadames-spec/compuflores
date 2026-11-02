@@ -2454,6 +2454,9 @@ button {
    Cuentas por Pagar y Reporte de Cuentas.
    Reglas SOLO para pantallas angostas: el escritorio (>900px) no cambia.
    ===================================================================== */
+/* En escritorio solo se ven las etiquetas largas de los botones bancarios */
+.bank-btn-short { display: none; }
+
 @media (max-width: 900px) {
   /* CxC / CxP: listado y panel lateral se apilan en una sola columna */
   .ar-main-grid,
@@ -2502,6 +2505,25 @@ button {
     flex-wrap: wrap !important;
     overflow-x: visible !important;
   }
+  /* Botones bancarios de cabecera: una sola línea, compactos, etiquetas cortas */
+  .bank-btn-long { display: none !important; }
+  .bank-btn-short { display: inline; }
+  .bank-head-actions {
+    width: 100%;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+  }
+  .bank-head-actions button {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 32px !important;
+    padding: 0 6px !important;
+    font-size: 10px !important;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  .bank-head-actions button svg { width: 13px; height: 13px; flex: 0 0 auto; }
+  .bank-head-actions button span { overflow: hidden; text-overflow: ellipsis; }
   /* Buscador de cuentas: ancho completo */
   .bank-search-box {
     width: 100% !important;

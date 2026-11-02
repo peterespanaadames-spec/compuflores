@@ -1030,7 +1030,7 @@ export function BankAccountsPage() {
               </div>
             </div>
             
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="bank-head-actions" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 onClick={() => {
                   setTfRate(activeRate.toString());
@@ -1053,7 +1053,8 @@ export function BankAccountsPage() {
                 }}
               >
                 <ArrowLeftRight size={14} />
-                <span>Transferir entre Cuentas</span>
+                <span className="bank-btn-long">Transferir entre Cuentas</span>
+                <span className="bank-btn-short">Transferir</span>
               </button>
 
               <button
@@ -1077,7 +1078,8 @@ export function BankAccountsPage() {
                 }}
               >
                 <PlusCircle size={14} />
-                <span>Ingresar saldo</span>
+                <span className="bank-btn-long">Ingresar saldo</span>
+                <span className="bank-btn-short">Ingresar</span>
               </button>
 
               <button
@@ -1101,7 +1103,8 @@ export function BankAccountsPage() {
                 }}
               >
                 <MinusCircle size={14} />
-                <span>Retirar saldo</span>
+                <span className="bank-btn-long">Retirar saldo</span>
+                <span className="bank-btn-short">Retirar</span>
               </button>
 
 
@@ -1123,7 +1126,7 @@ export function BankAccountsPage() {
                 }}
               >
                 <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-                <span>Sincronizar</span>
+                <span className="bank-btn-long">Sincronizar</span>
               </button>
             </div>
           </div>
