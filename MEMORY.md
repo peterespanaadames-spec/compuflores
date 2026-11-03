@@ -11,7 +11,8 @@
 - Migraciones en la nube de Supabase: 0029 aplicada ✓, 0030 aplicada ✓ (RLS app_sessions por usuario; verificada con fila real creada y revocada).
 
 ## 2026-11-03
-- **Cierre de sesión al cerrar navegador (commit velocity ver FDD)**: `frenyer_session` y `frenyer_refresh` ahora son **cookies de sesión** (sin Max-Age; antes 12 h) en `api/server.ts` — el navegador las borra al cerrarse y reabrir exige login. En `AuthContext`, si `/api/auth/session` no halla sesión, limpia la identidad local residual (`frenyer_active_user`/rol/permisos). Respaldo: inactividad server-side 30 min personal / 2 h comprador (cobertura del caso «continuar donde lo dejaste»). FDD en `02-DOCS/wiki/features/2026-11-03-cierre-navegador.md`.
+- **Cierre de sesión al cerrar navegador**: `frenyer_session` y `frenyer_refresh` ahora son **cookies de sesión** (sin Max-Age; antes 12 h) en `api/server.ts` — el navegador las borra al cerrarse y reabrir exige login. En `AuthContext`, si `/api/auth/session` no halla sesión, limpia la identidad local residual (`frenyer_active_user`/rol/permisos). Respaldo: inactividad server-side 30 min personal / 2 h comprador (cobertura del caso «continuar donde lo dejaste»). FDD en `02-DOCS/wiki/features/2026-11-03-cierre-navegador.md`.
+- **Recuperación automática de módulos tras despliegue**: el error «Failed to fetch dynamically imported module» (index.html viejo pide un chunk con hash ya inexistente) se resuelve solo — `src/app/router/lazyRoute.ts` envuelve todas las rutas lazy (`lazyRoute(...)` en `src/app/router/index.tsx`): si el import dinámico falla por red/módulo, recarga la página UNA vez (marca `frenyer:chunk-reload-at` en sessionStorage, cooldown 10 s para evitar bucles).
 - **Reporte de Ventas móvil 3.ª iteración**: «Sinc» renombrado + Exportar solo-icono junto al título (una fila con el título), espaciados comprimidos (12px padding, fichas 5px/gap 4px).
 
 ## Sesiones y autorización en servidor (2026-11-02) — SDD aprobado
