@@ -10,6 +10,10 @@
 - **Reporte Diario de Inventario móvil (2026-11-02)**: en `/inventarios/reporte-diario`, solo ≤640px — sin textos largos (párrafo de cabecera y subtítulos de KPI fuera), botones «Mov · Sinc · Exportar(icono)» junto al título en una línea (`rep-head-actions` + `rep-long/short`), KPI 2 por fila, filtros 2 por línea (`inv-period-tabs`, `inv-filter-selects`) y movimientos como fichas de 2 líneas (`rep-inv-table`): fecha·documento·tipo·monto·[ojo] / producto·SKU·cantidad. Fuera en móvil: Almacén, Costo Unit., Responsable (`rep-col-oculta`). FTD en `02-DOCS/wiki/features/2026-11-02-reporte-inventario-movil.md`.
 - Migraciones en la nube de Supabase: 0029 aplicada ✓, 0030 aplicada ✓ (RLS app_sessions por usuario; verificada con fila real creada y revocada).
 
+## 2026-11-03
+- **Cierre de sesión al cerrar navegador (commit velocity ver FDD)**: `frenyer_session` y `frenyer_refresh` ahora son **cookies de sesión** (sin Max-Age; antes 12 h) en `api/server.ts` — el navegador las borra al cerrarse y reabrir exige login. En `AuthContext`, si `/api/auth/session` no halla sesión, limpia la identidad local residual (`frenyer_active_user`/rol/permisos). Respaldo: inactividad server-side 30 min personal / 2 h comprador (cobertura del caso «continuar donde lo dejaste»). FDD en `02-DOCS/wiki/features/2026-11-03-cierre-navegador.md`.
+- **Reporte de Ventas móvil 3.ª iteración**: «Sinc» renombrado + Exportar solo-icono junto al título (una fila con el título), espaciados comprimidos (12px padding, fichas 5px/gap 4px).
+
 ## Sesiones y autorización en servidor (2026-11-02) — SDD aprobado
 - Spec aprobada en `02-DOCS/wiki/sdd/spec-sesiones-autorizacion.md`. Implementado en orden A0→A1→A2→A5→B.
 - **A0 (crítico)**: eliminadas las claves literales de respaldo en `/api/auth/local-login`; ahora la clave es ÚNICA (`FRENYER_ACCESS_KEY`). Condición antes: comparaba claves literales en el código → cualquiera con esa memoria podía entrar como admin.

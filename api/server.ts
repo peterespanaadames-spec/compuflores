@@ -273,12 +273,13 @@ const REFRESH_COOKIE = 'frenyer_refresh';
 const SESSION_MAX_AGE_MS = 12 * 60 * 60 * 1000; // 12 horas
 const LOCAL_TOKEN_PREFIX = 'local';
 
-function setSessionCookie(res: Response, name: string, value: string, maxAgeMs: number): void {
+// Cookies de SESIÓN (sin Max-Age): el navegador las elimina al cerrarse,
+// por lo que reabrir el navegador siempre exige iniciar sesión de nuevo.
+function setSessionCookie(res: Response, name: string, value: string): void {
   res.cookie(name, value, {
     httpOnly: true,
     sameSite: 'strict',
     secure: process.env.NODE_ENV === 'production',
-    maxAge: maxAgeMs,
     path: '/'
   });
 }
@@ -8072,9 +8073,9 @@ async function resolveRequestSession(
     const refreshed = await supabaseAuthRequest('token?grant_type=refresh_token', { refresh_token: refreshToken });
     if (refreshed.data?.access_token) {
       const newToken: string = refreshed.data.access_token;
-      setSessionCookie(res, SESSION_COOKIE, newToken, SESSION_MAX_AGE_MS);
+      setSessionCookie(res, SESSION_COOKIE, newToken);
       if (refreshed.data.refresh_token) {
-        setSessionCookie(res, REFRESH_COOKIE, refreshed.data.refresh_token, SESSION_MAX_AGE_MS);
+        setSessionCookie(res, REFRESH_COOKIE, refreshed.data.refresh_token);
       }
       const resolvedAfter = await resolveRemoteSession(newToken);
       if (resolvedAfter) {
@@ -8188,9 +8189,9 @@ app.post('/api/auth/login', async (req, res) => {
   // Credencial valida: el contador por correo de este usuario se reinicia.
   resetRateLimit(`login-email:${cleanEmail}`);
 
-  setSessionCookie(res, SESSION_COOKIE, result.data.access_token, SESSION_MAX_AGE_MS);
+  setSessionCookie(res, SESSION_COOKIE, result.data.access_token);
   if (result.data.refresh_token) {
-    setSessionCookie(res, REFRESH_COOKIE, result.data.refresh_token, SESSION_MAX_AGE_MS);
+    setSessionCookie(res, REFRESH_COOKIE, result.data.refresh_token);
   }
 
   const resolved = await resolveSessionUser(result.data.access_token);
@@ -8266,9 +8267,9 @@ app.post('/api/auth/register', async (req, res) => {
   }
 
   if (token) {
-    setSessionCookie(res, SESSION_COOKIE, token, SESSION_MAX_AGE_MS);
+    setSessionCookie(res, SESSION_COOKIE, token);
     if (refreshToken) {
-      setSessionCookie(res, REFRESH_COOKIE, refreshToken, SESSION_MAX_AGE_MS);
+      setSessionCookie(res, REFRESH_COOKIE, refreshToken);
     }
   }
 
@@ -8456,7 +8457,7 @@ app.post('/api/auth/local-login', async (req, res) => {
     exp: Date.now() + SESSION_MAX_AGE_MS
   };
 
-  setSessionCookie(res, SESSION_COOKIE, signLocalSession(payload), SESSION_MAX_AGE_MS);
+  setSessionCookie(res, SESSION_COOKIE, signLocalSession(payload));
   logAuthEvent('ACCESO_LOCAL_OK', ip, `email=${cleanEmail}`);
 
   res.json({
@@ -8525,9 +8526,9 @@ app.get('/api/auth/google/callback', async (req, res) => {
     return res.redirect(`/login?error=${encodeURIComponent('No se pudo completar el inicio de sesiÃ³n con Google.')}`);
   }
 
-  setSessionCookie(res, SESSION_COOKIE, result.data.access_token, SESSION_MAX_AGE_MS);
+  setSessionCookie(res, SESSION_COOKIE, result.data.access_token);
   if (result.data.refresh_token) {
-    setSessionCookie(res, REFRESH_COOKIE, result.data.refresh_token, SESSION_MAX_AGE_MS);
+    setSessionCookie(res, REFRESH_COOKIE, result.data.refresh_token);
   }
 
   const resolved = await resolveSessionUser(result.data.access_token);

@@ -173,6 +173,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Sin sesion: se continua en modo publico.
       }
 
+      // Sin sesion en servidor (p. ej. cookies de sesion borradas al cerrar el
+      // navegador): la identidad local residual debe desaparecer para exigir
+      // un nuevo inicio de sesion.
+      if (typeof window !== 'undefined' && localStorage.getItem('frenyer_active_user')) {
+        clearLocalIdentity();
+      }
+
       if (!isMounted) return;
       setUser(null);
       setSession(null);
