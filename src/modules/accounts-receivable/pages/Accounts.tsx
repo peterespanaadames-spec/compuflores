@@ -1948,28 +1948,30 @@ export function Accounts() {
               maxWidth: 540,
               background: '#fff',
               borderRadius: 16,
-              padding: 24,
+              overflow: 'hidden',
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
               position: 'relative'
             }}
           >
-            <button
-              onClick={() => setIsManualModalOpen(false)}
-              style={{ position: 'absolute', top: 20, right: 20, background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer' }}
-            >
-              <X size={20} />
-            </button>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 10, background: '#FFFDEB', color: '#2D2E32', display: 'grid', placeItems: 'center' }}>
-                <Plus size={20} />
+            {/* Cabecera amarilla */}
+            <div style={{ background: 'var(--brand-accent)', color: '#111827', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #FDF06F' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: '#111827', color: '#fff', display: 'grid', placeItems: 'center' }}>
+                  <Plus size={20} />
+                </div>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#111827' }}>
+                  Agregar Cuenta Pendiente
+                </h3>
               </div>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>
-                Agregar Cuenta Pendiente
-              </h3>
+              <button
+                onClick={() => setIsManualModalOpen(false)}
+                style={{ background: 'transparent', border: 'none', color: '#111827', cursor: 'pointer' }}
+              >
+                <X size={20} />
+              </button>
             </div>
 
-            <form onSubmit={handleSaveManualAccount} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <form onSubmit={handleSaveManualAccount} style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: 24 }}>
               <div className="field">
                 <label style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>Tipo de Cuenta:</label>
                 <div style={{ display: 'flex', gap: 10 }}>
