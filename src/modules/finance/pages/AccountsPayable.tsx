@@ -1794,9 +1794,9 @@ export function AccountsPayable() {
                       borderRadius: 8,
                       fontSize: 12,
                       fontWeight: 700,
-                      border: formSupplierMode === 'new' ? '2px solid #2D2E32' : '1px solid var(--border)',
-                      background: formSupplierMode === 'new' ? '#FFFDEB' : '#fff',
-                      color: formSupplierMode === 'new' ? '#2D2E32' : '#475569',
+                      border: formSupplierMode === 'new' ? '2px solid #111827' : '1px solid var(--border)',
+                      background: formSupplierMode === 'new' ? '#111827' : '#fff',
+                      color: formSupplierMode === 'new' ? '#ffffff' : '#475569',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -1927,9 +1927,6 @@ export function AccountsPayable() {
                           color: '#92400e'
                         }}
                       >
-                        <div style={{ marginBottom: 6, fontWeight: 600 }}>
-                          No se encontraron proveedores en la memoria de la sesión activa.
-                        </div>
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                           <button
                             type="button"
@@ -1969,25 +1966,6 @@ export function AccountsPayable() {
                   </div>
                 ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <div
-                    style={{
-                      padding: '10px 12px',
-                      background: '#FFFDEB',
-                      borderRadius: 8,
-                      border: '1px solid #FFFDEB',
-                      fontSize: 12,
-                      color: '#111827',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8
-                    }}
-                  >
-                    <Building size={16} />
-                    <span>
-                      <strong>Registro de Proveedor:</strong> Los datos se guardarán automáticamente en la tabla oficial de proveedores (<code>suppliers</code>) y se vincularán a esta factura de compra.
-                    </span>
-                  </div>
-
                   <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 10 }}>
                     <div>
                       <label style={{ fontSize: 11, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 4 }}>
