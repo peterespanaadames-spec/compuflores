@@ -1,3 +1,6 @@
+## CXP: retiro de bloque de sincronizacion de proveedores (2026-11-08, commit 029d39a)
+- En `AccountsPayable.tsx` se eliminó el bloque de estado vacío de proveedores (botones «Sincronizar tabla de proveedores» y «Nuevo Proveedor») que aparecía cuando `suppliersList.length === 0`. Build + push a frenyer OK.
+
 ## Despliegue: frenyer = pruebas, compuflores = comercial congelado (2026-11-02)
 - **Flujo de trabajo ratificado por el usuario**: TODO cambio nuevo se implementa y prueba en `frenyer` (GitHub peterespanaadames-spec/frenyer + Vercel frenyer.vercel.app); solo se sincroniza a `compuflores` (origin, comercial) cuando el usuario lo informe explícitamente («sincroniza»). Los dos remotos conviven siempre sincronizados al último commit aprobado.
 - Repo remoto nuevo `frenyer` (github peterespanaadames-spec/frenyer) con Vercel `frenyer.vercel.app` — ESTE es el entorno de pruebas del usuario. Variables de entorno ya cargadas allí (mode: variable de entorno, conectado). Commits subidos: defd4c8 (RBAC/sesiones), 34824fb (0030), 1fa460c (build fix).
