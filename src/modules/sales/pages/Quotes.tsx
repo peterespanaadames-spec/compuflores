@@ -1557,29 +1557,29 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
             }}
           >
             {/* Modal header */}
-            <div style={{ background: '#fff', borderBottom: '1px solid var(--border)', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ background: 'var(--brand-accent)', borderBottom: '1px solid #FDF06F', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <button
                   type="button"
                   onClick={() => { setIsCreateOpen(false); resetDraft(); }}
                   title="Volver a la pantalla anterior"
-                  style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: 6, borderRadius: 8, display: 'grid', placeItems: 'center' }}
+                  style={{ background: 'transparent', border: 'none', color: '#111827', cursor: 'pointer', padding: 6, borderRadius: 8, display: 'grid', placeItems: 'center' }}
                 >
                   <ArrowLeft size={18} />
                 </button>
-                <div style={{ width: 36, height: 36, borderRadius: 9, background: 'var(--brand-500)', color: '#fff', display: 'grid', placeItems: 'center' }}>
+                <div style={{ width: 36, height: 36, borderRadius: 9, background: '#111827', color: '#fff', display: 'grid', placeItems: 'center' }}>
                   <FileText size={18} />
                 </div>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>
+                  <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#111827' }}>
                     {editingQuote ? `Modificar cotización COT-${editingQuote.doc_number}` : 'Nueva cotización'}
                   </h2>
-                  <span style={{ fontSize: 12, color: '#64748b' }}>Documento expresado en USD ($)</span>
+                  <span style={{ fontSize: 12, color: '#374151' }}>Documento expresado en USD ($)</span>
                 </div>
               </div>
               <button
                 onClick={() => { setIsCreateOpen(false); resetDraft(); }}
-                style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: 6 }}
+                style={{ background: 'transparent', border: 'none', color: '#111827', cursor: 'pointer', padding: 6 }}
               >
                 <X size={22} />
               </button>
