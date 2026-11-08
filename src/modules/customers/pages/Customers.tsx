@@ -661,23 +661,24 @@ export function Customers() {
             {/* Modal Header */}
             <div
               style={{
-                background: 'linear-gradient(135deg, #2D2E32 0%, #111827 100%)',
-                color: 'white',
+                background: 'var(--brand-accent)',
+                color: '#111827',
                 padding: '20px 24px',
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center'
+                alignItems: 'center',
+                borderBottom: '1px solid #FDF06F'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <Users size={22} style={{ color: '#E5E7EB' }} />
+                <Users size={22} style={{ color: '#111827' }} />
                 <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   {editingId ? 'EDITAR CLIENTE' : 'NUEVO CLIENTE'}
                 </h3>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                style={{ background: 'transparent', border: 'none', color: '#E5E7EB', cursor: 'pointer' }}
+                style={{ background: 'transparent', border: 'none', color: '#111827', cursor: 'pointer' }}
               >
                 <X size={24} />
               </button>
@@ -685,20 +686,6 @@ export function Customers() {
 
             {/* Modal Form Fields */}
             <form onSubmit={handleSaveCustomer} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-              
-              <div className="field">
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', textTransform: 'uppercase', marginBottom: 8, display: 'block' }}>
-                  NOMBRE COMPLETO / RAZÓN SOCIAL *
-                </label>
-                <input
-                  className="input"
-                  value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
-                  placeholder="Ej: Inversiones Pérez C.A., María Gómez"
-                  required
-                  style={{ height: 48, fontSize: 14 }}
-                />
-              </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div className="field">
@@ -728,6 +715,7 @@ export function Customers() {
                     onChange={(e) => setDocNumberInput(e.target.value)}
                     placeholder="Ej: V-12345678"
                     required
+                    autoFocus
                     style={{ height: 48, fontSize: 14 }}
                   />
                   {isConsultaDocType(docTypeInput) && (
@@ -744,6 +732,20 @@ export function Customers() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className="field">
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', textTransform: 'uppercase', marginBottom: 8, display: 'block' }}>
+                  NOMBRE COMPLETO / RAZÓN SOCIAL *
+                </label>
+                <input
+                  className="input"
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  placeholder="Ej: Inversiones Pérez C.A., María Gómez"
+                  required
+                  style={{ height: 48, fontSize: 14 }}
+                />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
