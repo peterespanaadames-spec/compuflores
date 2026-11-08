@@ -48,7 +48,7 @@ export function CedulaLookupButton({
       onClick={runLookup}
       disabled={disabled || isConsulting}
       title="Consulta los datos de la persona en el registro y rellena el formulario"
-      style={{ height: 34, fontSize: 12, fontWeight: 700, padding: '0 14px', whiteSpace: 'nowrap' }}
+      style={{ height: 34, fontSize: 12, fontWeight: 700, padding: '0 14px', whiteSpace: 'nowrap', background: '#111827', color: '#ffffff', border: '1px solid #111827', boxShadow: 'none' }}
     >
       <Search size={14} style={{ marginRight: 6 }} />
       {isConsulting ? 'Consultando…' : 'Consultar cédula'}
