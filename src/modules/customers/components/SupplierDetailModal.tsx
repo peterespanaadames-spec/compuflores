@@ -892,7 +892,7 @@ export function SupplierDetailModal({
           {(activeTab === 'ficha' || isNew) && (
             <div>
               <div style={{ marginBottom: 16 }}>
-                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>
+                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#111827', background: 'var(--brand-accent)', padding: '8px 16px', borderRadius: 14, display: 'inline-block' }}>
                   {isNew ? 'Datos de Registro del Nuevo Proveedor' : 'Formulario de Edición de Ficha'}
                 </h3>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', color: 'var(--muted)' }}>
