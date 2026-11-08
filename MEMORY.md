@@ -32,14 +32,16 @@
 - En la tienda pública, los banners «Copias y Materiales» y «Comprar Repuestos» filtran la división, limpian categoría/búsqueda y desplazan al catálogo; los botones de producto siguen agregando al carrito.
 
 ## Autocompletado por cédula (2026-11-08)
-- **API cedula.com.ve** (pagada, APP-ID + token) integrada por proxy del servidor: `GET /api/cedula-lookup?doc=V-12345678` en `api/server.ts`. Sin credenciales responde 503 `configured:false` y TODA la UI queda dormida (nada se rompe ni se anuncia).
-- Credenciales por variable de entorno (jamás en el cliente): `CEDULA_APP_ID`, `CEDULA_TOKEN` — añadirlas a `.env.local` (local) y a Vercel → Redeploy.
+- **API cedula.com.ve** (pagada) integrada por proxy del servidor: `GET /api/cedula-lookup?doc=V-12345678` en `api/server.ts`. Credenciales activas en `.env.local` (`CEDULA_APP_ID=9659` + token); en Vercel faltan por cargar → Redeploy. Verificación E2E con cédula real pendiente (cada consulta gasta crédito).
 - Protección del crédito pagado: caché local de consultas exitosas en `data/cedula_lookups.json` (misma cédula no se paga dos veces) + límite de 15 consultas/min por IP (429).
 - Lib compartida `src/lib/cedulaLookup.ts`: parser (`V-12345678` / `12345678` asume V; rechaza 0 inicial), `lookupCedula`, `isConsultaDocType` (solo «Natural»), `useCedulaAutofill` (llena nombre/RIF/ubicación solo si el campo está vacío o fue autocompletado antes → los campos quedan editables).
 - Botón reutilizable `src/components/ui/CedulaLookupButton.tsx`: «Consultar» en los 4 modales ERP de persona natural (Sales POS + campos del paso 1, Customers, Accounts, Quotes; solo cuando el tipo es Natural).
 - Trigger mixto (decisión del usuario): ERP = botón explícito; tienda (checkout, onBlur) y portal del cliente (Mi Perfil, onBlur) = automático con aviso inline verde/rojo. La ubicación del registro («Estado · Municipio · Parroquia») va al campo dirección; en tienda/portal se muestra como aviso (no hay campo dirección ahí).
 - Proveedores/RIF jurídicos (J-) fuera de alcance: el API solo cubre personas naturales.
 - Build y lint limpios. Verificación E2E con cédula real pendiente de credenciales del usuario.
+- **Registro de cliente relanzado (2026-11-08)**: modal de Clientes con cabecera amarilla (`var(--brand-accent)`, texto #111827) y la cédula como PRIMER dato (tipo + cédula encima del nombre; autoFocus en cédula; botón «Consultar cédula» al lado). Los otros 3 modales (POS, CxC, Cotizaciones) siguen con cabecera oscura — homogeneizar a pedido.
+- **Integración del repo frenyer (2026-11-08)**: remoto estaba adelantado 30 commits (móvil compacto, sesiones, lazyRoute). Rebase de 3 commits locales sobre `bf6ead6` → `main` local = remoto + cédula + pendientes (banners/limpieza) + clientes-modal; push `bf6ead6..5baa542` a `peterespanaadames-spec/frenyer`. Conflictos resueltos: router/LoginPage → remoto (lazyRoute; reemplazo de sesión), .gitignore → unión, .rsc.json → 4.0.5, MEMORY → unión. `origin`/compuflores intacto (comercial, per flujo ratificado: frenyer = pruebas).
+- **Despliegue activo**: frenyer.vercel.app = pruebas (variables ya cargadas allí); compuflores.vercel.app = comercial SIN estas novedades hasta orden del usuario («sincroniza»).
 
 ## Limpieza de código (2026-10-30)
 - Eliminados 6 archivos de código muerto: Kpi.tsx, SupabaseConnectionModal.tsx, SalesCharts.tsx, SalesFilters.tsx, SalesKPIs.tsx, SalesTransactionsTable.tsx (confirmados por Knip y documentación).
