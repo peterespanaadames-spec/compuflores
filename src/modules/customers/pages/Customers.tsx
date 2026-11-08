@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import { getActiveExchangeRate, convertUSDtoVES, formatVES } from '../../../lib/currency';
 import { Button } from '../../../components/ui/Button';
+import { CedulaLookupButton } from '../../../components/ui/CedulaLookupButton';
+import { isConsultaDocType, useCedulaAutofill } from '../../../lib/cedulaLookup';
 import { getBusinessProfile } from '../../../lib/businessProfile';
 import { createWorksheetWithBusinessHeader } from '../../../lib/reportUtils';
 import {
@@ -84,6 +86,9 @@ export function Customers() {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   };
+
+  // Consulta de cédula: coloca nombres, RIF y ubicación en los campos (editables).
+  const applyNewCustomerCedula = useCedulaAutofill(showToast);
 
   // Load Real Data from Supabase
   const loadCustomers = async () => {
@@ -725,6 +730,19 @@ export function Customers() {
                     required
                     style={{ height: 48, fontSize: 14 }}
                   />
+                  {isConsultaDocType(docTypeInput) && (
+                    <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end' }}>
+                      <CedulaLookupButton
+                        docInput={docNumberInput}
+                        onError={showToast}
+                        onFound={(d) => applyNewCustomerCedula(d, {
+                          setDoc: setDocNumberInput,
+                          setName: setNameInput,
+                          setAddress: setAddressInput
+                        }, { name: nameInput, address: addressInput })}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -1048,6 +1048,169 @@ app.post('/api/reports/process-transactions', (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// 3b. AUTOCOMPLETADO DE PERSONA POR CEDULA (API cedula.com.ve)
+// Cada consulta gasta un credito prepagado de la cuenta del negocio: se
+// protege con limite de ritmo por IP y cache local de las consultas exitosas.
+// Las credenciales (CEDULA_APP_ID / CEDULA_TOKEN) viven solo en el servidor.
+// ---------------------------------------------------------------------------
+const CEDULA_APP_ID = process.env.CEDULA_APP_ID || '';
+const CEDULA_TOKEN = process.env.CEDULA_TOKEN || '';
+const CEDULA_API_URL = 'https://api.cedula.com.ve/api/v1';
+const CEDULA_LOOKUPS_FILE = path.resolve(DATA_DIR, 'cedula_lookups.json');
+const CEDULA_RATE_LIMIT_PER_MINUTE = 15;
+const CEDULA_RATE_WINDOW_MS = 60_000;
+
+const cedulaLookupCache: Record<string, { data: unknown; cachedAt: string }> = {};
+let cedulaLookupCacheLoaded = false;
+
+function ensureCedulaLookupCache(): void {
+  if (cedulaLookupCacheLoaded) return;
+  cedulaLookupCacheLoaded = true;
+  try {
+    const raw = fs.readFileSync(CEDULA_LOOKUPS_FILE, 'utf8');
+    const parsed = JSON.parse(raw) as { lookups?: Record<string, { data: unknown; cachedAt: string }> };
+    if (parsed && typeof parsed === 'object' && parsed.lookups) {
+      for (const [key, value] of Object.entries(parsed.lookups)) {
+        if (value && typeof value === 'object' && 'data' in value) {
+          cedulaLookupCache[key] = value;
+        }
+      }
+    }
+  } catch {
+    /* archivo ausente o ilegible: cache vacia */
+  }
+}
+
+function persistCedulaLookupCache(): void {
+  try {
+    fs.writeFileSync(
+      CEDULA_LOOKUPS_FILE,
+      JSON.stringify({ lookups: cedulaLookupCache }, null, 2),
+      'utf8'
+    );
+  } catch (err) {
+    console.error('[cedula-lookup] No se pudo guardar el cache local:', err);
+  }
+}
+
+/** Acepta "V-12345678", "V12345678", "12345678" (sin letra asume V). */
+function parseCedulaDoc(input: string): { nacionalidad: 'V' | 'E'; digits: string } | null {
+  const normalized = input.trim().toUpperCase().replace(/[\s.\-–]/g, '');
+  const match = normalized.match(/^([VE]?)(\d{5,9})$/);
+  if (!match) return null;
+  const nacionalidad = (match[1] || 'V') as 'V' | 'E';
+  if (match[2].startsWith('0')) return null; // una cedula no comienza en 0
+  return { nacionalidad, digits: match[2] };
+}
+
+const cedulaRateBuckets = new Map<string, number[]>();
+
+function isCedulaRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const hits = (cedulaRateBuckets.get(ip) ?? []).filter((t) => now - t < CEDULA_RATE_WINDOW_MS);
+  if (hits.length >= CEDULA_RATE_LIMIT_PER_MINUTE) {
+    cedulaRateBuckets.set(ip, hits);
+    return true;
+  }
+  hits.push(now);
+  cedulaRateBuckets.set(ip, hits);
+  if (cedulaRateBuckets.size > 500) cedulaRateBuckets.clear();
+  return false;
+}
+
+app.get('/api/cedula-lookup', async (req, res) => {
+  if (!CEDULA_APP_ID || !CEDULA_TOKEN) {
+    return res.status(503).json({
+      found: false,
+      configured: false,
+      message: 'Autocompletado por cédula no configurado: faltan las credenciales del servidor.'
+    });
+  }
+
+  const ip = String(req.headers['x-forwarded-for'] || req.ip || 'anon').split(',')[0].trim();
+  if (isCedulaRateLimited(ip)) {
+    return res.status(429).json({
+      found: false,
+      error: 'Demasiadas consultas seguidas. Espera un momento e intenta de nuevo.'
+    });
+  }
+
+  const doc = String(req.query.doc ?? '').trim();
+  const parsed = parseCedulaDoc(doc);
+  if (!parsed) {
+    return res.status(400).json({
+      found: false,
+      error: 'Formato de cédula inválido: usa V o E seguido de 5 a 9 dígitos (ej. V-12345678).'
+    });
+  }
+
+  const cacheKey = `${parsed.nacionalidad}-${parsed.digits}`;
+  ensureCedulaLookupCache();
+  const cached = cedulaLookupCache[cacheKey];
+  if (cached) {
+    return res.json({ ...(cached.data as object), cached: true });
+  }
+
+  const url = `${CEDULA_API_URL}?app_id=${encodeURIComponent(CEDULA_APP_ID)}&token=${encodeURIComponent(
+    CEDULA_TOKEN
+  )}&nacionalidad=${parsed.nacionalidad}&cedula=${parsed.digits}`;
+
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10_000);
+    const upstream = await fetch(url, { signal: controller.signal, headers: { Accept: 'application/json' } });
+    clearTimeout(timer);
+    const json = await upstream.json().catch(() => null);
+
+    if (!upstream.ok || !json || json.error) {
+      const upstreamDetail = json && typeof json.error_str === 'string' ? json.error_str : '';
+      return res.status(upstream.status === 404 ? 404 : 502).json({
+        found: false,
+        error: upstreamDetail || 'No se encontró a la persona en el registro o el servicio no respondió con datos.'
+      });
+    }
+
+    const data = json.data ?? {};
+    const names = [data.primer_nombre, data.segundo_nombre].filter(Boolean).join(' ').trim();
+    const lastNames = [data.primer_apellido, data.segundo_apellido].filter(Boolean).join(' ').trim();
+    const fullName = [names, lastNames].filter(Boolean).join(' ').trim();
+
+    const payload = {
+      found: true,
+      configured: true,
+      input: doc,
+      identity: {
+        nacionalidad: data.nacionalidad || parsed.nacionalidad,
+        cedula: String(data.cedula || parsed.digits),
+        rif: typeof data.rif === 'string' ? data.rif.trim() : '',
+        names,
+        lastNames,
+        fullName
+      },
+      location: {
+        estado: data.cne?.estado ?? '',
+        municipio: data.cne?.municipio ?? '',
+        parroquia: data.cne?.parroquia ?? '',
+        centroElectoral: data.cne?.centro_electoral ?? ''
+      }
+    };
+
+    cedulaLookupCache[cacheKey] = { data: payload, cachedAt: new Date().toISOString() };
+    persistCedulaLookupCache();
+
+    return res.json({ ...payload, cached: false });
+  } catch (err: any) {
+    const aborted = err?.name === 'AbortError';
+    return res.status(502).json({
+      found: false,
+      error: aborted
+        ? 'La consulta al registro tardó demasiado. Intenta de nuevo.'
+        : 'No se pudo contactar el servicio de consulta de cédulas.'
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // 4. SUPABASE BACKEND PROXY (Garantiza cero problemas de CORS o Iframe)
 // ---------------------------------------------------------------------------
 function supabaseRestRequest(

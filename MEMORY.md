@@ -28,6 +28,19 @@
 - **Herramienta**: vitest ya no escanea `node_modules` (include `src/**`, `passWithNoTests`): el proyecto NO tenía tests propios — los "1415 pasados" eran pruebas de dependencias. ESLint ahora ignora las carpetas ` * - copia`.
 - **Lección de QA**: los tokens locales (`local.` HMAC) son SIN ESTADO: el logout solo los invalida vía cookie — no sirve para probar revocación; para eso usar login real de Supabase + usuario temporal creado/destruido con service role (patrón ya usado en este run). `X-Forwarded-For` es controlado por el cliente (limitación documentada del rate limit por IP en localhost).
 
+## Navegación rápida del catálogo de tienda (2026-11-08)
+- En la tienda pública, los banners «Copias y Materiales» y «Comprar Repuestos» filtran la división, limpian categoría/búsqueda y desplazan al catálogo; los botones de producto siguen agregando al carrito.
+
+## Autocompletado por cédula (2026-11-08)
+- **API cedula.com.ve** (pagada, APP-ID + token) integrada por proxy del servidor: `GET /api/cedula-lookup?doc=V-12345678` en `api/server.ts`. Sin credenciales responde 503 `configured:false` y TODA la UI queda dormida (nada se rompe ni se anuncia).
+- Credenciales por variable de entorno (jamás en el cliente): `CEDULA_APP_ID`, `CEDULA_TOKEN` — añadirlas a `.env.local` (local) y a Vercel → Redeploy.
+- Protección del crédito pagado: caché local de consultas exitosas en `data/cedula_lookups.json` (misma cédula no se paga dos veces) + límite de 15 consultas/min por IP (429).
+- Lib compartida `src/lib/cedulaLookup.ts`: parser (`V-12345678` / `12345678` asume V; rechaza 0 inicial), `lookupCedula`, `isConsultaDocType` (solo «Natural»), `useCedulaAutofill` (llena nombre/RIF/ubicación solo si el campo está vacío o fue autocompletado antes → los campos quedan editables).
+- Botón reutilizable `src/components/ui/CedulaLookupButton.tsx`: «Consultar» en los 4 modales ERP de persona natural (Sales POS + campos del paso 1, Customers, Accounts, Quotes; solo cuando el tipo es Natural).
+- Trigger mixto (decisión del usuario): ERP = botón explícito; tienda (checkout, onBlur) y portal del cliente (Mi Perfil, onBlur) = automático con aviso inline verde/rojo. La ubicación del registro («Estado · Municipio · Parroquia») va al campo dirección; en tienda/portal se muestra como aviso (no hay campo dirección ahí).
+- Proveedores/RIF jurídicos (J-) fuera de alcance: el API solo cubre personas naturales.
+- Build y lint limpios. Verificación E2E con cédula real pendiente de credenciales del usuario.
+
 ## Limpieza de código (2026-10-30)
 - Eliminados 6 archivos de código muerto: Kpi.tsx, SupabaseConnectionModal.tsx, SalesCharts.tsx, SalesFilters.tsx, SalesKPIs.tsx, SalesTransactionsTable.tsx (confirmados por Knip y documentación).
 - Eliminadas 8 dependencias no usadas de package.json: @tanstack/react-query, csstype, eventemitter3, react-hook-form, react-redux, redux, reselect, zod.

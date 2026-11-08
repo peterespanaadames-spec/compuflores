@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { CedulaLookupButton } from '../../../components/ui/CedulaLookupButton';
+import { isConsultaDocType, useCedulaAutofill } from '../../../lib/cedulaLookup';
 import { Badge } from '../../../components/ui/Badge';
 import { formatUSD, formatVES, getActiveExchangeRate } from '../../../lib/currency';
 import { supabase } from '../../../lib/supabase/client';
@@ -101,6 +103,9 @@ export function Accounts() {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
   };
+
+  // Consulta de cédula: coloca nombres, RIF y ubicación en los campos (editables).
+  const applyNewCustomerCedula = useCedulaAutofill((m) => showToast(m, 'info'));
 
   const activeRate = getActiveExchangeRate();
 
@@ -2231,6 +2236,19 @@ export function Accounts() {
                     placeholder="Ej: V-12345678 o J-314569..."
                     required
                   />
+                  {isConsultaDocType(newCustomerDocType) && (
+                    <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end' }}>
+                      <CedulaLookupButton
+                        docInput={newCustomerDocNumber}
+                        onError={(m) => showToast(m, 'info')}
+                        onFound={(d) => applyNewCustomerCedula(d, {
+                          setDoc: setNewCustomerDocNumber,
+                          setName: setNewCustomerName,
+                          setAddress: setNewCustomerAddress
+                        }, { name: newCustomerName, address: newCustomerAddress })}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 

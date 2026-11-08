@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -62,6 +62,7 @@ import {
   PublicBusinessConfig
 } from '../../../types/domain';
 import { CustomerPortal, type PortalTab } from '../components/CustomerPortal';
+import { lookupCedula, parseCedulaDoc, useCedulaAutofill } from '../../../lib/cedulaLookup';
 import { OrderTrackerModal } from '../components/OrderTrackerModal';
 
 // --- LOGO SVG COMPONENT (Exact Match to CompuRepuestos CR Logo) ---
@@ -516,6 +517,38 @@ export function ShopPage() {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
+
+  // Consulta automática por cédula al dejar el campo (los datos quedan editables).
+  const [cedulaHint, setCedulaHint] = useState<{ text: string; tone: 'ok' | 'warn' } | null>(null);
+  const lastCedulaLookupRef = useRef('');
+  const applyCheckoutCedula = useCedulaAutofill(showToast);
+
+  const handleCedulaBlur = useCallback(() => {
+    const parsed = parseCedulaDoc(customerDoc);
+    if (!parsed || parsed.normalized === lastCedulaLookupRef.current) return;
+    lastCedulaLookupRef.current = parsed.normalized;
+    (async () => {
+      const outcome = await lookupCedula(parsed.normalized);
+      if (outcome.ok) {
+        applyCheckoutCedula(outcome.data, {
+          setDoc: setCustomerDoc,
+          setName: setCustomerName
+        }, { name: customerName });
+        const loc = [
+          outcome.data.location.estado,
+          outcome.data.location.municipio,
+          outcome.data.location.parroquia
+        ].filter((part) => part.trim().length > 0).join(' · ');
+        setCedulaHint(loc ? { text: `Registro: ${loc}`, tone: 'ok' } : null);
+      } else if (outcome.reason === 'not-configured') {
+        setCedulaHint(null); // Función dormida: sin credenciales no molesta al cliente
+      } else if (outcome.reason === 'unavailable') {
+        setCedulaHint({ text: 'No pudimos consultar el registro ahora; completa los datos.', tone: 'warn' });
+      } else {
+        setCedulaHint({ text: 'No se encontró la cédula en el registro; completa los datos.', tone: 'warn' });
+      }
+    })();
+  }, [customerDoc, customerName, applyCheckoutCedula]);
 
   // Sync cart to storage (avisa al guardia global de salida vía evento)
   useEffect(() => {
@@ -3966,7 +3999,13 @@ export function ShopPage() {
                       placeholder="Ej. V-18234567"
                       value={customerDoc}
                       onChange={e => setCustomerDoc(e.target.value)}
+                      onBlur={handleCedulaBlur}
                     />
+                    {cedulaHint && (
+                      <p style={{ margin: '4px 0 0', fontSize: 11.5, fontWeight: 600, color: cedulaHint.tone === 'ok' ? '#15803D' : '#DC2626' }}>
+                        {cedulaHint.text}
+                      </p>
+                    )}
                   </div>
 
                   <div className="field">

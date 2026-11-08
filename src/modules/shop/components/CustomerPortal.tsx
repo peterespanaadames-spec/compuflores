@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   X,
   LogOut,
@@ -25,6 +25,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { formatUSD, formatVES } from '../../../lib/currency';
+import { lookupCedula, parseCedulaDoc, useCedulaAutofill } from '../../../lib/cedulaLookup';
 
 interface CustomerPortalOrderItem {
   sku?: string;
@@ -188,6 +189,34 @@ export function CustomerPortal({
   const [editPhone, setEditPhone] = useState('');
   const [profileSuccessMsg, setProfileSuccessMsg] = useState('');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  // Consulta automática por cédula al salir del campo documento (los datos quedan editables).
+  const [docLookupHint, setDocLookupHint] = useState<{ text: string; tone: 'ok' | 'warn' } | null>(null);
+  const lastDocLookupRef = useRef('');
+  const applyProfileLookup = useCedulaAutofill();
+  const handleProfileDocBlur = useCallback(() => {
+    const parsed = parseCedulaDoc(editDocId);
+    if (!parsed || parsed.normalized === lastDocLookupRef.current) return;
+    lastDocLookupRef.current = parsed.normalized;
+    (async () => {
+      const outcome = await lookupCedula(parsed.normalized);
+      if (outcome.ok) {
+        applyProfileLookup(outcome.data, {
+          setDoc: setEditDocId,
+          setName: setEditFullName
+        }, { name: editFullName });
+        setDocLookupHint(
+          outcome.data.identity.fullName
+            ? { text: 'Datos cargados desde el registro.', tone: 'ok' }
+            : null
+        );
+      } else if (outcome.reason === 'not-configured') {
+        setDocLookupHint(null); // Función dormida: sin credenciales no se anuncia nada
+      } else if (outcome.reason !== 'invalid') {
+        setDocLookupHint({ text: 'No se encontró la cédula en el registro; completa tus datos.', tone: 'warn' });
+      }
+    })();
+  }, [editDocId, editFullName, applyProfileLookup]);
 
   // Address states
   const [isAddingAddress, setIsAddingAddress] = useState(false);
@@ -805,7 +834,13 @@ export function CustomerPortal({
                           placeholder="V-12345678 o J-12345678"
                           value={editDocId}
                           onChange={(e) => setEditDocId(e.target.value)}
+                          onBlur={handleProfileDocBlur}
                         />
+                        {docLookupHint && (
+                          <p style={{ margin: '4px 0 0', fontSize: 11.5, fontWeight: 600, color: docLookupHint.tone === 'ok' ? '#15803D' : '#DC2626' }}>
+                            {docLookupHint.text}
+                          </p>
+                        )}
                       </div>
                       <div className="cp-field-box">
                         <label>TELÉFONO DE CONTACTO:</label>

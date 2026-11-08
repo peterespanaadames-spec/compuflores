@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { CedulaLookupButton } from '../../../components/ui/CedulaLookupButton';
+import { isConsultaDocType, useCedulaAutofill } from '../../../lib/cedulaLookup';
 import { Badge } from '../../../components/ui/Badge';
 import { getActiveExchangeRate, setActiveExchangeRate, convertUSDtoVES, formatUSD, formatVES } from '../../../lib/currency';
 import {
@@ -207,6 +209,10 @@ export function Sales() {
   const [newCustomerCreditLimit, setNewCustomerCreditLimit] = useState('0');
   const [newCustomerAddress, setNewCustomerAddress] = useState('');
   const [isSavingCustomer, setIsSavingCustomer] = useState(false);
+
+  // Consulta de cédula: coloca nombres, RIF y ubicación en los campos (editables).
+  const applyClientFieldsCedula = useCedulaAutofill((m) => showToast(m, 'info'));
+  const applyNewCustomerCedula = useCedulaAutofill((m) => showToast(m, 'info'));
 
   const handleOpenNewCustomerModal = () => {
     setNewCustomerName('');
@@ -1827,6 +1833,17 @@ export function Sales() {
                     onChange={(e) => setClientRif(e.target.value)}
                     required
                   />
+                  <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end' }}>
+                    <CedulaLookupButton
+                      docInput={clientRif}
+                      onError={(m) => showToast(m, 'info')}
+                      onFound={(d) => applyClientFieldsCedula(d, {
+                        setDoc: setClientRif,
+                        setName: setClientName,
+                        setAddress: setClientAddress
+                      }, { name: clientName, address: clientAddress })}
+                    />
+                  </div>
                 </div>
                 <div className="field">
                   <label>Nombre / Razón Social *</label>
@@ -3515,6 +3532,19 @@ export function Sales() {
                     placeholder="Ej: V-12345678 o J-314569..."
                     required
                   />
+                  {isConsultaDocType(newCustomerDocType) && (
+                    <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end' }}>
+                      <CedulaLookupButton
+                        docInput={newCustomerDocNumber}
+                        onError={(m) => showToast(m, 'info')}
+                        onFound={(d) => applyNewCustomerCedula(d, {
+                          setDoc: setNewCustomerDocNumber,
+                          setName: setNewCustomerName,
+                          setAddress: setNewCustomerAddress
+                        }, { name: newCustomerName, address: newCustomerAddress })}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
