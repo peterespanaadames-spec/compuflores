@@ -1053,8 +1053,10 @@ app.post('/api/reports/process-transactions', (req, res) => {
 // protege con limite de ritmo por IP y cache local de las consultas exitosas.
 // Las credenciales (CEDULA_APP_ID / CEDULA_TOKEN) viven solo en el servidor.
 // ---------------------------------------------------------------------------
-const CEDULA_APP_ID = process.env.CEDULA_APP_ID || '';
-const CEDULA_TOKEN = process.env.CEDULA_TOKEN || '';
+// Credenciales del servicio: en Vercel viven en process.env; en local las lee
+// el parser de archivos .env (loadedEnv). Nunca se exponen al navegador.
+const CEDULA_APP_ID = (process.env.CEDULA_APP_ID || loadedEnv.CEDULA_APP_ID || '').trim();
+const CEDULA_TOKEN = (process.env.CEDULA_TOKEN || loadedEnv.CEDULA_TOKEN || '').trim();
 const CEDULA_API_URL = 'https://api.cedula.com.ve/api/v1';
 const CEDULA_LOOKUPS_FILE = path.resolve(DATA_DIR, 'cedula_lookups.json');
 const CEDULA_RATE_LIMIT_PER_MINUTE = 15;

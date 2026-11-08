@@ -29,6 +29,8 @@ Supabase en el navegador.
 - Hero con dos banners promocionales ("CompuFuturo", "Acelera Motor Partes").
 - Chips de categoría.
 - Cuadrícula de productos (`cr-product-grid` → `cr-product-card`) con buscador y filtros.
+- Los banners «Copias y Materiales» y «Comprar Repuestos» filtran su división, limpian
+  otros filtros y desplazan suavemente al catálogo de productos.
 - Tarjeta de **entrega express**.
 - Logotipo de marca en SVG inline (`CompuRepuestosLogo`, `:65-135`).
 - **Divisiones**: `ALL` / `MATERIALES` / `MOTOS` (`:182`).

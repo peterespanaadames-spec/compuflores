@@ -12,7 +12,8 @@ import {
   ArrowLeft,
   AlertCircle,
   CheckCircle2,
-  Loader2
+  Loader2,
+  LogOut
 } from 'lucide-react';
 
 export function LoginPage() {
@@ -119,6 +120,30 @@ export function LoginPage() {
       }
     }
   };
+
+  if (user) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <div style={{ width: 'min(460px, 100%)', background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 20px 60px rgba(0,0,0,0.25)', padding: 28, textAlign: 'center' }}>
+          <h3 style={{ margin: '0 0 10px', fontSize: 22, fontWeight: 800, color: '#0f172a' }}>Tienes otra sesión abierta</h3>
+          <p style={{ margin: '0 0 20px', fontSize: 16, color: '#64748b', lineHeight: 1.5 }}>
+            {user?.user_metadata?.full_name || user?.email || 'Usuario'} tiene una sesión activa. Ciérrala para poder ingresar con otra cuenta.
+          </p>
+          <button
+            type="button"
+            onClick={async () => {
+              await signOut();
+              setError(null);
+              setSuccessMessage('Sesión cerrada. Ya puedes iniciar sesión nuevamente.');
+            }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '12px 20px', borderRadius: 8, background: '#fef2f2', border: '1px solid #fca5a5', color: '#dc2626', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}
+          >
+            <LogOut size={16} /> Cerrar sesión
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <main className="auth-page">

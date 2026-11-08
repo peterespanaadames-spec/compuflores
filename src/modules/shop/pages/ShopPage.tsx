@@ -193,6 +193,18 @@ export function ShopPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
+  const showDivisionProducts = (division: 'MATERIALES' | 'MOTOS') => {
+    setActiveDivision(division);
+    setSelectedCategory('ALL');
+    setSearchTerm('');
+    requestAnimationFrame(() => {
+      document.getElementById('shop-product-catalog')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    });
+  };
+
   // Mobile drawer menu
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -2849,10 +2861,7 @@ export function ShopPage() {
           {/* BANNER 1: Flores Inversiones CompuFuturo (Laptops ocupando el contenedor) */}
           <div
             className="cr-banner-tech"
-            onClick={() => {
-              setActiveDivision('MATERIALES');
-              setSelectedCategory('ALL');
-            }}
+            onClick={() => showDivisionProducts('MATERIALES')}
           >
             <div>
               <div className="cr-banner-tagline">Flores Inversiones</div>
@@ -2872,8 +2881,7 @@ export function ShopPage() {
               className="cr-banner-btn-tech"
               onClick={e => {
                 e.stopPropagation();
-                setActiveDivision('MATERIALES');
-                setSelectedCategory('ALL');
+                showDivisionProducts('MATERIALES');
               }}
             >
               Copias y Materiales
@@ -2883,10 +2891,7 @@ export function ShopPage() {
           {/* BANNER 2: Acelera Motor Partes (Fondo oscuro con moto de alto rendimiento generada) */}
           <div
             className="cr-banner-moto"
-            onClick={() => {
-              setActiveDivision('MOTOS');
-              setSelectedCategory('ALL');
-            }}
+            onClick={() => showDivisionProducts('MOTOS')}
           >
             <div className="cr-banner-moto-title-group">
               <h2 className="cr-banner-moto-brand">Acelera</h2>
@@ -2906,8 +2911,7 @@ export function ShopPage() {
               className="cr-banner-btn-moto"
               onClick={e => {
                 e.stopPropagation();
-                setActiveDivision('MOTOS');
-                setSelectedCategory('ALL');
+                showDivisionProducts('MOTOS');
               }}
             >
               Comprar Repuestos
@@ -3252,7 +3256,7 @@ export function ShopPage() {
       </div>
 
       {/* 5. CATÁLOGO DE PRODUCTOS (5 estrellas, precios bimonetarios, bordes redondeados) */}
-      <main className="cr-catalog-wrap">
+      <main id="shop-product-catalog" className="cr-catalog-wrap">
         {isLoading ? (
           <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
             Cargando catálogo CompuRepuestos Flores Inversiones...
