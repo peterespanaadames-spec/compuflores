@@ -33,7 +33,11 @@ data/
 # Scratch workspace
 workspace/
 
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+
+# Local AI tool artifacts (skills, agents) — machine-local
+.agents/
+agent/
+skills-lock.json
 .rsc/
 .worktrees/
 .opencode/rsc/analyze

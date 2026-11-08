@@ -1914,55 +1914,6 @@ export function AccountsPayable() {
                         </div>
                       </div>
                     )}
-
-                    {suppliersList.length === 0 && (
-                      <div
-                        style={{
-                          marginTop: 8,
-                          padding: '12px',
-                          background: '#fffbeb',
-                          borderRadius: 8,
-                          border: '1px solid #fef3c7',
-                          fontSize: 12,
-                          color: '#92400e'
-                        }}
-                      >
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                          <button
-                            type="button"
-                            onClick={() => reloadSuppliers()}
-                            style={{
-                              padding: '6px 12px',
-                              background: '#fef08a',
-                              border: '1px solid #fde047',
-                              borderRadius: 6,
-                              fontSize: 11,
-                              fontWeight: 700,
-                              color: '#854d0e',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            🔄 Sincronizar tabla de proveedores
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setFormSupplierMode('new')}
-                            style={{
-                              padding: '6px 12px',
-                              background: '#2D2E32',
-                              border: 'none',
-                              borderRadius: 6,
-                              fontSize: 11,
-                              fontWeight: 700,
-                              color: '#fff',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Nuevo Proveedor
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
