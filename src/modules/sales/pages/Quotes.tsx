@@ -1542,10 +1542,31 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
       {/* ================= CREATE MODAL (full-screen overlay) ================= */}
       {isCreateOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 1300, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--canvas)', overflow: 'hidden' }}>
+          <div
+            style={{
+              flex: 1,
+              maxWidth: 1280,
+              width: '100%',
+              margin: '18px auto',
+              display: 'flex',
+              flexDirection: 'column',
+              background: 'var(--canvas)',
+              overflow: 'hidden',
+              borderRadius: 12,
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.35)'
+            }}
+          >
             {/* Modal header */}
             <div style={{ background: '#fff', borderBottom: '1px solid var(--border)', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => { setIsCreateOpen(false); resetDraft(); }}
+                  title="Volver a la pantalla anterior"
+                  style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: 6, borderRadius: 8, display: 'grid', placeItems: 'center' }}
+                >
+                  <ArrowLeft size={18} />
+                </button>
                 <div style={{ width: 36, height: 36, borderRadius: 9, background: 'var(--brand-500)', color: '#fff', display: 'grid', placeItems: 'center' }}>
                   <FileText size={18} />
                 </div>
@@ -1594,9 +1615,9 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                         )}
                       </div>
                       <Button
-                        variant="secondary"
+                        variant="accent"
                         onClick={handleOpenNewCustomerModal}
-                        style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', color: '#111827' }}
                       >
                         <UserPlus size={14} /> + Nuevo Cliente
                       </Button>
@@ -1939,16 +1960,17 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                 {/* Modal Header con gradiente violeta */}
                 <div
                   style={{
-                    background: 'linear-gradient(135deg, #2D2E32 0%, #111827 100%)',
-                    color: 'white',
+                    background: 'var(--brand-accent)',
+                    color: '#111827',
                     padding: '16px 20px',
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    borderBottom: '1px solid #FDF06F'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Users size={18} style={{ color: '#E5E7EB' }} />
+                    <Users size={18} style={{ color: '#111827' }} />
                     <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       NUEVO CLIENTE
                     </h3>
@@ -1956,7 +1978,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                   <button
                     type="button"
                     onClick={() => setIsNewCustomerOpen(false)}
-                    style={{ background: 'transparent', border: 'none', color: '#E5E7EB', cursor: 'pointer' }}
+                    style={{ background: 'transparent', border: 'none', color: '#111827', cursor: 'pointer' }}
                   >
                     <X size={20} />
                   </button>
@@ -1964,20 +1986,6 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
 
                 {/* Formulario idéntico a imagen y módulo Clientes */}
                 <form onSubmit={handleSaveNewCustomer} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <div className="field">
-                    <label style={{ fontSize: 11, fontWeight: 700, color: '#334155', textTransform: 'uppercase', marginBottom: 4 }}>
-                      NOMBRE COMPLETO / RAZÓN SOCIAL *
-                    </label>
-                    <input
-                      className="input"
-                      value={newCustomerName}
-                      onChange={(e) => setNewCustomerName(e.target.value)}
-                      placeholder="Ej: Inversiones Pérez C.A., María Gómez"
-                      required
-                      autoFocus
-                    />
-                  </div>
-
                   <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <div className="field">
                       <label style={{ fontSize: 11, fontWeight: 700, color: '#334155', textTransform: 'uppercase', marginBottom: 4 }}>
@@ -2005,6 +2013,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                         onChange={(e) => setNewCustomerDocNumber(e.target.value)}
                         placeholder="Ej: V-12345678 o J-314569"
                         required
+                        autoFocus
                       />
                       {isConsultaDocType(newCustomerDocType) && (
                         <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end' }}>
@@ -2020,6 +2029,19 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  <div className="field">
+                    <label style={{ fontSize: 11, fontWeight: 700, color: '#334155', textTransform: 'uppercase', marginBottom: 4 }}>
+                      NOMBRE COMPLETO / RAZÓN SOCIAL *
+                    </label>
+                    <input
+                      className="input"
+                      value={newCustomerName}
+                      onChange={(e) => setNewCustomerName(e.target.value)}
+                      placeholder="Ej: Inversiones Pérez C.A., María Gómez"
+                      required
+                    />
                   </div>
 
                   <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 12 }}>
