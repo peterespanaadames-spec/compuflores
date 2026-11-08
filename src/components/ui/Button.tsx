@@ -7,7 +7,7 @@ export function Button({
   ...p
 }: {
   children: ReactNode;
-  variant?: 'primary' | 'secondary' | 'accent' | 'yellow' | 'ghost' | 'link';
+  variant?: 'primary' | 'secondary' | 'danger' | 'accent' | 'yellow' | 'ghost' | 'link';
 } & ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button className={`btn ${variant} ${className}`.trim()} {...p}>

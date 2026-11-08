@@ -22,6 +22,20 @@ export function ExitGuardModal({ isOpen, onStay, onAbandon }: ExitGuardModalProp
   return (
     <div className="eg-root">
       <style>{`
+        .eg-root button {
+          transition:
+            background-color var(--button-motion-duration) ease-out,
+            border-color var(--button-motion-duration) ease-out,
+            color var(--button-motion-duration) ease-out,
+            transform var(--button-press-duration) ease-out,
+            scale var(--button-press-duration) ease-out,
+            box-shadow var(--button-motion-duration) ease-out;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .eg-root button {
+            transition-duration: 0.01ms;
+          }
+        }
         .eg-root .eg-backdrop {
           position: fixed;
           inset: 0;
@@ -84,7 +98,7 @@ export function ExitGuardModal({ isOpen, onStay, onAbandon }: ExitGuardModalProp
           color: #94a3b8;
           width: 26px;
           height: 26px;
-          border-radius: 8px;
+          border-radius: var(--button-radius);
           cursor: pointer;
           display: flex;
           align-items: center;

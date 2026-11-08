@@ -17,29 +17,48 @@
 ```ts
 interface ButtonProps {
   children: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'danger' | 'accent' | 'yellow' | 'ghost' | 'link';
   className?: string;
 }
 ```
 
 Extiende `ButtonHTMLAttributes<HTMLButtonElement>`. Genera `className = \`btn ${variant} ${className}\``.
+Usa las mismas variantes en el panel y la tienda; `className` permite conservar ajustes específicos
+de tamaño o color de marca sin cambiar el componente.
 
 | Variante | Clase resultante | Efecto |
 |---|---|---|
-| `primary` | `btn primary` | Relleno violeta |
-| `secondary` *(por defecto)* | `btn secondary` | ⚠ **No hay regla `.btn.secondary`** ⇒ aspecto de `.btn` base |
-| `ghost` | `btn ghost` | Transparente con borde |
+| `primary` | `btn primary` | Acción principal |
+| `secondary` *(por defecto)* | `btn secondary` | Superficie blanca con borde |
+| `danger` | `btn danger` | Acción destructiva |
+| `ghost` | `btn ghost` | Acción terciaria, sin borde visible |
+| `accent` / `yellow` | `btn accent` / `btn yellow` | Acción de marca destacada |
+| `link` | `btn link` | Acción presentada como enlace |
 
-> ⚠ El valor por defecto `secondary` no tiene estilo propio. Para un botón de acción
-> secundaria visible usa `variant="ghost"`. Ver
-> [KNOWN_ISSUES P-17](../operations/KNOWN_ISSUES.md#p-17).
+Para acciones destructivas compactas usa `className="btn-compact danger-subtle"`; para un botón
+destructivo de solo icono usa `className="btn-icon danger-subtle"` y añade un `aria-label`.
 
 **Uso.**
 
 ```tsx
 <Button variant="primary" onClick={handleSave}>Guardar</Button>
-<Button variant="ghost" onClick={onCancel}>Cancelar</Button>
+<Button variant="danger" onClick={handleDelete}>Eliminar</Button>
+<Button variant="secondary" onClick={onCancel}>Cancelar</Button>
+<Button variant="ghost" onClick={onMoreOptions}>Más opciones</Button>
 <Button disabled={isSaving}>Guardando…</Button>
+```
+
+**Tienda.** El catálogo reutiliza el mismo componente y mantiene los colores propios de cada
+familia de productos mediante `className`:
+
+```tsx
+<Button
+  variant="primary"
+  className="cr-card-action-btn tech"
+  onClick={() => addToCart(product)}
+>
+  Agregar al carrito
+</Button>
 ```
 
 ### 1.2 `Card`

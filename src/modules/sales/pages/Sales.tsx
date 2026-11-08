@@ -3122,12 +3122,15 @@ export function Sales() {
                       >
                         Enganchar / Cobrar
                       </Button>
-                      <button
+                      <Button
+                        type="button"
+                        variant="danger"
+                        className="btn-icon danger-subtle"
                         onClick={() => setParkedInvoices(parkedInvoices.filter(p => p.id !== parked.id))}
-                        style={{ background: 'transparent', border: 'none', color: '#DC2626', cursor: 'pointer', padding: 4 }}
+                        aria-label={`Eliminar venta pendiente de ${parked.clientName}`}
                       >
                         <Trash2 size={16} />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ))}

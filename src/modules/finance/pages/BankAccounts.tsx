@@ -20,6 +20,7 @@ import {
   FolderArchive
 } from 'lucide-react';
 import { Badge } from '../../../components/ui/Badge';
+import { Button } from '../../../components/ui/Button';
 import { getActiveExchangeRate, convertUSDtoVES, formatUSD, formatVES } from '../../../lib/currency';
 import { authenticatedFetch } from '../../../lib/supabase/api';
 import {
@@ -1334,21 +1335,14 @@ export function BankAccountsPage() {
                           >
                             Reactivar
                           </button>
-                          <button
+                          <Button
+                            type="button"
+                            variant="danger"
+                            className="btn-compact danger-subtle"
                             onClick={() => handlePurgeBankAccount(acc)}
-                            style={{
-                              background: '#fef2f2',
-                              border: '1px solid #fecaca',
-                              color: '#dc2626',
-                              borderRadius: 6,
-                              padding: '4px 8px',
-                              fontSize: 11,
-                              fontWeight: 700,
-                              cursor: 'pointer'
-                            }}
                           >
                             Eliminar
-                          </button>
+                          </Button>
                         </div>
                       ) : (
                         <div />
@@ -1797,12 +1791,15 @@ export function BankAccountsPage() {
                           <div className="muted small" style={{ fontSize: 10 }}>{pm.currency} • {pm.type} {acc ? `• Fijado a: ${acc.bank_name}` : ''}</div>
                         </div>
 
-                        <button
+                        <Button
+                          type="button"
+                          variant="danger"
+                          className="btn-icon danger-subtle"
                           onClick={() => handleDeletePaymentMethod(pm.id)}
-                          style={{ background: 'transparent', border: 'none', color: '#DC2626', cursor: 'pointer', padding: 4 }}
+                          aria-label={`Eliminar método de pago ${pm.name}`}
                         >
                           <Trash2 size={13} />
-                        </button>
+                        </Button>
                       </div>
                     );
                   })}
@@ -2199,32 +2196,30 @@ export function BankAccountsPage() {
                 </button>
 
                 {!deleteModalState.isPermanent && (
-                  <button
+                  <Button
                     type="button"
+                    variant="danger"
+                    className="btn-compact danger-subtle"
                     onClick={() => confirmDeleteAccount(true)}
-                    style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                   >
                     Eliminar Definitivo
-                  </button>
+                  </Button>
                 )}
 
-                <button
+                <Button
                   type="button"
+                  variant={deleteModalState.isPermanent ? 'danger' : 'primary'}
                   onClick={() => confirmDeleteAccount(deleteModalState.isPermanent)}
                   style={{
                     height: 36,
                     padding: '0 16px',
                     borderRadius: 6,
-                    background: deleteModalState.isPermanent ? '#dc2626' : '#2D2E32',
-                    color: '#fff',
-                    border: 'none',
                     fontSize: 12,
                     fontWeight: 700,
-                    cursor: 'pointer'
                   }}
                 >
                   {deleteModalState.isPermanent ? 'Sí, Eliminar' : 'Sí, Inactivar'}
-                </button>
+                </Button>
               </div>
             </div>
           </div>

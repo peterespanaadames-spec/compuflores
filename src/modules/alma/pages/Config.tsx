@@ -1878,23 +1878,16 @@ export function ConfigPage() {
                         <Edit2 size={16} />
                       </button>
 
-                      <button
+                      <Button
                         type="button"
+                        variant="danger"
+                        className="btn-icon danger-subtle"
                         onClick={() => setBranchToDelete(b)}
                         title="Eliminar Sede"
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: '#DC2626',
-                          cursor: 'pointer',
-                          padding: 5,
-                          borderRadius: 6,
-                          display: 'grid',
-                          placeItems: 'center'
-                        }}
+                        aria-label={`Eliminar sede ${b.name}`}
                       >
                         <Trash2 size={16} />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -2161,13 +2154,14 @@ export function ConfigPage() {
                     >
                       Cancelar
                     </button>
-                    <button
+                    <Button
                       type="button"
+                      variant="danger"
                       onClick={handleDeleteBranchConfirm}
-                      style={{ height: 36, padding: '0 16px', borderRadius: 6, background: '#dc2626', color: '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                      style={{ height: 36, padding: '0 16px', fontSize: 12, fontWeight: 700 }}
                     >
                       Sí, Eliminar
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -2723,13 +2717,16 @@ GRANT ALL ON TABLE public.branches TO anon;`}</pre>
                         >
                           <Edit2 size={15} />
                         </button>
-                        <button
+                        <Button
+                          type="button"
+                          variant="danger"
+                          className="btn-icon danger-subtle"
                           title="Eliminar asociado"
-                          style={{ background: 'transparent', border: 'none', color: '#e36f6f', cursor: 'pointer', padding: 6, borderRadius: 6, display: 'flex', alignItems: 'center' }}
                           onClick={() => handleDeleteUser(item.id)}
+                          aria-label={`Eliminar usuario ${item.name}`}
                         >
                           <Trash2 size={15} />
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -3250,24 +3247,14 @@ GRANT ALL ON TABLE public.branches TO anon;`}</pre>
                                     <Check size={12} /> Reactivar
                                   </button>
 
-                                  <button
+                                  <Button
+                                    type="button"
+                                    variant="danger"
+                                    className="btn-compact danger-subtle"
                                     onClick={() => setAuditConfirmModal({ isOpen: true, account: acc, action: 'eliminar_permanente' })}
-                                    style={{
-                                      background: '#fff',
-                                      color: '#b91c1c',
-                                      border: '1px solid #fecaca',
-                                      borderRadius: 6,
-                                      padding: '5px 10px',
-                                      fontSize: 11,
-                                      fontWeight: 700,
-                                      cursor: 'pointer',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: 4
-                                    }}
                                   >
                                     <Trash2 size={12} /> Eliminar
-                                  </button>
+                                  </Button>
                                 </div>
                               ) : (
                                 <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
@@ -3388,25 +3375,21 @@ GRANT ALL ON TABLE public.branches TO anon;`}</pre>
                         Cancelar
                       </button>
 
-                      <button
+                      <Button
                         type="button"
+                        variant={auditConfirmModal.action === 'eliminar_permanente' ? 'danger' : 'primary'}
                         onClick={handleExecuteAuditAction}
                         style={{
                           height: 36,
                           padding: '0 16px',
-                          borderRadius: 6,
-                          background: auditConfirmModal.action === 'eliminar_permanente' ? '#dc2626' : '#2D2E32',
-                          color: '#fff',
-                          border: 'none',
                           fontSize: 12,
-                          fontWeight: 700,
-                          cursor: 'pointer'
+                          fontWeight: 700
                         }}
                       >
                         {auditConfirmModal.action === 'inactivar' && 'Sí, Inactivar'}
                         {auditConfirmModal.action === 'reactivar' && 'Sí, Reactivar'}
                         {auditConfirmModal.action === 'eliminar_permanente' && 'Sí, Eliminar de Supabase'}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -3660,12 +3643,14 @@ GRANT ALL ON TABLE public.branches TO anon;`}</pre>
                                 <span style={{ fontSize: 12, fontWeight: 700, color: '#0f172a', display: 'block' }}>{pm.name}</span>
                                 <span style={{ fontSize: 11, color: '#64748b' }}>{pm.type} • {pm.currency}</span>
                               </div>
-                              <button
+                              <Button
+                                type="button"
+                                variant="danger"
+                                className="btn-compact danger-subtle"
                                 onClick={() => handleDeletePaymentMethod(pm.id)}
-                                style={{ background: '#fff', color: '#b91c1c', border: '1px solid #fecaca', borderRadius: 4, padding: '4px 8px', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
                               >
                                 <Trash2 size={11} /> Eliminar
-                              </button>
+                              </Button>
                             </div>
                           ))}
                         </div>

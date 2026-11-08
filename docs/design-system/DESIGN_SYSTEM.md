@@ -166,14 +166,16 @@
 
 | Clase | Aspecto | Uso |
 |---|---|---|
-| `.btn` | Base: 40 px de alto, radio 9 px, borde 1 px, fuente 13 px | Todos |
-| `.btn.primary` | Relleno violeta (`--brand-500` → `--brand-600` en hover) | Acción principal de la pantalla |
-| `.btn.ghost` | Transparente, solo borde | Acción secundaria o terciaria |
+| `.btn` | Radio compartido de 10 px, borde 1 px, tipografía heredada | Todos |
+| `.btn.primary` | Relleno oscuro de marca; elevación discreta al pasar el puntero | Acción principal |
+| `.btn.secondary` | Superficie blanca con borde | Acción secundaria |
+| `.btn.danger` | Rojo destructivo | Eliminar o acción irreversible |
+| `.btn.ghost` | Transparente y sin borde visible | Acción terciaria |
 
-> ⚠ **No existe `.btn.secondary`**, aunque el componente `Button` tenga
-> `variant='secondary'` como valor por defecto. El resultado es que los botones "secondary"
-> salen con el aspecto base (`.btn` sin relleno), no con un aspecto de botón secundario.
-> Hay que elegir conscientemente entre `primary` y `ghost`.
+Las variantes usan `MOTION_INTENSITY 4` (`--button-motion-duration: 200ms` y
+`--button-press-duration: 120ms`) y `DESIGN_VARIANCE 3` (`--button-radius: 10px`).
+El foco de teclado se muestra con `:focus-visible`; la pulsación reduce la escala a 0.95.
+El estado de pulsación se desactiva cuando el sistema solicita movimiento reducido.
 
 > ⚠ **`.select` no tiene regla.** Los `<select>` nativos salen sin estilo. Usa `.input` sobre
 > el `select` si quieres la misma caja.

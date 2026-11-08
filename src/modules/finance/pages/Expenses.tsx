@@ -1132,24 +1132,16 @@ grant all on table public.expense_payments to anon, authenticated;
                                 <Edit2 size={13} />
                               </button>
 
-                              <button
+                              <Button
                                 type="button"
+                                variant="danger"
+                                className="btn-icon danger-subtle"
                                 onClick={() => setDeleteConfirmExpense(exp)}
-                                style={{
-                                  width: 30,
-                                  height: 30,
-                                  borderRadius: 8,
-                                  background: 'transparent',
-                                  border: '1px solid var(--border)',
-                                  color: '#DC2626',
-                                  display: 'grid',
-                                  placeItems: 'center',
-                                  cursor: 'pointer'
-                                }}
                                 title="Eliminar gasto"
+                                aria-label={`Eliminar gasto ${exp.name}`}
                               >
                                 <Trash2 size={13} />
-                              </button>
+                              </Button>
                             </>
                           ) : (
                             <span
@@ -1971,9 +1963,8 @@ grant all on table public.expense_payments to anon, authenticated;
               </Button>
               <Button
                 type="button"
-                variant="primary"
+                variant="danger"
                 onClick={handleDeleteExpense}
-                style={{ background: '#DC2626', borderColor: '#DC2626' }}
               >
                 Sí, Eliminar
               </Button>

@@ -2403,10 +2403,10 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                 Cancelar
               </Button>
               <Button
-                variant="primary"
+                variant="danger"
                 onClick={handleDeleteQuote}
                 disabled={isDeleting}
-                style={{ background: '#dc2626', borderColor: '#dc2626', color: '#fff', display: 'flex', alignItems: 'center', gap: 6 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
               >
                 <Trash2 size={14} /> {isDeleting ? 'Eliminando...' : 'Sí, eliminar cotización'}
               </Button>

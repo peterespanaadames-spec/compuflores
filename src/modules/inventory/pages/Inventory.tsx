@@ -1108,13 +1108,16 @@ export function Inventory() {
                         <Clock size={14} />
                       </button>
 
-                      <button
+                      <Button
+                        type="button"
+                        variant="danger"
+                        className="btn-icon danger-subtle"
                         title="Eliminar del catálogo"
+                        aria-label={`Eliminar ${p.name} del catálogo`}
                         onClick={() => handleDeleteProduct(p.sku)}
-                        style={{ background: 'transparent', border: 'none', color: '#e36f6f', cursor: 'pointer', padding: 4 }}
                       >
                         <Trash2 size={14} />
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>

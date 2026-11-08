@@ -64,6 +64,7 @@ import {
 import { CustomerPortal, type PortalTab } from '../components/CustomerPortal';
 import { lookupCedula, parseCedulaDoc, useCedulaAutofill } from '../../../lib/cedulaLookup';
 import { OrderTrackerModal } from '../components/OrderTrackerModal';
+import { Button } from '../../../components/ui/Button';
 
 // --- LOGO SVG COMPONENT (Exact Match to CompuRepuestos CR Logo) ---
 function CompuRepuestosLogo({ className = '', size = 44 }: { className?: string; size?: number }) {
@@ -1014,6 +1015,27 @@ export function ShopPage() {
           position: relative;
           padding-bottom: 74px;
         }
+        .cr-store-root button {
+          transition:
+            background-color var(--button-motion-duration) ease-out,
+            border-color var(--button-motion-duration) ease-out,
+            color var(--button-motion-duration) ease-out,
+            transform var(--button-press-duration) ease-out,
+            scale var(--button-press-duration) ease-out,
+            box-shadow var(--button-motion-duration) ease-out;
+        }
+        .cr-store-root .cr-banner-btn-tech,
+        .cr-store-root .cr-banner-btn-moto,
+        .cr-store-root .cr-card-action-btn {
+          border-radius: var(--button-radius);
+          padding: 7px 12px;
+          font-size: 12px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .cr-store-root button {
+            transition-duration: 0.01ms;
+          }
+        }
         @media (min-width: 768px) {
           .cr-store-root {
             padding-bottom: 0;
@@ -1353,7 +1375,7 @@ export function ShopPage() {
           background: #1e3a8a;
           color: #ffffff;
           border: none;
-          border-radius: 9999px;
+          border-radius: var(--button-radius);
           padding: 8px 18px;
           font-size: 12.5px;
           font-weight: 700;
@@ -1379,7 +1401,7 @@ export function ShopPage() {
           background: #dc2626;
           color: #ffffff;
           border: none;
-          border-radius: 9999px;
+          border-radius: var(--button-radius);
           padding: 8px 18px;
           font-size: 12.5px;
           font-weight: 700;
@@ -1770,7 +1792,8 @@ export function ShopPage() {
         .cr-card-action-btn {
           width: 100%;
           border: none;
-          border-radius: 9999px;
+          border-radius: var(--button-radius);
+          height: auto;
           padding: 7px 12px;
           font-size: 12px;
           font-weight: 700;
@@ -2059,7 +2082,7 @@ export function ShopPage() {
           .cr-card-content {
             padding: 10px;
           }
-          .cr-card-action-btn {
+          .cr-store-root .cr-card-action-btn {
             font-size: 11px;
             padding: 6px 8px;
           }
@@ -3381,15 +3404,16 @@ export function ShopPage() {
                       <div className="cr-card-price-sub">≈ {prices.sub} (BCV)</div>
                     </div>
 
-                    <button
+                    <Button
                       type="button"
                       disabled={product.stock <= 0}
+                      variant="primary"
                       className={`cr-card-action-btn ${isMaterial ? 'tech' : 'moto'}`}
                       onClick={() => addToCart(product)}
                     >
                       <ShoppingCart size={13} />
                       <span>{isMaterial ? 'Copias y Materiales' : 'Comprar Repuestos'}</span>
-                    </button>
+                    </Button>
                   </div>
                 </div>
               );
@@ -4162,6 +4186,7 @@ export function ShopPage() {
                       }}
                       style={{
                         width: '100%',
+                        height: 'auto',
                         padding: '12px',
                         borderRadius: 12,
                         background: '#0284c7',
@@ -4395,9 +4420,10 @@ export function ShopPage() {
               </div>
             </div>
 
-            <button
+            <Button
               type="button"
               disabled={quickViewProduct.stock <= 0}
+              variant="primary"
               onClick={() => {
                 addToCart(quickViewProduct);
                 setQuickViewProduct(null);
@@ -4405,7 +4431,7 @@ export function ShopPage() {
               style={{
                 width: '100%',
                 padding: '12px',
-                borderRadius: 9999,
+                borderRadius: 'var(--button-radius)',
                 background: '#1e3a8a',
                 color: '#fff',
                 border: 'none',
@@ -4414,7 +4440,7 @@ export function ShopPage() {
               }}
             >
               {quickViewProduct.stock > 0 ? 'Agregar al Carrito' : 'Producto Sin Stock'}
-            </button>
+            </Button>
           </div>
         </div>
       )}

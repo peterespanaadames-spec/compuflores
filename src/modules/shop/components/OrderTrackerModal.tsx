@@ -422,6 +422,20 @@ export function OrderTrackerModal({
       </div>
 
       <style>{`
+        .tracker-root button {
+          transition:
+            background-color var(--button-motion-duration) ease-out,
+            border-color var(--button-motion-duration) ease-out,
+            color var(--button-motion-duration) ease-out,
+            transform var(--button-press-duration) ease-out,
+            scale var(--button-press-duration) ease-out,
+            box-shadow var(--button-motion-duration) ease-out;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .tracker-root button {
+            transition-duration: 0.01ms;
+          }
+        }
         .tracker-root {
           position: fixed;
           inset: 0;
@@ -488,7 +502,7 @@ export function OrderTrackerModal({
           color: #94a3b8;
           width: 34px;
           height: 34px;
-          border-radius: 8px;
+          border-radius: var(--button-radius);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -540,7 +554,7 @@ export function OrderTrackerModal({
           background: #2D2E32;
           color: #ffffff;
           border: none;
-          border-radius: 8px;
+          border-radius: var(--button-radius);
           padding: 7px 14px;
           font-size: 12.5px;
           font-weight: 700;
@@ -620,7 +634,7 @@ export function OrderTrackerModal({
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          border-radius: 8px;
+          border-radius: var(--button-radius);
           padding: 5px 10px;
           font-size: 11px;
           font-weight: 800;
@@ -725,7 +739,7 @@ export function OrderTrackerModal({
           background: var(--brand-accent);
           color: #111827;
           border: 1px solid #FDF06F;
-          border-radius: 8px;
+          border-radius: var(--button-radius);
           padding: 8px 14px;
           font-size: 11.5px;
           font-weight: 800;
@@ -922,7 +936,7 @@ export function OrderTrackerModal({
           color: #15803D;
           border: 1px solid #BBF7D0;
           text-decoration: none;
-          border-radius: 9px;
+          border-radius: var(--button-radius);
           padding: 9px 14px;
           font-size: 12.5px;
           font-weight: 600;
@@ -936,7 +950,7 @@ export function OrderTrackerModal({
           background: var(--brand-accent);
           border: 1px solid #FDF06F;
           color: #111827;
-          border-radius: 9px;
+          border-radius: var(--button-radius);
           padding: 10px 18px;
           font-size: 13px;
           font-weight: 700;

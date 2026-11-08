@@ -37,7 +37,12 @@
   --radius-lg: 20px;
   --radius-xl: 24px;
   --radius-pill: 9999px;
-  
+
+  --button-radius: var(--radius-sm);
+  --button-motion-duration: 200ms;
+  --button-press-duration: 120ms;
+  --button-press-scale: 0.95;
+
   --shadow-card: 0 2px 10px rgba(0, 0, 0, 0.03);
   --shadow-modal: 0 10px 30px rgba(0, 0, 0, 0.12);
 }

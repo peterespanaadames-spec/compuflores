@@ -21,9 +21,9 @@
 
 ## Fundamentos
 
-Canvas gris frío muy claro, superficies blancas, violeta como acento, bordes de 1 px, radios de
-8–16 px, sombras discretas, sans serif moderna y espaciado en múltiplos de 4 px. Usa tokens
-semánticos y estados completos.
+Canvas gris frío muy claro, superficies blancas, acentos antracita y amarillo, bordes de 1 px,
+radio compartido de 10 px para botones, sombras discretas, sans serif moderna y espaciado en
+múltiplos de 4 px. Usa tokens semánticos y estados completos.
 
 ---
 
@@ -48,32 +48,16 @@ Todos los colores, radios y sombras se consumen como variables CSS, nunca como v
 sueltos.
 
 ```css
-/* src/styles/tokens.css */
+/* Extracto relevante de src/styles/tokens.css */
 :root {
-  --brand-50:  #f4f1ff;
-  --brand-100: #e9e2ff;
-  --brand-500: #8b78e8;
-  --brand-600: #7562d5;
-  --brand-700: #5d4bb8;
-
-  --canvas:    #f5f6fa;
-  --surface:   #fff;
-  --sidebar:   #f8f8fb;
-
-  --text:      #171923;
-  --muted:     #6b7280;
-  --border:    #e8eaf0;
-
-  --success:   #28a879;
-  --warning:   #e5a52b;
-  --danger:    #e36f6f;
-  --info:      #48bbd0;
-
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-
-  --shadow-card: 0 2px 8px rgba(28,32,48,.04);
+  --brand-dark: #2D2E32;
+  --brand-accent: #FFF275;
+  --danger: #DC2626;
+  --radius-sm: 10px;
+  --button-radius: var(--radius-sm);
+  --button-motion-duration: 200ms;
+  --button-press-duration: 120ms;
+  --button-press-scale: 0.95;
 }
 ```
 

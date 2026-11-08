@@ -19,6 +19,7 @@ button, input, select, textarea {
 
 button {
   cursor: pointer;
+  transition: scale var(--button-press-duration) ease-out;
 }
 
 /* App Shell */
@@ -280,14 +281,19 @@ button {
   color: #1F2937;
   height: 42px;
   padding: 0 24px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--button-radius);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   font-size: 13.5px;
   font-weight: 600;
-  transition: all 0.15s ease;
+  transition:
+    background-color var(--button-motion-duration) ease-out,
+    border-color var(--button-motion-duration) ease-out,
+    color var(--button-motion-duration) ease-out,
+    scale var(--button-press-duration) ease-out,
+    box-shadow var(--button-motion-duration) ease-out;
   user-select: none;
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
@@ -297,6 +303,7 @@ button {
   background: #F8F9FA;
   border-color: #CBD5E1;
   color: #111827;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.08);
 }
 
 .btn.primary {
@@ -310,6 +317,57 @@ button {
 .btn.primary:hover {
   background: #111827;
   border-color: #111827;
+}
+
+.btn.danger {
+  background: var(--danger);
+  color: #FFFFFF;
+  border-color: var(--danger);
+  font-weight: 700;
+}
+
+.btn.danger:hover {
+  background: #B91C1C;
+  border-color: #B91C1C;
+  color: #FFFFFF;
+}
+
+.btn.danger-subtle {
+  background: #FFFFFF;
+  color: var(--danger);
+  border-color: #FECACA;
+}
+
+.btn.danger-subtle:hover {
+  background: var(--danger-light);
+  border-color: #FCA5A5;
+  color: #B91C1C;
+}
+
+.btn.btn-compact {
+  height: 32px;
+  padding: 0 10px;
+  font-size: 11px;
+  gap: 4px;
+}
+
+.btn.btn-icon {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: var(--button-radius);
+}
+
+.btn.btn-icon.danger-subtle {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.btn.btn-icon.danger-subtle:hover {
+  background: var(--danger-light);
+  border-color: transparent;
 }
 
 .btn.accent,
@@ -358,6 +416,27 @@ button {
 
 .btn.link:hover {
   color: #111827;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(45, 46, 50, 0.18);
+}
+
+button:active:not(:disabled) {
+  scale: var(--button-press-scale);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  .btn {
+    transition-duration: 0.01ms;
+  }
+
+  button:active:not(:disabled) {
+    scale: 1;
+  }
 }
 
 /* Grid System */
@@ -3134,5 +3213,3 @@ button {
     background: #ffffff !important;
   }
 }
-
-

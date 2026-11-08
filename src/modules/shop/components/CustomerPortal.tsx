@@ -1030,6 +1030,20 @@ export function CustomerPortal({
       </div>
 
       <style>{`
+        .cp-root button {
+          transition:
+            background-color var(--button-motion-duration) ease-out,
+            border-color var(--button-motion-duration) ease-out,
+            color var(--button-motion-duration) ease-out,
+            transform var(--button-press-duration) ease-out,
+            scale var(--button-press-duration) ease-out,
+            box-shadow var(--button-motion-duration) ease-out;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .cp-root button {
+            transition-duration: 0.01ms;
+          }
+        }
         .cp-root {
           position: fixed;
           inset: 0;
@@ -1088,7 +1102,7 @@ export function CustomerPortal({
           display: inline-flex; align-items: center; gap: 6px;
           background: rgba(255, 255, 255, 0.12); color: #ffffff;
           border: 1px solid rgba(255, 255, 255, 0.25);
-          border-radius: 9px; padding: 7px 13px; font-size: 12px; font-weight: 750; cursor: pointer;
+          border-radius: var(--button-radius); padding: 7px 13px; font-size: 12px; font-weight: 750; cursor: pointer;
           transition: all 0.15s ease;
         }
         .cp-btn-exit:hover {
@@ -1097,7 +1111,7 @@ export function CustomerPortal({
         .cp-signout {
           display: inline-flex; align-items: center; gap: 6px;
           background: #dc2626; color: #ffffff; border: none;
-          border-radius: 9px; padding: 8px 14px; font-size: 12px; font-weight: 750; cursor: pointer;
+          border-radius: var(--button-radius); padding: 8px 14px; font-size: 12px; font-weight: 750; cursor: pointer;
           transition: background 0.15s ease;
         }
         .cp-signout:hover { background: #b91c1c; }
@@ -1137,7 +1151,7 @@ export function CustomerPortal({
         .cp-date-input { border: none; outline: none; font-size: 12.5px; color: #334155; }
         .cp-refresh {
           background: #ffffff; border: 1px solid #cbd5e1; color: #475569;
-          width: 36px; height: 36px; border-radius: 9px; cursor: pointer;
+          width: 36px; height: 36px; border-radius: var(--button-radius); cursor: pointer;
           display: flex; align-items: center; justify-content: center; flex-shrink: 0;
           transition: all 0.15s ease;
         }
@@ -1174,7 +1188,7 @@ export function CustomerPortal({
         .cp-btn-rastrear {
           display: inline-flex; align-items: center; gap: 4px;
           background: transparent; color: #475569; border: 1px solid #cbd5e1;
-          border-radius: 6px; padding: 2px 6px; font-size: 11px; font-weight: 600; cursor: pointer;
+          border-radius: var(--button-radius); padding: 2px 6px; font-size: 11px; font-weight: 600; cursor: pointer;
           transition: all 0.15s ease;
         }
         .cp-btn-rastrear:hover { background: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
@@ -1280,19 +1294,19 @@ export function CustomerPortal({
         .cp-btn-amber {
           display: inline-flex; align-items: center; gap: 7px;
           background: #D97706; color: #ffffff; border: none;
-          border-radius: 9px; padding: 10px 20px; font-size: 13px; font-weight: 850;
+          border-radius: var(--button-radius); padding: 10px 20px; font-size: 13px; font-weight: 850;
           letter-spacing: 0.02em; cursor: pointer; transition: background 0.15s ease;
         }
         .cp-btn-amber:hover { background: #d97706; }
         .cp-btn-blue-sm {
           display: inline-flex; align-items: center; gap: 6px;
           background: #0284c7; color: #ffffff; border: none;
-          border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 800; cursor: pointer;
+          border-radius: var(--button-radius); padding: 8px 14px; font-size: 12px; font-weight: 800; cursor: pointer;
         }
         .cp-btn-blue-sm:hover { background: #0369a1; }
         .cp-btn-cancel {
           background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569;
-          border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 750; cursor: pointer;
+          border-radius: var(--button-radius); padding: 8px 14px; font-size: 12px; font-weight: 750; cursor: pointer;
         }
         .cp-addresses-list { display: flex; flex-direction: column; gap: 10px; }
         .cp-address-row-box {
@@ -1302,7 +1316,7 @@ export function CustomerPortal({
         .cp-address-text { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #1e293b; font-weight: 600; }
         .cp-btn-del-addr {
           background: transparent; border: none; color: #DC2626; cursor: pointer;
-          width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+          width: 32px; height: 32px; border-radius: var(--button-radius); display: flex; align-items: center; justify-content: center;
         }
         .cp-btn-del-addr:hover { background: #fee2e2; }
         .cp-add-address-form {
@@ -1327,7 +1341,7 @@ export function CustomerPortal({
         .cp-btn-blue-submit {
           align-self: flex-start;
           background: #0284c7; color: #ffffff; border: none;
-          border-radius: 9px; padding: 11px 22px; font-size: 13px; font-weight: 850;
+          border-radius: var(--button-radius); padding: 11px 22px; font-size: 13px; font-weight: 850;
           letter-spacing: 0.02em; cursor: pointer; transition: background 0.15s ease;
         }
         .cp-btn-blue-submit:hover { background: #0369a1; }
