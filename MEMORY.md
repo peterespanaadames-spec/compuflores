@@ -2,7 +2,7 @@
 
 ## Despliegue
 - `frenyer` / `frenyer.vercel.app` es el entorno de pruebas.
-- `origin` / `compuflores.vercel.app` es comercial y permanece congelado hasta que el usuario diga «sincroniza».
+- `origin` / `compuflores.vercel.app` es comercial; se sincroniza solo con orden explícita del usuario (última: «actualiza los ambos repositorios», 2026-11-09 → `3a72db0`, igualado con `frenyer`).
 - Trabajar sobre la rama abierta; no publicar ni sincronizar sin autorización explícita.
 
 ## Estado y decisiones vigentes
