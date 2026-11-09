@@ -184,7 +184,7 @@ export function ProfitLossPage() {
   const business = getBusinessProfile();
 
   return (
-    <div className="content">
+    <div className="content m-root pnl-root">
       {/* Membrete Oficial del Negocio */}
       <div style={{ background: '#4b5563', color: '#ffffff', padding: '16px 20px', borderRadius: 'var(--radius-lg)', marginBottom: 20 }}>
         <h2 style={{ margin: 0, fontSize: 18, color: '#ffffff', fontWeight: 800 }}>{business.businessName}</h2>

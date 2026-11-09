@@ -3760,3 +3760,49 @@ button:active:not(:disabled) {
   .sup-root table td:nth-child(4) { order: 5; flex: 0 0 auto; font-size: 9.5px; color: var(--muted); max-width: 88px; }
   .sup-root table td:nth-child(7) { order: 6; flex: 0 0 auto; font-size: 9.5px; color: var(--muted); max-width: 80px; }
 }
+
+/* =====================================================================
+   FASE 5 — GANANCIAS Y PÉRDIDAS (pnl-root) Y SALUD DEL NEGOCIO
+   (ch-root). Solo ≤640px. KPI 2 por fila y fichas bimonetarias:
+   concepto · USD / lectura comercial · Bs. Salario: categoría · USD · %.
+   Salud: fichas de indicadores 2 por fila.
+   ===================================================================== */
+@media (max-width: 640px) {
+  /* --- Ganancias y Pérdidas --- */
+  .pnl-root .grid.grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  .pnl-root .grid.grid-3 .card { padding: 12px 10px !important; }
+  .pnl-root .grid.grid-3 ~ .card { padding: 12px !important; }
+  .pnl-root table td[colspan] {
+    flex: 1 1 100% !important;
+    padding: 20px !important;
+    text-align: center;
+  }
+  /* Ingresos/egresos: concepto · USD / lectura · Bs */
+  .pnl-root table td:nth-child(1) { order: 1; flex: 1 1 50%; min-width: 0; font-weight: 700; font-size: 11px; }
+  .pnl-root table td:nth-child(3) { order: 2; margin-left: auto; font-weight: 800; font-size: 11px; }
+  .pnl-root table td:nth-child(2) { order: 3; flex: 1 1 auto; min-width: 0; font-size: 9.5px; color: var(--muted); max-width: 55%; }
+  .pnl-root table td:nth-child(4) { order: 4; font-weight: 700; font-size: 10.5px; color: #334155; }
+  /* Gastos: categoría · USD · % */
+  .pnl-root table:nth-of-type(2) td:nth-child(2),
+  .pnl-root table:nth-of-type(2) td:nth-child(3) { order: 2; font-weight: 700; font-size: 10.5px; }
+
+  /* --- Salud del Negocio --- */
+  .ch-root [style*="minmax(200px, 1fr)"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  .ch-root [style*="minmax(320px, 1fr)"] {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+  .ch-root [style*="repeat(2, minmax(0, 1fr))"] { gap: 8px !important; }
+  /* Anillo de salud y tarjetas compactas */
+  .ch-root [style*="width: 80"] { width: 64px !important; height: 64px !important; }
+  .ch-root [style*="width: 36"] { width: 30px !important; height: 30px !important; }
+  .ch-root [style*="width: 36"] svg { width: 14px; height: 14px; }
+  .ch-root [style*="width: 32"] { width: 27px !important; height: 27px !important; }
+  .ch-root [style*="width: 32"] svg { width: 13px; height: 13px; }
+}
