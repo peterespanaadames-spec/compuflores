@@ -220,7 +220,7 @@ export function InternalPurchasesPage() {
   };
 
   return (
-    <div className="content">
+    <div className="content m-root invcom-root">
       {/* Header */}
       <div className="page-head">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

@@ -945,7 +945,7 @@ export function MovementsPage() {
   };
 
   return (
-    <div className="content" style={{ maxWidth: 1600, paddingBottom: 60 }}>
+    <div className="content m-root mov-root" style={{ maxWidth: 1600, paddingBottom: 60 }}>
       {/* Toast Alert */}
       {toast && (
         <div
