@@ -3196,6 +3196,129 @@ button:active:not(:disabled) {
   .rep-inv-root .card .btn { height: 30px !important; padding: 0 10px !important; font-size: 10.5px !important; }
 }
 
+/* =====================================================================
+   RESPONSIVE REPORTE DE CUENTAS MÓVIL — /cuentas/reporte
+   Solo pantallas angostas (≤640px); el escritorio no cambia.
+   Cabecera con botones cortos, KPI 2 por fila (conserva la tasa BCV),
+   filtros apilados y la tabla como fichas de 2 líneas con lo esencial:
+   fecha · comprobante · monto [ojo] / cliente. Tipo, método, banco y
+   monto en VES quedan en escritorio (ya los oculta .rep-col-oculta).
+   ===================================================================== */
+@media (max-width: 640px) {
+  /* Espaciados generales compactos */
+  .rep-acc-root { padding: 12px !important; }
+  .rep-acc-root .mb-6 { margin-bottom: 10px !important; }
+  .rep-acc-root .card { padding: 12px !important; }
+
+  /* Cabecera: sin texto largo, botones junto al título */
+  .rep-acc-root .page-head {
+    flex-direction: row !important;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px !important;
+  }
+  .rep-acc-root .page-head h1 { font-size: 14.5px; line-height: 1.2; margin: 0; overflow-wrap: anywhere; }
+  /* El título puede ajustarse a 2 líneas si los botones no caben */
+  .rep-acc-root .page-head > div:first-child { flex: 1 1 auto; min-width: 0; }
+  .rep-acc-root .page-head p { display: none !important; }
+  .rep-acc-root .rep-head-actions {
+    width: auto;
+    flex: 0 0 auto;
+    flex-wrap: nowrap !important;
+    gap: 5px !important;
+  }
+  .rep-acc-root .rep-head-actions .btn {
+    flex: 0 0 auto;
+    min-width: 0;
+    height: 30px !important;
+    padding: 0 7px !important;
+    font-size: 10px !important;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  .rep-acc-root .rep-head-actions .btn svg { flex: 0 0 auto; }
+  .rep-acc-root .rep-long { display: none !important; }
+  .rep-acc-root .rep-short { display: inline !important; }
+
+  /* KPI: 2 tarjetas por fila; se ocultan los subtítulos decorativos
+     pero se conserva la tasa BCV (dato bimonetario crítico) */
+  .rep-acc-root .grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  .rep-acc-root .grid-4 .card { padding: 10px 8px !important; border-radius: 10px; }
+  .rep-acc-root .grid-4 .kpi-label { font-size: 9px; line-height: 1.15; }
+  .rep-acc-root .grid-4 .kpi-value { font-size: 14px; margin: 2px 0 0; }
+  .rep-acc-root .grid-4 .card:nth-child(1) .muted.small,
+  .rep-acc-root .grid-4 .card:nth-child(3) .muted.small,
+  .rep-acc-root .grid-4 .card:nth-child(4) .muted.small { display: none !important; }
+  .rep-acc-root .grid-4 .card:nth-child(2) .muted.small { font-size: 9px; }
+
+  /* Filtros: cada control en su línea; «Desde/Hasta» dos por línea */
+  .rep-acc-root .fin-filters { gap: 8px !important; }
+  .rep-acc-root .fin-filters > div { width: 100% !important; min-width: 0 !important; }
+  .rep-acc-root .fin-filters .input { height: 32px; font-size: 12px; }
+  .rep-acc-root .fin-filters > div:nth-child(2) {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: flex-end !important;
+    gap: 6px !important;
+    overflow-x: visible !important;
+  }
+  .rep-acc-root .fin-filters > div:nth-child(2) > div { flex: 1 1 42% !important; min-width: 0 !important; }
+  .rep-acc-root .fin-filters > div:nth-child(2) > div > span { font-size: 9px !important; }
+  .rep-acc-root .fin-filters > div:nth-child(2) input[type="date"] {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 30px !important;
+    font-size: 11px !important;
+    padding: 0 4px !important;
+  }
+  .rep-acc-root .fin-filters > div:nth-child(3) select { height: 32px; font-size: 12px; }
+
+  /* Tabla: fichas de 2 líneas con lo esencial */
+  .rep-acc-root .section-head { margin-bottom: 8px !important; }
+  .rep-acc-root .section-head h3 { font-size: 13px; }
+  .rep-acc-root .table-wrap { overflow-x: hidden; }
+  .rep-acc-root .rep-acc-table { display: block; font-size: 11px; }
+  .rep-acc-root .rep-acc-table thead { display: none !important; }
+  .rep-acc-root .rep-acc-table tbody { display: block; }
+  .rep-acc-root .rep-acc-table tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rep-acc-root .rep-acc-table tr:last-child { border-bottom: none; }
+  .rep-acc-root .rep-acc-table td {
+    display: block;
+    padding: 0 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Columnas secundarias fuera de la ficha (Tipo, Método, Banco, VES) */
+  .rep-acc-root .rep-acc-table .rep-col-oculta { display: none !important; }
+  /* Línea 1: fecha · comprobante ......... monto [ojo] */
+  .rep-acc-root .rep-acc-table td:nth-child(1) { order: 1; flex: 0 0 auto; font-size: 9.5px; color: var(--muted); }
+  .rep-acc-root .rep-acc-table td:nth-child(2) { order: 2; flex: 0 1 auto; max-width: 96px; font-weight: 800; font-size: 11px; }
+  .rep-acc-root .rep-acc-table td:nth-child(7) { order: 3; flex: 0 0 auto; margin-left: auto; font-weight: 800; font-size: 11px; }
+  .rep-acc-root .rep-acc-table td:nth-child(9) { order: 4; flex: 0 0 auto; }
+  .rep-acc-root .rep-acc-table td:nth-child(9) .btn {
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    border-radius: 6px !important;
+  }
+  .rep-acc-root .rep-acc-table td:nth-child(9) .btn svg { width: 13px; height: 13px; }
+  /* Línea 2: cliente */
+  .rep-acc-root .rep-acc-table td:nth-child(4) { order: 5; flex: 1 1 100%; min-width: 0; font-size: 10.5px; font-weight: 600; color: #334155; }
+}
+
 @media print {
   @page {
     size: letter;

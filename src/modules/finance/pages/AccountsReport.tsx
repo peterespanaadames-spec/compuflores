@@ -169,7 +169,7 @@ export function AccountsReportPage() {
   };
 
   return (
-    <div className="content">
+    <div className="content rep-acc-root">
       {/* 1. Encabezado de Página */}
       <div className="page-head flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -178,15 +178,21 @@ export function AccountsReportPage() {
             Auditoría de recaudaciones, métodos de pago y conciliación con cuentas bancarias.
           </p>
         </div>
-        <div className="actions flex flex-wrap items-center gap-2">
-          <Button variant="secondary" onClick={loadData}>
-            <RefreshCcw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} /> Actualizar
+        <div className="actions rep-head-actions flex flex-wrap items-center gap-2">
+          <Button variant="secondary" onClick={loadData} title="Actualizar datos">
+            <RefreshCcw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <span className="rep-long">Actualizar</span>
+            <span className="rep-short">Act.</span>
           </Button>
-          <Button variant="secondary" onClick={handleExportExcel}>
-            <FileDown className="w-4 h-4" /> Exportar Excel (.xlsx)
+          <Button variant="secondary" onClick={handleExportExcel} title="Exportar a Excel">
+            <FileDown className="w-4 h-4" />
+            <span className="rep-long">Exportar Excel (.xlsx)</span>
+            <span className="rep-short">Excel</span>
           </Button>
-          <Button variant="secondary" onClick={() => window.print()}>
-            <Printer className="w-4 h-4" /> Imprimir
+          <Button variant="secondary" onClick={() => window.print()} title="Imprimir reporte">
+            <Printer className="w-4 h-4" />
+            <span className="rep-long">Imprimir</span>
+            <span className="rep-short">Impr.</span>
           </Button>
         </div>
       </div>
@@ -298,7 +304,7 @@ export function AccountsReportPage() {
           <div className="p-8 text-center muted small">No se encontraron pagos con los filtros seleccionados.</div>
         ) : (
           <div className="table-wrap">
-            <table className="table report-table">
+            <table className="table report-table rep-acc-table">
               <thead>
                 <tr>
                   <th>Fecha</th>
@@ -335,8 +341,9 @@ export function AccountsReportPage() {
                       <Button
                         variant="primary"
                         onClick={() => navigate(`/ventas-flash/reporte/${p.sale_id}`)}
+                        title="Ver detalle del comprobante"
                       >
-                        <Eye className="w-4 h-4" /> Detalle
+                        <Eye className="w-4 h-4" /> <span className="rep-long">Detalle</span>
                       </Button>
                     </td>
                   </tr>

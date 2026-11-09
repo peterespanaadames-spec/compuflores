@@ -19,6 +19,7 @@
 - 2026-11-08: componente compartido aplicado a acciones de compra de la tienda y a eliminaciones en Configuración, Bancos, Gastos, Inventario, Cotizaciones y ventas pendientes.
 - 2026-11-08: encabezados de Productos e inventario y Proveedores, más los modales Nuevo producto y Registrar proveedor, usan el amarillo corporativo; conservar la estructura existente.
 - 2026-11-09: Reporte diario de inventario abre con el periodo «Este Mes» (no «Hoy»); el resto de filtros y la exportación no cambian.
+- 2026-11-09: Reporte de Cuentas (/cuentas/reporte) con versión móvil ≤640px — patrón propio `.rep-acc-root`: botones con etiqueta corta (Act./Excel/Impr.), KPI 2 por fila conservando la tasa BCV, filtros apilados y tabla como fichas de 2 líneas (fecha · comprobante · monto [ojo] / cliente). Tipo, método, banco y monto VES solo en escritorio.
 - Respetar `prefers-reduced-motion` y conservar las reglas responsive existentes.
 - Tailwind no está instalado; usar componentes y clases semánticas de `src/styles/globals.css`.
 
