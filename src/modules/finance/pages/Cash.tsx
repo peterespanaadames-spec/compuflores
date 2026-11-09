@@ -2,7 +2,7 @@ import { EmptyState } from '../../../components/ui/EmptyState';
 
 export function CashPage() {
   return (
-    <div className="content">
+    <div className="content m-root">
       <div className="page-head">
         <div>
           <h1>Caja</h1>

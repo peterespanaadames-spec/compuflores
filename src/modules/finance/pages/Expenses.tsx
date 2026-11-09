@@ -577,7 +577,7 @@ grant all on table public.expense_payments to anon, authenticated;
   };
 
   return (
-    <div className="content" style={{ paddingBottom: 50 }}>
+    <div className="content m-root fin-exp-root" style={{ paddingBottom: 50 }}>
       {/* Toast Notification */}
       {toast && (
         <div
