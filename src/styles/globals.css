@@ -3877,7 +3877,7 @@ button:active:not(:disabled) {
 @media (max-width: 360px) {
   /* --- POS: catálogo --- */
   .pos-root [style*="minmax(180px, 1fr)"] {
-    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)) !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     gap: 6px !important;
   }
   .pos-root [style*="min-height: 140px"] { padding: 5px !important; }
@@ -3945,4 +3945,63 @@ button:active:not(:disabled) {
   .rep-sales-root .rep-head-actions .btn { height: 27px !important; padding: 0 6px !important; font-size: 9.5px !important; }
   .rep-sales-root .grid-4 .card { padding: 8px 6px !important; }
   .rep-sales-root .grid-4 .kpi-value { font-size: 12.5px !important; }
+}
+
+/* =====================================================================
+   POS AJUSTE MÓVIL (≤640px) — catálogo de producto con EXACTAMENTE
+   3 fichas por fila y encaje perfecto (sin desbordes), carrito de
+   compra más pequeño y botones reducidos. Escritorio intacto.
+   ===================================================================== */
+@media (max-width: 640px) {
+  /* --- Catálogo: 3 por fila, encaje perfecto --- */
+  .pos-root [style*="minmax(180px, 1fr)"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+  .pos-root [style*="min-height: 140px"] { padding: 6px 5px !important; overflow: hidden; }
+  .pos-root [style*="min-height: 140px"] b {
+    font-size: 11.5px !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+  }
+  .pos-root [style*="min-height: 140px"] .muted { font-size: 9px !important; }
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14"] { font-size: 12px !important; }
+
+  /* --- Carrito de compra: más pequeño --- */
+  .pos-root #pos-cart-panel { padding: 10px 9px !important; gap: 7px !important; }
+  .pos-root #pos-cart-panel > div:first-child b { font-size: 11px !important; }
+  .pos-root #pos-cart-panel [style*="padding: 8px 12px"] { padding: 6px 8px !important; }
+  .pos-root #pos-cart-panel [style*="min-height: 220px"] {
+    min-height: 120px !important;
+    max-height: 260px !important;
+    gap: 5px !important;
+  }
+  /* Stepper de cantidad más estrecho */
+  .pos-root #pos-cart-panel [style*="width: 48px"] {
+    width: 36px !important;
+    height: 20px !important;
+    font-size: 9.5px !important;
+  }
+  .pos-root #pos-cart-panel [style*="width: 24px"] { width: 18px !important; height: 20px !important; }
+  .pos-root #pos-cart-panel [style*="font-size: 12px"] { font-size: 10px !important; }
+  .pos-root #pos-cart-panel [style*="min-width: 65px"] { min-width: 54px !important; }
+
+  /* --- Botones del POS: una medida menor --- */
+  .pos-root .pos-toolbar-actions > button { height: 28px !important; font-size: 10px !important; padding-left: 6px !important; padding-right: 6px !important; }
+  .pos-root .pos-paymode-btn { padding: 5px 3px !important; font-size: 10px !important; }
+  .pos-root .pos-doctype-btn b { font-size: 9.5px !important; }
+  .pos-root .pos-paymode-btn svg { width: 12px !important; height: 12px !important; }
+  .pos-root .pos-doctype-btn svg { width: 12px !important; height: 12px !important; }
+
+  /* --- Barra fija del carrito: más discreta --- */
+  .pos-root .pos-mobile-cartbar {
+    left: 7px;
+    right: 7px;
+    bottom: 9px;
+    padding: 6px 8px 6px 10px;
+    gap: 8px;
+  }
+  .pos-root .pos-mobile-cartbar-cta { padding: 6px 9px !important; font-size: 10px !important; }
 }
