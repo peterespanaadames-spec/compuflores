@@ -1172,7 +1172,7 @@ export function Sales() {
     isCompactViewport && searchTerm.trim() === '' ? sortedByRotation.slice(0, 10) : filteredProducts;
 
   return (
-    <div className="content" style={{ paddingBottom: 40 }}>
+    <div className="content pos-root" style={{ paddingBottom: 40 }}>
       {/* Toast */}
       {toast && (
         <div
