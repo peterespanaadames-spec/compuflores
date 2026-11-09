@@ -3360,3 +3360,124 @@ button:active:not(:disabled) {
     background: #ffffff !important;
   }
 }
+
+/* =====================================================================
+   M-SYSTEM — SISTEMA MÓVIL COMPARTIDO (≤640px)
+   Base única de diseño móvil para todo el ERP. Una sola fuente de
+   verdad en vez de duplicar el patrón por página.
+
+   Contrato de opt-in con escritorio intacto:
+   · Solo aplican reglas dentro de esta media query.
+   · Solo afecta a páginas que añaden la clase `m-root` a su
+     contenedor `.content`. Las páginas con raíces dedicadas ya
+     probadas (rep-sales-root, rep-inv-root, rep-acc-root, bank-*,
+     inv-*, POS y tienda) NO llevan m-root: sus reglas siguen mandando.
+   · El escritorio (>640px) no ve ningún cambio de este bloque.
+
+   Vocabulario: tipografía reducida y directa, KPI 2 por fila,
+   botones agrupados en filas de 2–4 con etiqueta corta
+   (usar spans .rep-long / .rep-short reutilizando el patrón
+   existente), tarjetas y espaciado equilibrados.
+   ===================================================================== */
+@media (max-width: 640px) {
+  /* --- Página: respiro y tipografía --- */
+  .m-root { padding: 12px !important; }
+  .m-root .page-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 10px !important;
+  }
+  .m-root .page-head h1 { font-size: 15px; line-height: 1.25; margin: 0; overflow-wrap: anywhere; }
+  /* Subtítulos descriptivos largos: fuera del móvil */
+  .m-root .page-head p { display: none !important; }
+  .m-root .mb-6 { margin-bottom: 10px !important; }
+
+  /* --- Botones de cabecera: filas de 2–4 por línea, envoltura libre --- */
+  .m-root .page-head .actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 6px !important;
+  }
+  .m-root .page-head .actions .btn {
+    height: 32px !important;
+    padding: 0 10px !important;
+    font-size: 11px !important;
+    border-radius: 9px;
+  }
+  .m-root .page-head .actions .btn svg { width: 13px; height: 13px; }
+
+  /* --- KPI: 2 tarjetas por fila (estándar único) --- */
+  .m-root .grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  .m-root .grid-4 .card { padding: 10px 8px !important; border-radius: 10px; }
+  .m-root .grid-4 .kpi-label { font-size: 9px; line-height: 1.15; }
+  .m-root .grid-4 .kpi-value { font-size: 14px; margin: 2px 0 0; }
+  /* Subtítulos secundarios de KPI se ocultan; los críticos (tasa BCV)
+     se conservan con reglas por página usando :nth-child, como en
+     rep-acc-root. */
+
+  /* --- Tarjetas y espaciado base --- */
+  .m-root .card { padding: 12px !important; }
+  .m-root .card h2, .m-root .card h3 { font-size: 13px; }
+
+  /* --- Fin-filters comunes: un control por línea --- */
+  .m-root .fin-filters { gap: 8px !important; }
+  .m-root .fin-filters input,
+  .m-root .fin-filters select {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 32px !important;
+    font-size: 12px !important;
+  }
+  .m-root .fin-filters [style*="flex-wrap: nowrap"] {
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
+  }
+
+  /* --- Tablas: base de fichas; el orden por columnas lo define cada página --- */
+  .m-root table { display: block; font-size: 11px; }
+  .m-root table thead { display: none !important; }
+  .m-root table tbody { display: block; }
+  .m-root table tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .m-root table tr:last-child { border-bottom: none; }
+  .m-root table td {
+    display: block;
+    padding: 2px 0 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Botones de fila: icono pequeño y táctil */
+  .m-root table .btn { height: 28px !important; padding: 0 7px !important; font-size: 10px !important; }
+}
+
+/* =====================================================================
+   M-MODAL — MODALES COMO HOJA MÓVIL (≤640px)
+   Única regla del sistema que no va por página: cualquier .modal-
+   container se presenta como hoja inferior a ancho completo.
+   El escritorio (>640px) no ve ningún cambio.
+   ===================================================================== */
+@media (max-width: 640px) {
+  .modal-overlay {
+    padding: 0 !important;
+    place-items: end stretch;
+  }
+  .modal-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92dvh;
+    border-radius: 16px 16px 0 0;
+    padding: 16px 14px calc(16px + env(safe-area-inset-bottom)) !important;
+    overflow-y: auto;
+  }
+}
