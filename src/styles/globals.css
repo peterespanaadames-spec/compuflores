@@ -3550,3 +3550,63 @@ button:active:not(:disabled) {
   .fin-exp-root table td:nth-child(5) { order: 5; flex: 1 1 auto; font-size: 9.5px; color: var(--muted); min-width: 0; }
   .fin-exp-root table td:nth-child(7) { order: 6; flex: 0 0 auto; font-size: 9.5px; color: var(--muted); }
 }
+
+/* =====================================================================
+   FASE 2 — CUENTAS POR COBRAR (fin-cxc-root) Y POR PAGAR (fin-cxp-root)
+   Solo ≤640px. KPI 2 por fila con importes Bs·USD compatibles,
+   cabecera compacta y la tabla plana de CxC como ficha de 2 líneas:
+   cliente · pendiente [acción] / vencimiento · estado.
+   Estructura de lista de CxP (tarjetas) se apila a una columna.
+   ===================================================================== */
+@media (max-width: 640px) {
+  /* --- CxC: KPI 2 por fila --- */
+  .fin-cxc-root [style*="minmax(220px, 1fr)"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+  .fin-cxc-root .fin-kpi-grid .card { padding: 12px 10px !important; }
+  .fin-cxc-root .kpi-label { font-size: 9px !important; }
+  .fin-cxc-root [style*="font-size: 18"] { font-size: 12.5px !important; }
+  /* Botones de cabecera compactos (llevan estilos inline de 40px) */
+  .fin-cxc-root .page-head button { height: 34px !important; padding: 0 12px !important; font-size: 11.5px !important; }
+
+  /* Tabla plana: ficha de 2 líneas */
+  .fin-cxc-root .table-wrap { overflow-x: hidden; }
+  .fin-cxc-root .ar-flat-table td[colspan] {
+    flex: 1 1 100% !important;
+    padding: 20px !important;
+    text-align: center;
+  }
+  .fin-cxc-root .ar-flat-table td:nth-child(2) { display: none !important; }
+  /* Línea 1: cliente · pendiente [acción] */
+  .fin-cxc-root .ar-flat-table td:nth-child(1) { order: 1; flex: 1 1 52%; min-width: 0; font-weight: 700; font-size: 11px; }
+  .fin-cxc-root .ar-flat-table td.num { order: 2; margin-left: auto; font-weight: 800; font-size: 11px; }
+  .fin-cxc-root .ar-flat-table td:last-child { order: 3; display: flex; gap: 4px; }
+  .fin-cxc-root .ar-flat-table td:last-child .btn,
+  .fin-cxc-root .ar-flat-table td:last-child button {
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    justify-content: center;
+    border-radius: 6px !important;
+  }
+  .fin-cxc-root .ar-flat-table td:last-child svg { width: 13px; height: 13px; }
+  /* Línea 2: vencimiento · estado */
+  .fin-cxc-root .ar-flat-table td:nth-child(3) { order: 4; font-size: 9.5px; color: var(--muted); }
+  .fin-cxc-root .ar-flat-table td:nth-child(5) { order: 5; flex: 0 0 auto; }
+
+  /* --- CxP --- */
+  .fin-cxp-root [style*="repeat(4, 1fr)"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+  .fin-cxp-root .fin-kpi-grid .card { padding: 12px 10px !important; }
+  .fin-cxp-root .kpi-label { font-size: 9px !important; }
+  .fin-cxp-root [style*="font-size: 18"] { font-size: 12.5px !important; }
+  .fin-cxp-root h1 { font-size: 15px !important; }
+  .fin-cxp-root [style*="height: 40"] { height: 34px !important; }
+  /* La cuadrícula principal (lista + panel) se apila a una columna */
+  .fin-cxp-root [style*="2fr 1fr"] { grid-template-columns: 1fr !important; }
+}

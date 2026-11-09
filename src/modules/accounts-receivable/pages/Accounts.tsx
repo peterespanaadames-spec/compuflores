@@ -806,7 +806,7 @@ export function Accounts() {
   const uniqueClientNames = Array.from(new Set(accounts.map(a => a.customer_name)));
 
   return (
-    <div className="content" style={{ paddingBottom: 50 }}>
+    <div className="content m-root fin-cxc-root" style={{ paddingBottom: 50 }}>
       {/* Toast */}
       {toast && (
         <div

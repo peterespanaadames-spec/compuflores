@@ -924,7 +924,7 @@ export function AccountsPayable() {
   const now = new Date();
 
   return (
-    <div style={{ maxWidth: 1400, margin: '0 auto', paddingBottom: 60 }}>
+    <div className="m-root fin-cxp-root" style={{ maxWidth: 1400, margin: '0 auto', paddingBottom: 60 }}>
       {/* Toast Notifier */}
       {toast && (
         <div
