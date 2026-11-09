@@ -293,7 +293,7 @@ export function SuppliersPage() {
   const totalDebtVES = convertUSDtoVES(totalDebtUSD, activeRate);
 
   return (
-    <div className="content">
+    <div className="content m-root sup-root">
       {/* Toast Notification */}
       {toast && (
         <div

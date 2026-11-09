@@ -2,7 +2,7 @@ import { EmptyState } from '../../../components/ui/EmptyState';
 
 export function MarketingPage() {
   return (
-    <div className="content">
+    <div className="content m-root">
       <div className="page-head">
         <div>
           <h1>Marketing y Campañas</h1>

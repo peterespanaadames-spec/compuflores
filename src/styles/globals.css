@@ -3694,3 +3694,69 @@ button:active:not(:disabled) {
   .saldet-root .invoice-sheet table.iv-table th { display: table-cell !important; padding: 3px 4px !important; font-size: 8.5px; }
   .saldet-root .invoice-sheet table.iv-table tr { display: table-row !important; }
 }
+
+/* =====================================================================
+   FASE 4 — CLIENTES (crm-root), PROVEEDORES (sup-root) Y MARKETING.
+   Solo ≤640px. KPI 2 por fila, búsquedas y botones en filas,
+   directorios como fichas de 2 líneas:
+   Clientes: nombre · total gastado [acciones] / documento · estado · órdenes.
+   Proveedores: código · balance [acciones] / contacto · rubro · estado.
+   Teléfonos, correos, tipos y fechas antiguas quedan en escritorio.
+   ===================================================================== */
+@media (max-width: 640px) {
+  /* --- Clientes --- */
+  .crm-root .grid.grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+  .crm-root .grid.grid-3 .card { padding: 12px 10px !important; }
+  .crm-root .grid.grid-3 [style*="width: 44"] { width: 32px !important; height: 32px !important; }
+  .crm-root .grid.grid-3 [style*="width: 44"] svg { width: 16px; height: 16px; }
+  .crm-root .table-wrap { overflow-x: hidden; }
+  .crm-root table td[colspan] {
+    flex: 1 1 100% !important;
+    padding: 20px !important;
+    text-align: center;
+  }
+  .crm-root table td:nth-child(4),
+  .crm-root table td:nth-child(5),
+  .crm-root table td:nth-child(6),
+  .crm-root table td:nth-child(9) { display: none !important; }
+  /* Línea 1: nombre · total gastado [acciones] */
+  .crm-root table td:nth-child(3) { order: 1; flex: 1 1 50%; min-width: 0; font-weight: 700; font-size: 11px; }
+  .crm-root table td[style*="text-align: right"] { order: 2; margin-left: auto; font-weight: 800; font-size: 11px; }
+  .crm-root table td[style*="text-align: center"]:last-child { order: 3; display: flex; gap: 4px; margin-left: auto; }
+  .crm-root table td button[style*="width: 28"] { width: 26px !important; height: 26px !important; }
+  /* Línea 2: documento · estado/id · órdenes */
+  .crm-root table td:nth-child(2) { order: 4; flex: 0 0 auto; font-size: 9.5px; color: var(--muted); max-width: 92px; }
+  .crm-root table td:nth-child(1) { order: 5; flex: 0 0 auto; font-size: 9.5px; color: var(--muted); }
+  .crm-root table td:nth-child(7) { order: 6; flex: 1 1 auto; text-align: right; font-size: 9.5px; color: var(--muted); min-width: 0; }
+
+  /* --- Proveedores --- */
+  .sup-root .table-wrap { overflow-x: hidden; }
+  .sup-root table td[colspan] {
+    flex: 1 1 100% !important;
+    padding: 20px !important;
+    text-align: center;
+  }
+  .sup-root table td:nth-child(2),
+  .sup-root table td:nth-child(5) { display: none !important; }
+  /* Línea 1: código/proveedor · balance [acciones] */
+  .sup-root table td:nth-child(1) { order: 1; flex: 1 1 50%; min-width: 0; font-weight: 700; font-size: 11px; }
+  .sup-root table td.num { order: 2; margin-left: auto; font-weight: 800; font-size: 11px; }
+  .sup-root table td:last-child { order: 3; display: flex; gap: 4px; }
+  .sup-root table td:last-child .btn,
+  .sup-root table td:last-child button {
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    justify-content: center;
+    border-radius: 6px !important;
+  }
+  .sup-root table td:last-child svg { width: 13px; height: 13px; }
+  /* Línea 2: contacto · rubro · estado */
+  .sup-root table td:nth-child(3) { order: 4; flex: 1 1 auto; min-width: 0; font-size: 10px; color: #334155; max-width: 55%; }
+  .sup-root table td:nth-child(4) { order: 5; flex: 0 0 auto; font-size: 9.5px; color: var(--muted); max-width: 88px; }
+  .sup-root table td:nth-child(7) { order: 6; flex: 0 0 auto; font-size: 9.5px; color: var(--muted); max-width: 80px; }
+}

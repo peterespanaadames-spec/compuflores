@@ -351,7 +351,7 @@ export function Customers() {
   };
 
   return (
-    <div className="content" style={{ paddingBottom: 40 }}>
+    <div className="content m-root crm-root" style={{ paddingBottom: 40 }}>
       {/* Toast */}
       {toast && (
         <div
