@@ -34,10 +34,15 @@ data/
 workspace/
 
 
+
 # Local AI tool artifacts (skills, agents) — machine-local
 .agents/
 agent/
 skills-lock.json
+
+# Preview / simulaciones de diseño (no versionar)
+public/preview/
+docs/preview/
 .rsc/
 .worktrees/
 .opencode/rsc/analyze

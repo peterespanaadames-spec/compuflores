@@ -815,7 +815,7 @@ export function Inventory() {
       )}
 
       {/* Main Header */}
-      <div className="page-head" style={{ marginBottom: 12 }}>
+      <div className="page-head inv-page-head" style={{ marginBottom: 12 }}>
         <div>
           <h1 style={{ fontWeight: 700, fontSize: 24, color: 'var(--text)' }}>
             Productos e inventario
@@ -1396,7 +1396,7 @@ export function Inventory() {
             }}
           >
             {/* Header with title and X button */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <div className="inv-product-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0a2540' }}>
                 {editingSku ? 'Editar producto' : 'Nuevo producto'}
               </h2>

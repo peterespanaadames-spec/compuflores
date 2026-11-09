@@ -464,10 +464,11 @@ export function SupplierDetailModal({
         {/* ENCABEZADO SUPERIOR: CIERRE, IMPRESIÓN Y ACCIÓN SEGÚN EL TAG */}
         {/* ================================================================= */}
         <div
+          className={isNew ? 'supplier-registration-header' : undefined}
           style={{
             padding: '16px 22px',
             borderBottom: '1px solid var(--border)',
-            backgroundColor: '#fafbfc',
+            backgroundColor: isNew ? 'var(--brand-accent)' : '#fafbfc',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',

@@ -319,7 +319,7 @@ export function SuppliersPage() {
       )}
 
       {/* Page Header Principal */}
-      <div className="page-head">
+      <div className="page-head supplier-page-head">
         <div>
           <h1 style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ width: 44, height: 44, borderRadius: 14, background: 'var(--brand-accent)', color: '#111827', border: '1px solid #FDF06F', display: 'grid', placeItems: 'center' }}>

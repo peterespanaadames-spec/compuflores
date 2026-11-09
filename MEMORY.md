@@ -17,6 +17,7 @@
 - Mantener el sistema existente: antracita/amarillo en el panel y colores propios de marca en la tienda; sin reestructurar páginas.
 - Botones compartidos: Primary, Secondary, Danger y Ghost; radio 10 px, transiciones 200 ms, pulsación 0.95 y foco visible.
 - 2026-11-08: componente compartido aplicado a acciones de compra de la tienda y a eliminaciones en Configuración, Bancos, Gastos, Inventario, Cotizaciones y ventas pendientes.
+- 2026-11-08: encabezados de Productos e inventario y Proveedores, más los modales Nuevo producto y Registrar proveedor, usan el amarillo corporativo; conservar la estructura existente.
 - Respetar `prefers-reduced-motion` y conservar las reglas responsive existentes.
 - Tailwind no está instalado; usar componentes y clases semánticas de `src/styles/globals.css`.
 

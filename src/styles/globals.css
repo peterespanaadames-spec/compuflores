@@ -267,6 +267,30 @@ button {
   font-weight: 400;
 }
 
+.inv-page-head,
+.supplier-page-head {
+  padding: 16px 20px;
+  border: 1px solid #E8D94B;
+  border-radius: var(--radius-md);
+  background: var(--brand-accent);
+  align-items: center;
+}
+
+.supplier-registration-header {
+  border-bottom-color: #E8D94B !important;
+}
+
+.inv-product-modal-header {
+  margin: -24px -24px 20px;
+  padding: 14px 20px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--brand-accent);
+}
+
+.inv-product-modal-header h2 {
+  color: var(--heading) !important;
+}
+
 .actions {
   display: flex;
   gap: 10px;
