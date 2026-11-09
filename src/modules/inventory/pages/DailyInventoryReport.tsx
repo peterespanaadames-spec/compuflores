@@ -54,7 +54,7 @@ export function DailyInventoryReportPage() {
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
-  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('HOY');
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('MES');
   const [movementTypeFilter, setMovementTypeFilter] = useState<MovementTypeFilter>('TODOS');
   const [selectedWarehouse, setSelectedWarehouse] = useState('ALL');
   const [showCustomDateRange, setShowCustomDateRange] = useState(false);
