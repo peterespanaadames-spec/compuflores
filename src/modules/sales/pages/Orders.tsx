@@ -532,7 +532,7 @@ export function OrdersPage() {
   };
 
   return (
-    <div className="content">
+    <div className="content m-root ped-root">
       {/* Toast Alert */}
       {toast && (
         <div

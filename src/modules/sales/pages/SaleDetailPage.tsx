@@ -256,7 +256,7 @@ export function SaleDetailPage({ saleId: propSaleId, onBack }: SaleDetailPagePro
   const vesFmt = (n: number) => `Bs. ${n.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
-    <div className="content">
+    <div className="content m-root saldet-root">
       {/* Cabecera de acciones: oculta al imprimir */}
       <div className="page-head flex items-center justify-between gap-4 no-print">
         <div>

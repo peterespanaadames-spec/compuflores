@@ -3610,3 +3610,87 @@ button:active:not(:disabled) {
   /* La cuadrícula principal (lista + panel) se apila a una columna */
   .fin-cxp-root [style*="2fr 1fr"] { grid-template-columns: 1fr !important; }
 }
+
+/* =====================================================================
+   FASE 3 — PEDIDOS (ped-root), COTIZACIONES (cot-root) DETALLE DE VENTA
+   (saldet-root). Solo ≤640px.
+   Pedidos: KPI sin subtítulos, fichas de 2 líneas (pedido · total
+   [detalles] / cliente · entrega · pago). Métodos y tiempo quedan
+   en escritorio.
+   Cotizaciones: fichas (folio · monto [acciones] / cliente · estado);
+   concepto y fechas quedan en escritorio.
+   Detalle: comprobante compacto sin scroll lateral brusco.
+   ===================================================================== */
+@media (max-width: 640px) {
+  /* --- Pedidos --- */
+  .ped-root .page-head .actions button { height: 32px !important; padding: 0 10px !important; font-size: 11px !important; }
+  .ped-root .grid-4 .muted { display: none !important; }
+  .ped-root .table-wrap { overflow-x: hidden; }
+  .ped-root table td[colspan] {
+    flex: 1 1 100% !important;
+    padding: 20px !important;
+    text-align: center;
+  }
+  .ped-root table td:nth-child(3),
+  .ped-root table td:nth-child(4),
+  .ped-root table td:nth-child(6) { display: none !important; }
+  /* Línea 1: pedido · total [detalles] */
+  .ped-root table td:nth-child(1) { order: 1; flex: 0 0 auto; font-weight: 700; font-size: 11px; }
+  .ped-root table td.num { order: 2; margin-left: auto; font-weight: 800; font-size: 11px; }
+  .ped-root table td:nth-child(9) { order: 3; display: flex; }
+  .ped-root table td:nth-child(9) .btn,
+  .ped-root table td:nth-child(9) button {
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    justify-content: center;
+    border-radius: 6px !important;
+  }
+  .ped-root table td:nth-child(9) svg { width: 13px; height: 13px; }
+  /* Línea 2: cliente · estado de entrega · estado de pago */
+  .ped-root table td:nth-child(2) { order: 4; flex: 1 1 52%; min-width: 0; font-size: 10.5px; color: #334155; }
+  .ped-root table td:nth-child(7) { order: 5; flex: 0 0 auto; font-size: 9.5px; color: var(--muted); max-width: 88px; }
+  .ped-root table td:nth-child(8) { order: 6; flex: 0 0 auto; font-size: 9.5px; color: var(--muted); max-width: 88px; }
+
+  /* --- Cotizaciones --- */
+  .cot-root [style*="minmax(230px, 1fr)"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+  .cot-root [style*="minmax(230px, 1fr)"] .card { padding: 12px 10px !important; }
+  .cot-root table { min-width: 0 !important; }
+  .cot-root .table-wrap { overflow-x: hidden; }
+  .cot-root table td[colspan] {
+    flex: 1 1 100% !important;
+    padding: 20px !important;
+    text-align: center;
+  }
+  .cot-root table td:nth-child(2),
+  .cot-root table td:nth-child(4) { display: none !important; }
+  /* Línea 1: folio · monto [acciones] */
+  .cot-root table td:nth-child(1) { order: 1; flex: 0 0 auto; font-weight: 700; font-size: 11px; }
+  .cot-root table td:nth-child(5) { order: 2; margin-left: auto; font-weight: 800; font-size: 11px; }
+  .cot-root table td:nth-child(7) { order: 3; display: flex; gap: 4px; }
+  .cot-root table td:nth-child(7) .btn,
+  .cot-root table td:nth-child(7) button {
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    justify-content: center;
+    border-radius: 6px !important;
+  }
+  .cot-root table td:nth-child(7) svg { width: 13px; height: 13px; }
+  /* Línea 2: cliente · estado */
+  .cot-root table td:nth-child(3) { order: 4; flex: 1 1 auto; min-width: 0; font-size: 10.5px; color: #334155; }
+  .cot-root table td:nth-child(6) { order: 5; flex: 0 0 auto; font-size: 9.5px; }
+
+  /* --- Detalle de venta: comprobante compacto --- */
+  .saldet-root [style*="1.45fr 1fr"] { grid-template-columns: 1fr !important; }
+  .saldet-root .invoice-sheet { padding: 12px 12px 10px !important; max-width: 100% !important; }
+  .saldet-root .invoice-sheet table.iv-table { font-size: 10px; display: block; overflow-x: auto; }
+  .saldet-root .invoice-sheet table.iv-table thead { display: table-header-group !important; }
+  .saldet-root .invoice-sheet table.iv-table tbody { display: table-row-group !important; }
+  .saldet-root .invoice-sheet table.iv-table th { display: table-cell !important; padding: 3px 4px !important; font-size: 8.5px; }
+  .saldet-root .invoice-sheet table.iv-table tr { display: table-row !important; }
+}

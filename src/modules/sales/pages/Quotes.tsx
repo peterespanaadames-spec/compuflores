@@ -926,7 +926,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
   const uniqueCustomerNames = Array.from(new Set(quotes.map(q => q.customer?.name || (q as any).customers?.name || ''))).filter(Boolean);
 
   return (
-    <div className="content" style={{ paddingBottom: 40 }}>
+    <div className="content m-root cot-root" style={{ paddingBottom: 40 }}>
       {/* Toast */}
       {toast && (
         <div
