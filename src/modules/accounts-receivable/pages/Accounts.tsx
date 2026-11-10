@@ -26,6 +26,7 @@ import {
 import { Card } from '../../../components/ui/Card';
 import { MobileSearchBar } from '../../../components/mobile/MobileSearchBar';
 import { MobileFilterSheet, MobileFilterTrigger } from '../../../components/mobile/MobileFilterSheet';
+import { MobileEmptyState } from '../../../components/mobile/MobileEmptyState';
 import { Button } from '../../../components/ui/Button';
 import { CedulaLookupButton } from '../../../components/ui/CedulaLookupButton';
 import { isConsultaDocType, useCedulaAutofill } from '../../../lib/cedulaLookup';
@@ -1179,9 +1180,7 @@ export function Accounts() {
 
             {/* EMPTY STATE */}
             {filteredAccounts.length === 0 ? (
-              <div className="empty" style={{ padding: '60px 0', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
-                No se encontraron cuentas por cobrar con los filtros seleccionados.
-              </div>
+              <MobileEmptyState title="No se encontraron cuentas por cobrar con los filtros seleccionados." />
             ) : viewMode === 'grouped' ? (
               /* VIEW 1: DRILL-DOWN ACCORDION GROUPED BY CLIENT */
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
