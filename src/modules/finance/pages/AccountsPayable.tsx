@@ -24,6 +24,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
+import { MobileSearchBar } from '../../../components/mobile/MobileSearchBar';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { formatUSD, formatVES, getActiveExchangeRate } from '../../../lib/currency';
@@ -1135,25 +1136,11 @@ export function AccountsPayable() {
         className="card fin-filters"
         style={{ padding: '16px 20px', marginBottom: 20, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            background: '#f8fafc',
-            padding: '6px 14px',
-            borderRadius: 10,
-            border: '1px solid var(--border)',
-            flex: 1,
-            minWidth: 260
-          }}
-        >
-          <Search size={16} style={{ color: '#94a3b8' }} />
-          <input
-            placeholder="Buscar proveedor, documento o concepto..."
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <MobileSearchBar
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: '100%' }}
+            onChange={setSearchTerm}
+            placeholder="Buscar proveedor, documento o concepto..."
           />
         </div>
 

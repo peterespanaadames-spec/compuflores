@@ -39,6 +39,7 @@ import {
   fetchBankAccountsFromSupabase,
   createProductInSupabase
 } from '../../../lib/supabase/db';
+import { MobileSearchBar } from '../../../components/mobile/MobileSearchBar';
 import { authenticatedFetch } from '../../../lib/supabase/api';
 import { getBusinessProfile } from '../../../lib/businessProfile';
 import { isDecimalUnit, roundQuantity2, parseQuantityInput } from '../../../lib/inventory/units';
@@ -1292,16 +1293,11 @@ export function Sales() {
               
               {/* Search Bar */}
               <div className="card pos-search-card" style={{ padding: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Search size={18} style={{ color: '#94a3b8' }} />
-                  <input
-                    className="input"
-                    style={{ border: 'none', boxShadow: 'none', padding: 0, height: 'auto', fontSize: 14, flex: 1, width: '100%', minWidth: 0 }}
-                    placeholder="Buscar producto por SKU, Nombre o escanear Código de Barras..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
+                <MobileSearchBar
+                  value={searchTerm}
+                  onChange={setSearchTerm}
+                  placeholder="Buscar producto por SKU, Nombre o escanear Código de Barras..."
+                />
               </div>
 
               {/* Category Pills */}

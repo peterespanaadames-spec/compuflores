@@ -25,6 +25,8 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
+import { MobileSearchBar } from '../../../components/mobile/MobileSearchBar';
+import { FloatingActionButton } from '../../../components/mobile/FloatingActionButton';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { getActiveExchangeRate, convertUSDtoVES, formatVES } from '../../../lib/currency';
@@ -893,12 +895,10 @@ export function Inventory() {
       <Card>
         <div className="toolbar inv-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
           <div className="search" style={{ flex: 1, maxWidth: 440 }}>
-            <Search size={16} />
-            <input
-              className="input"
-              placeholder="Buscar SKU, nombre, código o ubicación..."
+            <MobileSearchBar
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={setSearchTerm}
+              placeholder="Buscar SKU, nombre, código o ubicación..."
             />
           </div>
 
@@ -2337,6 +2337,8 @@ export function Inventory() {
           </div>
         </div>
       )}
+
+      <FloatingActionButton onClick={handleOpenNewProduct} label="Nuevo producto" />
 
     </div>
   );

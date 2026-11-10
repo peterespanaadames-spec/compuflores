@@ -24,6 +24,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
+import { MobileSearchBar } from '../../../components/mobile/MobileSearchBar';
 import { Button } from '../../../components/ui/Button';
 import { CedulaLookupButton } from '../../../components/ui/CedulaLookupButton';
 import { isConsultaDocType, useCedulaAutofill } from '../../../lib/cedulaLookup';
@@ -1023,25 +1024,11 @@ export function Accounts() {
         }}
       >
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: 1, minWidth: 280, flexWrap: 'wrap' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              background: '#f8fafc',
-              padding: '6px 14px',
-              borderRadius: 10,
-              border: '1px solid var(--border)',
-              flex: 1,
-              minWidth: 240
-            }}
-          >
-            <Search size={16} style={{ color: '#94a3b8' }} />
-            <input
-              placeholder="Buscar cliente, cédula/RIF, documento u orden..."
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <MobileSearchBar
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: '100%' }}
+              onChange={setSearchTerm}
+              placeholder="Buscar cliente, cédula/RIF, documento u orden..."
             />
           </div>
 

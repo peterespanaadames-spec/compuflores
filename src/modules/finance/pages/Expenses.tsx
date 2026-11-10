@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
+import { MobileSearchBar } from '../../../components/mobile/MobileSearchBar';
 import { Badge } from '../../../components/ui/Badge';
 import {
   DbExpense,
@@ -806,36 +807,11 @@ grant all on table public.expense_payments to anon, authenticated;
               alignItems: 'center'
             }}
           >
-            <Search size={15} style={{ position: 'absolute', left: 12, color: '#94a3b8' }} />
-            <input
-              type="text"
-              placeholder="Buscar por nombre, categoría…"
+            <MobileSearchBar
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="input"
-              style={{
-                paddingLeft: 34,
-                paddingRight: searchTerm ? 30 : 12,
-                height: 38,
-                fontSize: 13,
-                width: '100%'
-              }}
+              onChange={setSearchTerm}
+              placeholder="Buscar por nombre, categoría..."
             />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                style={{
-                  position: 'absolute',
-                  right: 10,
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: '#94a3b8'
-                }}
-              >
-                <X size={14} />
-              </button>
-            )}
           </div>
 
           <select
