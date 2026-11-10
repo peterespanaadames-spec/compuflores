@@ -30,6 +30,7 @@ import { FloatingActionButton } from '../../../components/mobile/FloatingActionB
 import { MobileFilterSheet, MobileFilterTrigger } from '../../../components/mobile/MobileFilterSheet';
 import { MobileEmptyState } from '../../../components/mobile/MobileEmptyState';
 import { MobileLoadingState } from '../../../components/mobile/MobileLoadingState';
+import { ConfirmationDialog } from '../../../components/mobile/ConfirmationDialog';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { getActiveExchangeRate, convertUSDtoVES, formatVES } from '../../../lib/currency';
@@ -266,6 +267,8 @@ export function Inventory() {
   
   // Product Creation/Edition Modal
   const [isNewProductOpen, setIsNewProductOpen] = useState(false);
+  const [deleteSku, setDeleteSku] = useState<string | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [editingSku, setEditingSku] = useState<string | null>(null);
 
   // Dynamic Categories State
@@ -606,7 +609,6 @@ export function Inventory() {
 
   // 6. Delete Product
   const handleDeleteProduct = async (sku: string) => {
-    if (!window.confirm(`¿Está seguro de que desea eliminar el producto ${sku} del catálogo?`)) return;
     setProducts(prev => prev.filter(p => p.sku !== sku));
     const res = await deleteProductFromSupabase(sku);
     if (res.success) {
@@ -616,6 +618,8 @@ export function Inventory() {
       showToast(`Error al eliminar: ${res.error || 'Verifica permisos'}`, 'info');
       await loadProducts();
     }
+    setIsDeleteOpen(false);
+    setDeleteSku(null);
   };
 
   // 7. Stock adjustment
@@ -1117,7 +1121,7 @@ export function Inventory() {
                         className="btn-icon danger-subtle"
                         title="Eliminar del catálogo"
                         aria-label={`Eliminar ${p.name} del catálogo`}
-                        onClick={() => handleDeleteProduct(p.sku)}
+                        onClick={() => { setDeleteSku(p.sku); setIsDeleteOpen(true); }}
                       >
                         <Trash2 size={14} />
                       </Button>
@@ -2342,6 +2346,16 @@ export function Inventory() {
       )}
 
       <FloatingActionButton onClick={handleOpenNewProduct} label="Nuevo producto" />
+
+      <ConfirmationDialog
+        open={isDeleteOpen}
+        title="Eliminar producto"
+        message={`¿Eliminar el producto ${deleteSku} del catálogo? Esta acción no se puede deshacer.`}
+        confirmLabel="Eliminar"
+        danger
+        onConfirm={() => deleteSku && handleDeleteProduct(deleteSku)}
+        onCancel={() => { setIsDeleteOpen(false); setDeleteSku(null); }}
+      />
 
     </div>
   );
