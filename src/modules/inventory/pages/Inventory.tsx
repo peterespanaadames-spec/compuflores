@@ -27,6 +27,7 @@ import {
 import { Card } from '../../../components/ui/Card';
 import { MobileSearchBar } from '../../../components/mobile/MobileSearchBar';
 import { FloatingActionButton } from '../../../components/mobile/FloatingActionButton';
+import { MobileFilterSheet, MobileFilterTrigger } from '../../../components/mobile/MobileFilterSheet';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { getActiveExchangeRate, convertUSDtoVES, formatVES } from '../../../lib/currency';
@@ -75,6 +76,7 @@ export function Inventory() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeExchangeRate, setActiveExchangeRateState] = useState(() => getActiveExchangeRate());
 
   const loadProducts = async () => {
@@ -903,24 +905,10 @@ export function Inventory() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            {/* Sede / Almacén Filter */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <MapPin size={15} style={{ color: '#0066f5' }} />
-              <select
-                className="input"
-                style={{ height: 38, fontSize: 12, width: 190, fontWeight: 600 }}
-                value={selectedBranchFilter}
-                onChange={(e) => setSelectedBranchFilter(e.target.value)}
-              >
-                <option value="all">Todas las Sedes / Almacenes</option>
-                {branches.map(b => (
-                  <option key={b.id || b.code} value={b.id || b.code}>
-                    {b.code ? `[${b.code}] ` : ''}{b.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
+            <MobileFilterTrigger
+              onClick={() => setIsFilterOpen(true)}
+              activeCount={selectedBranchFilter !== 'all' ? 1 : 0}
+            />
             <button
               type="button"
               className="inv-sync"
@@ -946,6 +934,25 @@ export function Inventory() {
             </button>
           </div>
         </div>
+
+        <MobileFilterSheet open={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <MapPin size={15} style={{ color: '#0066f5' }} />
+            <select
+              className="input"
+              style={{ height: 38, fontSize: 12, width: '100%', fontWeight: 600 }}
+              value={selectedBranchFilter}
+              onChange={(e) => setSelectedBranchFilter(e.target.value)}
+            >
+              <option value="all">Todas las Sedes / Almacenes</option>
+              {branches.map(b => (
+                <option key={b.id || b.code} value={b.id || b.code}>
+                  {b.code ? `[${b.code}] ` : ''}{b.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </MobileFilterSheet>
 
         <div className="table-wrap">
           <table className="table inv-table">
