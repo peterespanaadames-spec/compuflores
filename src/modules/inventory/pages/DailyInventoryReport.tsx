@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { MobilePagination } from '../../../components/mobile/MobilePagination';
 import { Badge } from '../../../components/ui/Badge';
 import {
   getActiveExchangeRate,

@@ -1081,7 +1081,7 @@ export function ConfigPage() {
   );
 
   return (
-    <div className="content">
+    <div className="content m-root">
       {/* Toast Notification */}
       {notification && (
         <div
