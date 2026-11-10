@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
 import { Menu, Sparkles, RefreshCw, Edit3, AlertCircle, ArrowUpRight, Check, X, Store, LogOut } from 'lucide-react';
 import { Sidebar } from '../components/ui/Sidebar';
+import { MobileHeader } from '../components/mobile/MobileHeader';
+import { MobileBottomNav } from '../components/mobile/MobileBottomNav';
+import { MobileMoreSheet } from '../components/mobile/MobileMoreSheet';
 import { ManualBcvRateModal } from '../components/modals/ManualBcvRateModal';
 import { getActiveExchangeRate, setActiveExchangeRate, isFutureExchangeRate } from '../lib/currency';
 import { getBusinessProfile, BusinessProfile, refreshBusinessProfileFromServer } from '../lib/businessProfile';
@@ -17,6 +20,7 @@ export function DashboardLayout() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
 
   const { signOut, profile: authProfile } = useAuth();
 
@@ -238,6 +242,7 @@ export function DashboardLayout() {
         onNavigate={() => setIsMobileMenuOpen(false)}
       />
       <main className="main" style={{ position: 'relative' }}>
+        <MobileHeader />
         <header className="topbar">
           <button
             type="button"
@@ -452,6 +457,22 @@ export function DashboardLayout() {
         )}
 
         <Outlet />
+
+        <MobileBottomNav onMore={() => setIsMoreSheetOpen(true)} />
+        <MobileMoreSheet
+          open={isMoreSheetOpen}
+          onClose={() => setIsMoreSheetOpen(false)}
+          permissions={(() => {
+            try {
+              const s = localStorage.getItem('frenyer_user_permissions');
+              if (s) {
+                const p = JSON.parse(s);
+                if (Array.isArray(p)) return p;
+              }
+            } catch {}
+            return ['ventas', 'inventario', 'finanzas', 'reportes', 'usuarios'];
+          })()}
+        />
 
         {/* Alma Copilot: oculto temporalmente (el módulo y la ruta /alma siguen disponibles) */}
         {false && (
