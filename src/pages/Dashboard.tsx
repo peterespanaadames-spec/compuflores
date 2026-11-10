@@ -265,7 +265,7 @@ export function Dashboard() {
   }, []);
 
   return (
-    <div className="content">
+    <div className="content m-root dash-root">
       <div className="page-head">
         <div>
           <h1>Resumen operativo</h1>
