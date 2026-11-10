@@ -4226,3 +4226,23 @@ button:active:not(:disabled) {
 .mobile-pagination span { font-size: 11px; font-weight: 700; color: #374151; }
 .mobile-fab { position: fixed; right: 16px; bottom: calc(72px + env(safe-area-inset-bottom)); width: 48px; height: 48px; border-radius: 9999px; border: none; background: #2D2E32; color: #FFFFFF; display: grid; place-items: center; box-shadow: 0 6px 16px rgba(45,46,50,0.35); cursor: pointer; z-index: 45; }
 .mobile-page { padding: 12px; }
+/* =====================================================================
+   POS MOVIL ULTRA-COMPACTO (<=640px)
+   ===================================================================== */
+@media (max-width: 640px) {
+  .pos-root [style*="minmax(180px, 1fr)"] { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 4px !important; }
+  .pos-root [style*="min-height: 140px"] { padding: 4px 3px !important; overflow: hidden; }
+  .pos-root [style*="min-height: 140px"] b { font-size: 10.5px !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+  .pos-root [style*="min-height: 140px"] .muted { font-size: 8px !important; }
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14"] { font-size: 11px !important; }
+  .pos-root #pos-cart-panel { padding: 8px 7px !important; gap: 5px !important; }
+  .pos-root #pos-cart-panel > div:first-child b { font-size: 10.5px !important; }
+  .pos-root #pos-cart-panel [style*="padding: 8px 12px"] { padding: 4px 6px !important; }
+  .pos-root #pos-cart-panel [style*="min-height: 220px"] { min-height: 90px !important; max-height: 200px !important; gap: 4px !important; }
+  .pos-root #pos-cart-panel [style*="width: 48px"] { width: 32px !important; height: 18px !important; font-size: 9px !important; }
+  .pos-root #pos-cart-panel [style*="width: 24px"] { width: 16px !important; height: 18px !important; }
+  .pos-root #pos-cart-panel [style*="font-size: 12px"] { font-size: 9.5px !important; }
+  .pos-root #pos-cart-panel [style*="min-width: 65px"] { min-width: 48px !important; }
+  .pos-root .pos-mobile-cartbar { left: 6px; right: 6px; bottom: 7px; padding: 5px 7px 5px 9px; gap: 6px; }
+  .pos-root .pos-mobile-cartbar-cta { padding: 5px 7px !important; font-size: 9.5px !important; }
+}
