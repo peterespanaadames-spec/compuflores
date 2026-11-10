@@ -25,6 +25,7 @@ import {
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { MobileSearchBar } from '../../../components/mobile/MobileSearchBar';
+import { MobileFilterSheet, MobileFilterTrigger } from '../../../components/mobile/MobileFilterSheet';
 import { Badge } from '../../../components/ui/Badge';
 import {
   DbExpense,
@@ -57,6 +58,7 @@ export function ExpensesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('Todas');
   const [statusFilter, setStatusFilter] = useState<'TODOS' | 'PENDIENTE' | 'PAGADO' | 'VENCIDO'>('TODOS');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Modales
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -814,31 +816,35 @@ grant all on table public.expense_payments to anon, authenticated;
             />
           </div>
 
-          <select
-            value={categoryFilter}
-            onChange={e => setCategoryFilter(e.target.value)}
-            className="input"
-            style={{ height: 38, fontSize: 13, width: 170, cursor: 'pointer' }}
-          >
-            <option value="Todas">Todas las categorías</option>
-            {categories.map(c => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+          <MobileFilterTrigger
+            onClick={() => setIsFilterOpen(true)}
+            activeCount={(categoryFilter !== 'Todas' ? 1 : 0) + (statusFilter !== 'TODOS' ? 1 : 0)}
+          />
 
-          <select
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value as any)}
-            className="input"
-            style={{ height: 38, fontSize: 13, width: 140, cursor: 'pointer' }}
-          >
-            <option value="TODOS">Todos los estados</option>
-            <option value="PENDIENTE">Pendientes</option>
-            <option value="PAGADO">Pagados</option>
-            <option value="VENCIDO">Expirados / Vencidos</option>
-          </select>
+          <MobileFilterSheet open={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
+            <select
+              value={categoryFilter}
+              onChange={e => setCategoryFilter(e.target.value)}
+              className="input"
+              style={{ height: 38, fontSize: 12, width: '100%', cursor: 'pointer' }}
+            >
+              <option value="Todas">Todas las categorías</option>
+              {categories.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <select
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value as any)}
+              className="input"
+              style={{ height: 38, fontSize: 12, width: '100%', cursor: 'pointer' }}
+            >
+              <option value="TODOS">Todos los estados</option>
+              <option value="PENDIENTE">Pendientes</option>
+              <option value="PAGADO">Pagados</option>
+              <option value="VENCIDO">Expirados / Vencidos</option>
+            </select>
+          </MobileFilterSheet>
         </div>
       </div>
 
