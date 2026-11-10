@@ -3948,6 +3948,25 @@ button:active:not(:disabled) {
 }
 
 /* =====================================================================
+   POS PORTRAIT 9:16 (≤640px) — seguridad de ajuste en pantallas altas
+   y estrechas (celulares 9:16). Evita desbordes horizontales, el
+   stepper del cobro no desborda y el carrito no tapa el contenido.
+   Escritorio intacto.
+   ===================================================================== */
+@media (max-width: 640px) {
+  .pos-root { overflow-x: hidden !important; padding-bottom: 78px !important; }
+  .pos-root .page-head { flex-wrap: wrap; }
+  .pos-root .page-head > div:first-child { flex: 1 1 100%; min-width: 0; }
+  .pos-root .pos-stepper { gap: 14px !important; }
+  .pos-root .pos-stepper-connector { width: 24px !important; }
+  .pos-root [style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
+  .pos-root [style*="width: 600px"] { width: 100% !important; max-width: 100% !important; }
+  .pos-root .pos-mobile-cartbar { left: 6px; right: 6px; bottom: 8px; }
+  .pos-root [style*="min-width: 280px"] { min-width: 0 !important; }
+  .pos-root [style*="min-width: 260px"] { min-width: 0 !important; }
+}
+
+/* =====================================================================
    POS AJUSTE MÓVIL (≤640px) — catálogo de producto con EXACTAMENTE
    3 fichas por fila y encaje perfecto (sin desbordes), carrito de
    compra más pequeño y botones reducidos. Escritorio intacto.
