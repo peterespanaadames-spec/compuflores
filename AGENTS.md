@@ -51,6 +51,8 @@ npm run test
 - **Estética visual**: Seguir la guía de `/docs/design-system/DESIGN_SYSTEM.md`. Canvas de color gris frío muy claro, tarjetas blancas con bordes de `1px solid var(--border)`, radios de borde redondos (`var(--radius-lg)` de 16px) y acento violeta (`var(--brand-500)`). No introducir clases CSS huérfanas o estilos en línea sin justificación.
 - **Referencia de diseño**: El archivo de referencia para layouts modulares es `/src/pages/Dashboard.tsx` y el menú de navegación es `/src/components/ui/Sidebar.tsx`.
 
+- **Adaptacion movil obligatoria**: Todo codigo nuevo (pantallas, componentes, formularios, filtros, tablas, modales) debe disenarse y verificarse tambien para smartphones (320-430 px) y tablets (768 px). Reutilizar los componentes de `src/components/mobile/` y las clases compartidas (`m-root`, `MobilePageContainer`, `MobileSearchBar`, `MobileFilterSheet`, `MobileBottomSheet`, etc.), incluir media queries `@media (max-width: 640px)` (y `<=360px` si aplica), y comprobar que no haya desbordes horizontales, tapado por la barra inferior ni targets tactiles menores a 28 px. La version de escritorio debe seguir funcionando sin cambios. Ningun cambio se considera completo sin esta verificacion movil.
+
 ## Reglas de dominio / trampas conocidas
 
 - **Bimonetariedad estricta**: Frenyer opera simultáneamente en USD y VES. Toda operación financiera, flujo de caja o cuenta bancaria debe calcular y registrar el tipo de cambio de referencia vigente en el momento de la transacción para mantener un historial de auditoría consistente.
