@@ -26,6 +26,7 @@ import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { MobileSearchBar } from '../../../components/mobile/MobileSearchBar';
 import { MobileFilterSheet, MobileFilterTrigger } from '../../../components/mobile/MobileFilterSheet';
+import { MobileEmptyState } from '../../../components/mobile/MobileEmptyState';
 import { Badge } from '../../../components/ui/Badge';
 import {
   DbExpense,
@@ -922,15 +923,12 @@ grant all on table public.expense_payments to anon, authenticated;
               {filteredExpenses.length === 0 ? (
                 <tr>
                   <td colSpan={8} style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                    <WalletCards size={36} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-main)' }}>
-                      No hay gastos registrados en Supabase
-                    </div>
-                    <div style={{ fontSize: 13, marginTop: 4 }}>
-                      {searchTerm || categoryFilter !== 'Todas' || statusFilter !== 'TODOS'
+                    <MobileEmptyState
+                      title="No hay gastos registrados en Supabase"
+                      description={searchTerm || categoryFilter !== 'Todas' || statusFilter !== 'TODOS'
                         ? 'No hay gastos que coincidan con los filtros aplicados.'
-                        : 'Los registros de gastos fijos y variables aparecerán aquí automáticamente una vez creados en la base de datos.'}
-                    </div>
+                        : 'Los registros de gastos fijos y variables aparecerán automáticamente una vez creados en la base de datos.'}
+                    />
                   </td>
                 </tr>
               ) : (
