@@ -42,3 +42,4 @@
 - Diseño: `docs/design-system/README.md`, `DESIGN_SYSTEM.md`, `COMPONENTS_AND_PATTERNS.md`.
 - Estado de sesiones: `02-DOCS/wiki/features/2026-11-02-reemplazo-sesion.md`, `2026-11-03-cierre-navegador.md`.
 - Adaptaciones móviles: `02-DOCS/wiki/features/2026-11-02-reporte-ventas-movil.md`, `2026-11-02-reporte-inventario-movil.md`, `2026-11-02-movimientos-bancarios-movil.md`.
+- 2026-11-10: Continuación de cableado (commit 9b52a23→379ce7f): MobileSearchBar en Clientes; filtros CxP y Gastos en Bottom Sheet. Build y lint limpios. Pendiente: Movimientos, formularios largos en secciones, listas de datos compactas, Configuración/Alma.
