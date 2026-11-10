@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { getActiveExchangeRate, convertUSDtoVES, formatVES } from '../../../lib/currency';
 import { Button } from '../../../components/ui/Button';
+import { MobileSearchBar } from '../../../components/mobile/MobileSearchBar';
 import { CedulaLookupButton } from '../../../components/ui/CedulaLookupButton';
 import { isConsultaDocType, useCedulaAutofill } from '../../../lib/cedulaLookup';
 import { getBusinessProfile } from '../../../lib/businessProfile';
@@ -446,13 +447,11 @@ export function Customers() {
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, width: 1000, maxWidth: '100%' }}>
           
           {/* Search Bar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, padding: '0 12px', minWidth: 320, flex: 1, maxWidth: 440 }}>
-            <Search size={16} style={{ color: '#94a3b8' }} />
-            <input
-              style={{ border: 'none', outline: 'none', padding: '8px 0', fontSize: 13, width: '100%' }}
-              placeholder="Buscar por nombre, cédula/RIF, código, teléfono..."
+          <div style={{ flex: 1, minWidth: 0, maxWidth: 440 }}>
+            <MobileSearchBar
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={setSearchTerm}
+              placeholder="Buscar por nombre, cédula/RIF, código, teléfono..."
             />
           </div>
 
