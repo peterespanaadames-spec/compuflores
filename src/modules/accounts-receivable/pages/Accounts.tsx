@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { MobileSearchBar } from '../../../components/mobile/MobileSearchBar';
+import { MobileFilterSheet, MobileFilterTrigger } from '../../../components/mobile/MobileFilterSheet';
 import { Button } from '../../../components/ui/Button';
 import { CedulaLookupButton } from '../../../components/ui/CedulaLookupButton';
 import { isConsultaDocType, useCedulaAutofill } from '../../../lib/cedulaLookup';
@@ -90,6 +91,7 @@ export function Accounts() {
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedClientFilter, setSelectedClientFilter] = useState('Todos');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('Todos');
   const [selectedAccount, setSelectedAccount] = useState<ReceivableRecord | null>(null);
@@ -1032,52 +1034,36 @@ export function Accounts() {
             />
           </div>
 
-          <select
-            value={selectedClientFilter}
-            onChange={(e) => setSelectedClientFilter(e.target.value)}
-            style={{
-              height: 40,
-              background: '#fff',
-              border: '1px solid var(--border)',
-              borderRadius: 10,
-              padding: '0 14px',
-              fontSize: 13,
-              fontWeight: 600,
-              color: '#0f172a',
-              outline: 'none',
-              cursor: 'pointer',
-              minWidth: 180
-            }}
-          >
-            <option value="Todos">Todos los clientes</option>
-            {uniqueClientNames.map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+          <MobileFilterTrigger
+            onClick={() => setIsFilterOpen(true)}
+            activeCount={(selectedClientFilter !== 'Todos' ? 1 : 0) + (selectedStatusFilter !== 'Todos' ? 1 : 0)}
+          />
 
-          <select
-            value={selectedStatusFilter}
-            onChange={(e) => setSelectedStatusFilter(e.target.value)}
-            style={{
-              height: 40,
-              background: '#fff',
-              border: '1px solid var(--border)',
-              borderRadius: 10,
-              padding: '0 14px',
-              fontSize: 13,
-              fontWeight: 600,
-              color: '#0f172a',
-              outline: 'none',
-              cursor: 'pointer',
-              minWidth: 160
-            }}
-          >
-            <option value="Todos">Todos los estados</option>
-            <option value="Pendiente">Pendiente</option>
-            <option value="Parcial">Parcial</option>
-            <option value="Pagada">Pagada</option>
-            <option value="Vencida">Vencida</option>
-          </select>
+          <MobileFilterSheet open={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
+            <select
+              value={selectedClientFilter}
+              onChange={(e) => setSelectedClientFilter(e.target.value)}
+              className="input"
+              style={{ height: 38, fontSize: 12, width: '100%', fontWeight: 600 }}
+            >
+              <option value="Todos">Todos los clientes</option>
+              {uniqueClientNames.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <select
+              value={selectedStatusFilter}
+              onChange={(e) => setSelectedStatusFilter(e.target.value)}
+              className="input"
+              style={{ height: 38, fontSize: 12, width: '100%', fontWeight: 600 }}
+            >
+              <option value="Todos">Todos los estados</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="Parcial">Parcial</option>
+              <option value="Pagada">Pagada</option>
+              <option value="Vencida">Vencida</option>
+            </select>
+          </MobileFilterSheet>
         </div>
 
         {/* View Mode Switcher and Controls */}
