@@ -1277,24 +1277,7 @@ export function DailyInventoryReportPage() {
                 <span className="muted small">
                   Página <b>{currentPage}</b> de <b>{totalPages}</b>
                 </span>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <Button
-                    variant="secondary"
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    style={{ height: 32, padding: '0 10px', fontSize: 12 }}
-                  >
-                    <ChevronLeft size={14} /> Anterior
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                    style={{ height: 32, padding: '0 10px', fontSize: 12 }}
-                  >
-                    Siguiente <ChevronRight size={14} />
-                  </Button>
-                </div>
+                <MobilePagination page={currentPage} totalPages={totalPages} onChange={setCurrentPage} />
               </div>
             )}
           </>
