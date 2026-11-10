@@ -46,3 +46,4 @@
 - 2026-11-10: Continuación de cableado (commit ea9e721→9b52a23): filtros CxP y Gastos en Bottom Sheet. Pendiente: Movimientos, formularios largos en secciones, listas de datos compactas, Configuración/Alma.
 - 2026-11-10: Cableado adicional (commit 9b52a23→4750a73→379ce7f→ea9e721): MobileSearchBar en Clientes. Pendiente: formularios largos en secciones, listas de datos compactas, Configuración/Alma.
 - 2026-11-10: Cableado adicional (commit 9a24586): MobileEmptyState y MobileLoadingState en Inventario. Build y lint limpios. Pendiente: Movimientos, formularios largos en secciones, listas de datos compactas, Configuración/Alma.
+- 2026-11-10: Regla permanente agregada a AGENTS.md: toda funcionalidad/codigo nuevo debe disenarse y verificarse tambien para movil (320-430 px) y tablet (768 px), reutilizando componentes de src/components/mobile/ y clases compartidas, con media queries <=640px y sin desbordes. Ningun cambio se considera completo sin verificacion movil.
