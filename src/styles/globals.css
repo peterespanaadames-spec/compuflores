@@ -4165,3 +4165,64 @@ button:active:not(:disabled) {
   }
   .pos-root .pos-mobile-cartbar-cta { padding: 6px 9px !important; font-size: 10px !important; }
 }
+
+/* =====================================================================
+   COMPONENTES MÓVILES COMPARTIDOS (base global, compactos)
+   ===================================================================== */
+.mobile-searchbar { display: flex; align-items: center; gap: 8px; background: #F9FAFB; border: 1px solid var(--border); border-radius: 10px; padding: 7px 10px; }
+.mobile-searchbar input { flex: 1; border: none; background: transparent; outline: none; font-size: 12px; color: #111827; }
+.mobile-searchbar button { border: none; background: transparent; color: #6B7280; display: grid; place-items: center; cursor: pointer; }
+.mobile-filter-trigger { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 10px; background: #FFFFFF; font-size: 11px; font-weight: 600; color: #374151; cursor: pointer; }
+.mobile-filter-trigger__badge { background: #FFF275; color: #1F2937; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 9999px; }
+.mobile-filter-sheet__body { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 10px; }
+.mobile-filter-sheet__actions { display: flex; gap: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+.mobile-filter-sheet__actions .btn { flex: 1; height: 34px; }
+.mobile-empty-state { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 24px 12px; color: #9CA3AF; text-align: center; }
+.mobile-empty-state__title { font-size: 12px; font-weight: 700; color: #374151; }
+.mobile-empty-state__desc { font-size: 10.5px; color: #6B7280; }
+.mobile-loading-state { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 20px; color: #6B7280; font-size: 11px; }
+.mobile-loading-state__spinner { width: 16px; height: 16px; border: 2px solid #E5E7EB; border-top-color: #2D2E32; border-radius: 9999px; animation: mobile-spin 0.7s linear infinite; }
+@keyframes mobile-spin { to { transform: rotate(360deg); } }
+.compact-stat-card { background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; padding: 10px 8px; }
+.compact-stat-card__label { font-size: 9px; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em; }
+.compact-stat-card__value { font-size: 15px; font-weight: 800; margin-top: 2px; }
+.compact-stat-card__subtitle { font-size: 9px; color: #9CA3AF; margin-top: 2px; }
+.compact-product-card { display: flex; flex-direction: column; gap: 4px; padding: 6px 5px; background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; text-align: left; cursor: pointer; transition: transform 0.15s ease; }
+.compact-product-card:active { transform: scale(0.97); }
+.compact-product-card__img { width: 100%; aspect-ratio: 1; border-radius: 8px; background: #F3F4F6; display: grid; place-items: center; overflow: hidden; }
+.compact-product-card__img img { width: 100%; height: 100%; object-fit: cover; }
+.compact-product-card__name { font-size: 11px; font-weight: 700; color: #111827; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.compact-product-card__sku { font-size: 8.5px; color: #9CA3AF; }
+.compact-product-card__row { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.compact-product-card__price { font-size: 11.5px; font-weight: 800; color: #2D2E32; }
+.compact-product-card__stock { font-size: 9px; font-weight: 700; color: #15803D; }
+.compact-product-card__stock.is-low { color: #DC2626; }
+.mobile-data-list { display: flex; flex-direction: column; gap: 6px; }
+.mobile-data-list__item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; text-align: left; width: 100%; cursor: pointer; }
+.mobile-data-list__leading { flex: 0 0 auto; }
+.mobile-data-list__main { flex: 1; min-width: 0; }
+.mobile-data-list__title { font-size: 11.5px; font-weight: 700; color: #111827; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mobile-data-list__subtitle { font-size: 9.5px; color: #6B7280; }
+.mobile-data-list__right { flex: 0 0 auto; font-size: 11px; font-weight: 700; }
+.mobile-form-section { background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 8px; }
+.mobile-form-section__title { font-size: 10.5px; font-weight: 800; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.mobile-form-section__body { display: flex; flex-direction: column; gap: 8px; }
+.mobile-form-field { display: flex; flex-direction: column; gap: 4px; }
+.mobile-form-field__label { font-size: 10px; font-weight: 700; color: #374151; }
+.mobile-form-field__error { font-size: 9.5px; color: #DC2626; }
+.mobile-action-sheet { display: flex; flex-direction: column; gap: 6px; }
+.mobile-action-sheet__item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: #FFFFFF; font-size: 12px; font-weight: 600; color: #374151; cursor: pointer; width: 100%; text-align: left; }
+.mobile-action-sheet__item.is-danger { color: #DC2626; border-color: #FECACA; }
+.mobile-confirm__backdrop { position: fixed; inset: 0; z-index: 70; background: rgba(15,23,42,0.4); display: grid; place-items: center; padding: 20px; }
+.mobile-confirm { background: #FFFFFF; border-radius: 14px; padding: 18px; max-width: 360px; width: 100%; }
+.mobile-confirm__icon { color: #D97706; margin-bottom: 6px; }
+.mobile-confirm__title { font-size: 14px; font-weight: 800; color: #111827; margin-bottom: 4px; }
+.mobile-confirm__message { font-size: 11.5px; color: #6B7280; margin-bottom: 12px; }
+.mobile-confirm__actions { display: flex; gap: 8px; }
+.mobile-confirm__actions .btn { flex: 1; height: 34px; }
+.mobile-pagination { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; }
+.mobile-pagination button { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: #FFFFFF; font-size: 11px; font-weight: 600; cursor: pointer; }
+.mobile-pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+.mobile-pagination span { font-size: 11px; font-weight: 700; color: #374151; }
+.mobile-fab { position: fixed; right: 16px; bottom: calc(72px + env(safe-area-inset-bottom)); width: 48px; height: 48px; border-radius: 9999px; border: none; background: #2D2E32; color: #FFFFFF; display: grid; place-items: center; box-shadow: 0 6px 16px rgba(45,46,50,0.35); cursor: pointer; z-index: 45; }
+.mobile-page { padding: 12px; }
