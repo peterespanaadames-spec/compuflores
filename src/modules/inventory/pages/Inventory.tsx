@@ -28,6 +28,8 @@ import { Card } from '../../../components/ui/Card';
 import { MobileSearchBar } from '../../../components/mobile/MobileSearchBar';
 import { FloatingActionButton } from '../../../components/mobile/FloatingActionButton';
 import { MobileFilterSheet, MobileFilterTrigger } from '../../../components/mobile/MobileFilterSheet';
+import { MobileEmptyState } from '../../../components/mobile/MobileEmptyState';
+import { MobileLoadingState } from '../../../components/mobile/MobileLoadingState';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { getActiveExchangeRate, convertUSDtoVES, formatVES } from '../../../lib/currency';
@@ -975,22 +977,16 @@ export function Inventory() {
               {isLoading ? (
                 <tr>
                   <td colSpan={11} style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                      <RefreshCw size={24} style={{ animation: 'spin 1s linear infinite' }} />
-                      <span>Cargando productos...</span>
-                    </div>
+                    <MobileLoadingState label="Cargando productos..." />
                   </td>
                 </tr>
               ) : filteredProducts.length === 0 ? (
                 <tr>
                   <td colSpan={11} style={{ textAlign: 'center', padding: '40px 20px', color: '#94a3b8' }}>
-                    <Box size={32} strokeWidth={1.5} style={{ marginBottom: 8 }} />
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#334155' }}>
-                      No se encontraron productos registrados.
-                    </p>
-                    <span className="muted small" style={{ display: 'block', marginTop: 4 }}>
-                      Haz clic en el botón superior "+ Nuevo producto" para registrar el primero en el catálogo.
-                    </span>
+                    <MobileEmptyState
+                      title="No se encontraron productos registrados."
+                      description="Usa el botón + para registrar el primero en el catálogo."
+                    />
                   </td>
                 </tr>
               ) : (
