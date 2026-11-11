@@ -31,6 +31,7 @@ import { MobileFilterSheet, MobileFilterTrigger } from '../../../components/mobi
 import { MobileEmptyState } from '../../../components/mobile/MobileEmptyState';
 import { MobileLoadingState } from '../../../components/mobile/MobileLoadingState';
 import { ConfirmationDialog } from '../../../components/mobile/ConfirmationDialog';
+import { MobileFormSection } from '../../../components/mobile/MobileForm';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { getActiveExchangeRate, convertUSDtoVES, formatVES } from '../../../lib/currency';
@@ -1422,6 +1423,8 @@ export function Inventory() {
             {/* Form layout precisely matching Image */}
             <form onSubmit={handleSaveProduct} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               
+              <div className="product-form-sections">
+              <MobileFormSection title="Datos del producto">
               {/* Row 1: Nombre */}
               <div className="field full">
                 <label style={{ fontSize: 12, fontWeight: 600, color: '#334155', marginBottom: 4, display: 'block' }}>
@@ -1569,6 +1572,8 @@ export function Inventory() {
                 </div>
               </div>
 
+              </MobileFormSection>
+              <MobileFormSection title="Precios e inventario">
               {/* Moneda Base */}
               <div className="field full">
                 <label style={{ fontSize: 12, fontWeight: 600, color: '#334155', marginBottom: 4, display: 'block' }}>
@@ -1690,6 +1695,8 @@ export function Inventory() {
                 </div>
               </div>
 
+              </MobileFormSection>
+              <MobileFormSection title="Detalles">
               {/* Row 7: Fecha de vencimiento (Opcional) */}
               <div className="field full">
                 <label style={{ fontSize: 12, fontWeight: 600, color: '#334155', marginBottom: 4, display: 'block' }}>
@@ -1732,6 +1739,8 @@ export function Inventory() {
                 </span>
               </div>
 
+              </MobileFormSection>
+              <MobileFormSection title="Imagen">
               {/* Row 8: Foto del producto */}
               <div className="field full" style={{ marginTop: 6 }}>
                 <label style={{ fontSize: 12, fontWeight: 600, color: '#334155', marginBottom: 6, display: 'block' }}>
@@ -1818,6 +1827,9 @@ export function Inventory() {
                     </span>
                   </div>
                 </div>
+              </div>
+
+              </MobileFormSection>
               </div>
 
               {/* Row 9: Footer Actions */}
