@@ -34,7 +34,8 @@
 
 ## Pendiente
 - Pruebas integrales en 320/360/390/430/768 px + escritorio (bloqueadas: sesión expirada sin credenciales de prueba).
-- MobileDataList en listas; MobilePagination en otros módulos.
+- MobileDataList en listas.
 - 2026-11-10 (commit d5ce122): Kárdex con controles móviles: MobileSearchBar + MobileFilterTrigger/Sheet (almacén, tipo, período, producto) visibles solo ≤640px (`mov-mobile-controls`), barra de filtros de escritorio oculta (`mov-desktop-filters` display none). Escritorio intacto. Build y lint limpios. Ambos repos sincronizados.
 - 2026-11-10 (commit 0a7e690): Formulario Nuevo/Editar producto en secciones `MobileFormSection` (Datos, Precios e inventario, Detalles, Imagen) con envoltorio `.product-form-sections`: escritorio idéntico (secciones neutras), ≤640px tarjetas compactas con título. Build y lint limpios. Ambos repos sincronizados.
 - 2026-11-10 (commit 4253662): Formulario de proveedor a 1 columna ≤640px (`.supplier-form-grid`) y formulario de Cuenta pendiente (CxP) con campos apilados ≤640px (los 3 resúmenes quedan en fila). Escritorio intacto. Build y lint limpios. Ambos repos sincronizados.
+- 2026-11-10 (commit d7bb2ca): MobilePagination en Kárdex ≤640px (`mov-mobile-pager`), botones anterior/siguiente de escritorio ocultos. Build y lint limpios. Ambos repos sincronizados.
