@@ -4266,22 +4266,82 @@ button:active:not(:disabled) {
 .mobile-fab { position: fixed; right: 16px; bottom: calc(72px + env(safe-area-inset-bottom)); width: 48px; height: 48px; border-radius: 9999px; border: none; background: #2D2E32; color: #FFFFFF; display: grid; place-items: center; box-shadow: 0 6px 16px rgba(45,46,50,0.35); cursor: pointer; z-index: 45; }
 .mobile-page { padding: 12px; }
 /* =====================================================================
-   POS MOVIL ULTRA-COMPACTO (<=640px)
+   POS MOVIL ULTRA-COMPACTO — bloque final (último en cascada, es el que
+   manda sobre los bloques anteriores del mismo peso). Fichas de catálogo
+   del tamaño de las de Cuentas por Cobrar (2-3 líneas) y carrito pequeño.
    ===================================================================== */
 @media (max-width: 640px) {
-  .pos-root [style*="minmax(180px, 1fr)"] { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 4px !important; }
-  .pos-root [style*="min-height: 140px"] { padding: 4px 3px !important; overflow: hidden; }
-  .pos-root [style*="min-height: 140px"] b { font-size: 10.5px !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+  /* --- Catálogo: 3 fichas por fila, altura compacta (antes 140px fijos) --- */
+  .pos-root [style*="minmax(180px, 1fr)"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+  .pos-root [style*="min-height: 140px"] {
+    min-height: 0 !important;
+    padding: 5px 5px 4px !important;
+    border-radius: 10px !important;
+    overflow: hidden;
+    gap: 3px !important;
+  }
+  /* Fila superior (SKU + badges) */
   .pos-root [style*="min-height: 140px"] .muted { font-size: 8px !important; }
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14"] { font-size: 11px !important; }
-  .pos-root #pos-cart-panel { padding: 8px 7px !important; gap: 5px !important; }
+  .pos-root [style*="min-height: 140px"] span[style*="font-size: 10px"] { font-size: 7.5px !important; padding: 1px 3px !important; }
+  .pos-root [style*="min-height: 140px"] span[style*="font-size: 9px"] { font-size: 7.5px !important; padding: 1px 3px !important; }
+  .pos-root [style*="min-height: 140px"] div[style*="font-size: 12px"] {
+    font-size: 9.5px !important;
+    margin-bottom: 2px !important;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 12px"] { font-size: 9.5px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pos-root [style*="min-height: 140px"] div[style*="padding-top: 8px"] { padding-top: 4px !important; }
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14px"] { font-size: 10.5px !important; }
+  .pos-root [style*="min-height: 140px"] span[style*="font-size: 11px"] { font-size: 8px !important; }
+
+  /* --- Carrito de compra: compacto --- */
+  .pos-root #pos-cart-panel { padding: 8px 7px !important; gap: 6px !important; }
   .pos-root #pos-cart-panel > div:first-child b { font-size: 10.5px !important; }
-  .pos-root #pos-cart-panel [style*="padding: 8px 12px"] { padding: 4px 6px !important; }
-  .pos-root #pos-cart-panel [style*="min-height: 220px"] { min-height: 90px !important; max-height: 200px !important; gap: 4px !important; }
+  /* Barra del cliente */
+  .pos-root #pos-cart-panel [style*="padding: 8px 12px"] { padding: 5px 6px !important; }
+  /* Filas de ítems (antes padding 10px 12px) */
+  .pos-root #pos-cart-panel [style*="padding: 10px 12px"] { padding: 5px 6px !important; border-radius: 7px !important; }
+  /* Lista de ítems: menos alto reservado */
+  .pos-root #pos-cart-panel [style*="min-height: 220px"] { min-height: 90px !important; max-height: 220px !important; gap: 4px !important; }
+  .pos-root #pos-cart-panel [style*="min-height: 200px"] { min-height: 110px !important; }
+  /* Stepper de cantidad */
   .pos-root #pos-cart-panel [style*="width: 48px"] { width: 32px !important; height: 18px !important; font-size: 9px !important; }
   .pos-root #pos-cart-panel [style*="width: 24px"] { width: 16px !important; height: 18px !important; }
+  /* Importes y textos */
   .pos-root #pos-cart-panel [style*="font-size: 12px"] { font-size: 9.5px !important; }
   .pos-root #pos-cart-panel [style*="min-width: 65px"] { min-width: 48px !important; }
+  /* Resumen y botón COBRAR */
+  .pos-root #pos-cart-panel b[style*="font-size: 18px"] { font-size: 14px !important; }
+  .pos-root #pos-cart-panel [style*="height: 42px"] { height: 34px !important; font-size: 11.5px !important; }
+  .pos-root #pos-cart-panel [style*="height: 42px"] svg { width: 13px !important; height: 13px !important; }
+  .pos-root #pos-cart-panel [style*="padding-top: 12px"] { padding-top: 8px !important; }
+
+  /* --- Barra fija del carrito --- */
   .pos-root .pos-mobile-cartbar { left: 6px; right: 6px; bottom: 7px; padding: 5px 7px 5px 9px; gap: 6px; }
   .pos-root .pos-mobile-cartbar-cta { padding: 5px 7px !important; font-size: 9.5px !important; }
+}
+
+/* --- POS: tramo extra compacto (≤360px, celulares < ~6,2") ---
+   Debe ir DESPUÉS del tramo ≤640px para que sus medidas menores ganen. */
+@media (max-width: 360px) {
+  .pos-root [style*="minmax(180px, 1fr)"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+  }
+  .pos-root [style*="min-height: 140px"] { padding: 4px 3px !important; }
+  .pos-root [style*="min-height: 140px"] div[style*="font-size: 12px"] { font-size: 9px !important; }
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 12px"] { font-size: 9px !important; }
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14px"] { font-size: 10px !important; }
+  .pos-root #pos-cart-panel { padding: 6px 6px !important; gap: 5px !important; }
+  .pos-root #pos-cart-panel [style*="min-height: 220px"] { min-height: 80px !important; max-height: 200px !important; }
+  .pos-root #pos-cart-panel [style*="width: 48px"] { width: 28px !important; height: 16px !important; font-size: 8.5px !important; }
+  .pos-root #pos-cart-panel [style*="width: 24px"] { width: 14px !important; height: 16px !important; }
+  .pos-root #pos-cart-panel [style*="font-size: 12px"] { font-size: 9px !important; }
+  .pos-root #pos-cart-panel b[style*="font-size: 18px"] { font-size: 13px !important; }
+  .pos-root #pos-cart-panel [style*="height: 42px"] { height: 30px !important; font-size: 10.5px !important; }
+  .pos-root .pos-mobile-cartbar { left: 5px; right: 5px; bottom: 6px; padding: 4px 6px 4px 8px; gap: 5px; }
+  .pos-root .pos-mobile-cartbar-cta { padding: 4px 6px !important; font-size: 9px !important; }
 }
