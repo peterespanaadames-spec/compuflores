@@ -11,6 +11,7 @@ import {
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Card } from '../../../components/ui/Card';
+import { MobileEmptyState } from '../../../components/mobile/MobileEmptyState';
 import { Button } from '../../../components/ui/Button';
 import { authenticatedFetch } from '../../../lib/supabase/api';
 import { getActiveExchangeRate, formatUSD, formatVES } from '../../../lib/currency';
@@ -320,7 +321,7 @@ export function ProfitLossPage() {
           <span className="badge warning">Operativos</span>
         </div>
         {data.expensesByCategory.length === 0 ? (
-          <div className="empty">No hay gastos registrados en este periodo.</div>
+          <MobileEmptyState title="No hay gastos registrados en este periodo." />
         ) : (
           <div className="table-wrap">
             <table className="table">

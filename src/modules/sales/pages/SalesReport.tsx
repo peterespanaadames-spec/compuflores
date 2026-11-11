@@ -14,6 +14,7 @@ import {
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
+import { MobileEmptyState } from '../../../components/mobile/MobileEmptyState';
 import { SaleDetailModal } from '../../../components/modals/SaleDetailModal';
 import { authenticatedFetch } from '../../../lib/supabase/api';
 import { getActiveExchangeRate, formatUSD, formatVES } from '../../../lib/currency';
@@ -1007,7 +1008,7 @@ export const SalesReportPage = () => {
               <span className="badge brand">{filteredSales.length} comprobantes</span>
             </div>
             {filteredSales.length === 0 ? (
-              <div className="empty">No se encontraron ventas para los filtros seleccionados.</div>
+              <MobileEmptyState title="No se encontraron ventas para los filtros seleccionados." />
             ) : (
               <div className="table-wrap">
                 <table className="table rep-sales-table">
@@ -1100,7 +1101,7 @@ export const SalesReportPage = () => {
               <span className="badge brand">{topProductsList.length} artículos</span>
             </div>
             {topProductsList.length === 0 ? (
-              <div className="empty">No se registraron productos vendidos en el rango de fechas seleccionado.</div>
+              <MobileEmptyState title="No se registraron productos vendidos en el rango de fechas seleccionado." />
             ) : (
               <div className="table-wrap">
                 <table className="table">
@@ -1195,7 +1196,7 @@ export const SalesReportPage = () => {
               <span className="badge brand">{paymentMethodsList.length} métodos</span>
             </div>
             {paymentMethodsList.length === 0 ? (
-              <div className="empty">No se registraron transacciones de pago en el rango seleccionado.</div>
+              <MobileEmptyState title="No se registraron transacciones de pago en el rango seleccionado." />
             ) : (
               <div className="table-wrap">
                 <table className="table">

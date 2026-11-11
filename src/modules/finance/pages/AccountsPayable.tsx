@@ -1190,9 +1190,7 @@ export function AccountsPayable() {
           </div>
 
           {groupedSuppliers.length === 0 ? (
-            <div className="empty" style={{ padding: '48px 0', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
-              No se encontraron cuentas por pagar que coincidan con los filtros aplicados.
-            </div>
+            <MobileEmptyState title="No se encontraron cuentas por pagar que coincidan con los filtros aplicados." />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {groupedSuppliers.map((sup) => {
