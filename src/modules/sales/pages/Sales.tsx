@@ -1170,7 +1170,7 @@ export function Sales() {
     (a, b) => (productRotation[b.sku] || 0) - (productRotation[a.sku] || 0)
   );
   const visibleCatalog =
-    isCompactViewport && searchTerm.trim() === '' ? sortedByRotation.slice(0, 10) : filteredProducts;
+    isCompactViewport && searchTerm.trim() === '' ? sortedByRotation.slice(0, 8) : filteredProducts;
 
   return (
     <div className="content pos-root" style={{ paddingBottom: 40 }}>
@@ -1327,7 +1327,7 @@ export function Sales() {
 
               {/* Aviso de catálogo compacto (solo se ve en móvil por CSS) */}
               <p className="muted small pos-catalog-hint" style={{ margin: 0, fontSize: 11 }}>
-                Los 10 más vendidos según tus facturas. Usa el buscador o el escáner para el resto del catálogo.
+                Los 8 más vendidos según tus facturas. Usa el buscador o el escáner para el resto del catálogo.
               </p>
 
               {/* Product Grid */}

@@ -4271,31 +4271,31 @@ button:active:not(:disabled) {
    del tamaño de las de Cuentas por Cobrar (2-3 líneas) y carrito pequeño.
    ===================================================================== */
 @media (max-width: 640px) {
-  /* --- Catálogo: fichas de 2,25 cm (~85px) de ancho mínimo --- */
+  /* --- Catálogo: los 8 más vendidos en 2 columnas --- */
   .pos-root [style*="minmax(180px, 1fr)"] {
-    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)) !important;
-    gap: 5px !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
   }
   .pos-root [style*="min-height: 140px"] {
     min-height: 0 !important;
-    padding: 4px 4px 3px !important;
-    border-radius: 9px !important;
+    padding: 6px 6px 5px !important;
+    border-radius: 10px !important;
     overflow: hidden;
-    gap: 2px !important;
+    gap: 3px !important;
   }
   /* Fila superior (SKU + badges) */
-  .pos-root [style*="min-height: 140px"] .muted { font-size: 7.5px !important; }
-  .pos-root [style*="min-height: 140px"] span[style*="font-size: 10px"] { font-size: 7px !important; padding: 1px 2px !important; }
-  .pos-root [style*="min-height: 140px"] span[style*="font-size: 9px"] { font-size: 7px !important; padding: 1px 2px !important; }
+  .pos-root [style*="min-height: 140px"] .muted { font-size: 8px !important; }
+  .pos-root [style*="min-height: 140px"] span[style*="font-size: 10px"] { font-size: 8px !important; padding: 1px 4px !important; }
+  .pos-root [style*="min-height: 140px"] span[style*="font-size: 9px"] { font-size: 8px !important; padding: 1px 4px !important; }
   .pos-root [style*="min-height: 140px"] div[style*="font-size: 12px"] {
-    font-size: 8.5px !important;
+    font-size: 10.5px !important;
     margin-bottom: 2px !important;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 12px"] { font-size: 8.5px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .pos-root [style*="min-height: 140px"] div[style*="padding-top: 8px"] { padding-top: 3px !important; }
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14px"] { font-size: 10px !important; }
-  .pos-root [style*="min-height: 140px"] span[style*="font-size: 11px"] { font-size: 7.5px !important; }
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 12px"] { font-size: 10.5px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pos-root [style*="min-height: 140px"] div[style*="padding-top: 8px"] { padding-top: 4px !important; }
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14px"] { font-size: 11.5px !important; }
+  .pos-root [style*="min-height: 140px"] span[style*="font-size: 11px"] { font-size: 8.5px !important; }
 
   /* --- Carrito de compra: compacto --- */
   .pos-root #pos-cart-panel { padding: 8px 7px !important; gap: 6px !important; }
@@ -4328,13 +4328,13 @@ button:active:not(:disabled) {
    Debe ir DESPUÉS del tramo ≤640px para que sus medidas menores ganen. */
 @media (max-width: 360px) {
   .pos-root [style*="minmax(180px, 1fr)"] {
-    grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)) !important;
-    gap: 4px !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 5px !important;
   }
-  .pos-root [style*="min-height: 140px"] { padding: 3px 3px 2px !important; }
-  .pos-root [style*="min-height: 140px"] div[style*="font-size: 12px"] { font-size: 8px !important; }
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 12px"] { font-size: 8px !important; }
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14px"] { font-size: 9.5px !important; }
+  .pos-root [style*="min-height: 140px"] { padding: 5px 5px 4px !important; }
+  .pos-root [style*="min-height: 140px"] div[style*="font-size: 12px"] { font-size: 9.5px !important; }
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 12px"] { font-size: 9.5px !important; }
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14px"] { font-size: 10.5px !important; }
   .pos-root #pos-cart-panel { padding: 6px 6px !important; gap: 5px !important; }
   .pos-root #pos-cart-panel [style*="min-height: 220px"] { min-height: 80px !important; max-height: 200px !important; }
   .pos-root #pos-cart-panel [style*="width: 48px"] { width: 28px !important; height: 16px !important; font-size: 8.5px !important; }
