@@ -3413,7 +3413,9 @@ export async function recordInventoryAdjustmentInSupabase(adjustment: {
         movType = 'AJUSTE_CORRECCION';
       }
 
-      // Actualizar stock
+      // Actualizar stock (redondeo a 2 decimales para unidades decimales: kg/L/mts)
+      nextStock = Math.round(nextStock * 100) / 100;
+      netDelta = Math.round(netDelta * 100) / 100;
       const { error: updErr } = await supabase
         .from('products')
         .update({ stock: nextStock })

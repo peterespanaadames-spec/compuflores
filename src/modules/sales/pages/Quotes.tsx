@@ -39,6 +39,7 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { CedulaLookupButton } from '../../../components/ui/CedulaLookupButton';
 import { isConsultaDocType, useCedulaAutofill } from '../../../lib/cedulaLookup';
+import { isDecimalUnit, roundQuantity2, parseQuantityInput } from '../../../lib/inventory/units';
 import { Badge } from '../../../components/ui/Badge';
 import { getBusinessProfile } from '../../../lib/businessProfile';
 import { EmptyState } from '../../../components/ui/EmptyState';
@@ -70,6 +71,7 @@ interface PosProduct {
   category: string;
   priceUSD: number;
   stock: number;
+  unit?: string;
 }
 
 interface QuoteDraftItem {
@@ -78,6 +80,7 @@ interface QuoteDraftItem {
   quantity: number;
   unitPriceUSD: number;
   stock: number;
+  unit?: string;
 }
 
 interface CustomerOption {
@@ -224,7 +227,8 @@ export function QuotesPage() {
       name: p.name,
       category: p.category || 'General',
       priceUSD: Number(p.price_usd) || 0,
-      stock: Number(p.stock) || 0
+      stock: Number(p.stock) || 0,
+      unit: p.unit
     })));
     setCustomers((dbCusts || []).map(c => ({
       id: c.id,
@@ -383,7 +387,8 @@ export function QuotesPage() {
         name: product.name,
         quantity: 1,
         unitPriceUSD: product.priceUSD,
-        stock: product.stock
+        stock: product.stock,
+        unit: product.unit
       }];
     });
   };
@@ -393,9 +398,12 @@ export function QuotesPage() {
       prev.map(it => {
         if (it.sku !== sku) return it;
         const current = Number(it.quantity) || 1;
-        const next = current + delta;
+        // Kilogramo/Litro/Metro: cantidades con decimales a 2 casillas
+        const next = isDecimalUnit(it.unit)
+          ? roundQuantity2(current + delta)
+          : current + delta;
         if (next < 0) return it;
-        if (next > it.stock) {
+        if (next > it.stock + 0.0001) {
           showToast(`Stock máximo disponible para "${it.name}": ${it.stock} unidades.`, 'info');
           return it;
         }
@@ -410,6 +418,15 @@ export function QuotesPage() {
         if (it.sku !== sku) return it;
         if (rawVal === '') {
           return { ...it, quantity: '' as any };
+        }
+        if (isDecimalUnit(it.unit)) {
+          const parsed = parseQuantityInput(rawVal);
+          if (!parsed) return { ...it, quantity: '' as any };
+          if (parsed > it.stock + 0.0001) {
+            showToast(`Stock máximo disponible para "${it.name}": ${it.stock} unidades.`, 'info');
+            return { ...it, quantity: it.stock };
+          }
+          return { ...it, quantity: parsed };
         }
         const parsed = parseInt(rawVal, 10);
         if (isNaN(parsed)) return it;
@@ -428,13 +445,13 @@ export function QuotesPage() {
       prev.map(it => {
         if (it.sku !== sku) return it;
         const q = Number(it.quantity);
-        if (!q || isNaN(q) || q < 1) {
-          return { ...it, quantity: 1 };
+        if (!q || isNaN(q) || q <= 0) {
+          return { ...it, quantity: isDecimalUnit(it.unit) ? 0.01 : 1 };
         }
-        if (q > it.stock) {
+        if (q > it.stock + 0.0001) {
           return { ...it, quantity: it.stock };
         }
-        return { ...it, quantity: Math.floor(q) };
+        return { ...it, quantity: isDecimalUnit(it.unit) ? roundQuantity2(q) : Math.floor(q) };
       })
     );
   };
@@ -494,7 +511,8 @@ export function QuotesPage() {
         name: it.name || 'Producto',
         quantity: Number(it.quantity) || 1,
         unitPriceUSD: Number(it.unit_price_usd) || 0,
-        stock: prod ? prod.stock : 999
+        stock: prod ? prod.stock : 999,
+        unit: prod?.unit
       };
     });
     setDraftItems(loadedItems);
@@ -1825,8 +1843,9 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                               <button type="button" onClick={() => updateDraftQuantity(it.sku, -1)} style={{ width: 26, height: 26, background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 700, color: '#64748b' }}>-</button>
                               <input
                                 type="number"
-                                min={1}
+                                min={isDecimalUnit(it.unit) ? '0.01' : '1'}
                                 max={it.stock}
+                                step={isDecimalUnit(it.unit) ? '0.01' : '1'}
                                 value={it.quantity === ('' as any) ? '' : it.quantity}
                                 onChange={(e) => updateDraftQuantityManual(it.sku, e.target.value)}
                                 onFocus={(e) => e.target.select()}

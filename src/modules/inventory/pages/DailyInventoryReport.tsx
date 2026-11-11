@@ -28,6 +28,7 @@ import {
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { MobilePagination } from '../../../components/mobile/MobilePagination';
+import { isDecimalUnit, parseQuantityInput } from '../../../lib/inventory/units';
 import { Badge } from '../../../components/ui/Badge';
 import {
   getActiveExchangeRate,
@@ -83,7 +84,7 @@ export function DailyInventoryReportPage() {
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
   const [formSku, setFormSku] = useState('');
   const [formType, setFormType] = useState<'ENTRADA' | 'SALIDA' | 'CORRECCION'>('ENTRADA');
-  const [formQty, setFormQty] = useState<number>(1);
+  const [formQty, setFormQty] = useState<string>('1');
   const [formUnitCostUSD, setFormUnitCostUSD] = useState<number>(10);
   const [formDocNumber, setFormDocNumber] = useState('');
   const [formWarehouse, setFormWarehouse] = useState('Almacén Principal');
@@ -327,7 +328,8 @@ export function DailyInventoryReportPage() {
       showToast('Seleccione un producto del catálogo.', 'error');
       return;
     }
-    if (!formQty || formQty <= 0) {
+    const formQtyNum = parseQuantityInput(formQty);
+    if (!formQtyNum || formQtyNum <= 0) {
       showToast('La cantidad debe ser mayor a 0.', 'error');
       return;
     }
@@ -335,13 +337,19 @@ export function DailyInventoryReportPage() {
     setIsSubmittingForm(true);
     try {
       const selectedProd = products.find((p) => p.sku === formSku);
+      const qtyNum = formQtyNum;
+      if (!qtyNum || qtyNum <= 0) {
+        showToast('La cantidad debe ser mayor a 0.', 'error');
+        setIsSubmittingForm(false);
+        return;
+      }
       const generatedDocNumber = formDocNumber.trim() || `AJU-${Date.now().toString().slice(-6)}`;
       
       const payload = {
         sku: formSku,
         product_name: selectedProd?.name || 'Producto',
         adjustment_type: formType,
-        quantity: formType === 'SALIDA' ? -Math.abs(formQty) : Math.abs(formQty),
+        quantity: formType === 'SALIDA' ? -Math.abs(qtyNum) : Math.abs(qtyNum),
         reason: formReason,
         notes: formNotes,
         doc_number: generatedDocNumber,
@@ -1443,11 +1451,19 @@ export function DailyInventoryReportPage() {
                     <label>Cantidad (Uds)</label>
                     <input
                       type="number"
-                      min="1"
-                      step="1"
+                      min={isDecimalUnit(products.find((p) => p.sku === formSku)?.unit) ? '0.01' : '1'}
+                      step={isDecimalUnit(products.find((p) => p.sku === formSku)?.unit) ? '0.01' : '1'}
                       className="input"
                       value={formQty}
-                      onChange={(e) => setFormQty(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (isDecimalUnit(products.find((p) => p.sku === formSku)?.unit)) {
+                          setFormQty(raw);
+                        } else {
+                          const num = parseInt(raw, 10);
+                          setFormQty(String(Math.max(1, isNaN(num) ? 1 : num)));
+                        }
+                      }}
                       required
                     />
                   </div>
@@ -1502,9 +1518,9 @@ export function DailyInventoryReportPage() {
                 <div style={{ padding: 12, background: 'var(--canvas)', borderRadius: 'var(--radius-sm)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span className="muted small">Valorización estimada:</span>
                   <div style={{ textAlign: 'right' }}>
-                    <b>{formatUSD(formQty * formUnitCostUSD)}</b>
+                    <b>{formatUSD((parseQuantityInput(formQty) || 0) * formUnitCostUSD)}</b>
                     <span className="muted small" style={{ marginLeft: 6, fontFamily: 'monospace' }}>
-                      ≈ Bs. {convertUSDtoVES(formQty * formUnitCostUSD, activeRate).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      ≈ Bs. {convertUSDtoVES((parseQuantityInput(formQty) || 0) * formUnitCostUSD, activeRate).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
                 </div>

@@ -38,6 +38,7 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { getReportHeaderHtml } from '../../../lib/reportUtils';
+import { isDecimalUnit, parseQuantityInput } from '../../../lib/inventory/units';
 import { getBusinessProfile } from '../../../lib/businessProfile';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import {
@@ -176,7 +177,7 @@ export function OrdersPage() {
   const [newOrderPayment, setNewOrderPayment] = useState<PaymentMethod>('PAGO_MOVIL');
   const [newOrderItems, setNewOrderItems] = useState<Array<{ sku: string; name: string; quantity: number; unit_price_usd: number }>>([]);
   const [selectedProductSku, setSelectedProductSku] = useState('');
-  const [selectedQty, setSelectedQty] = useState(1);
+  const [selectedQty, setSelectedQty] = useState<string>('1');
   const [isSubmittingNew, setIsSubmittingNew] = useState(false);
   const [isTrackerModalOpen, setIsTrackerModalOpen] = useState(false);
   const [trackerModalOrder, setTrackerModalOrder] = useState<any>(null);
@@ -450,22 +451,27 @@ export function OrdersPage() {
     if (!prod) return;
 
     setNewOrderItems(prev => {
+      // Kilogramo/Litro/Metro: cantidades con decimales a 2 casillas
+      const qtyNum = isDecimalUnit(prod.unit)
+        ? parseQuantityInput(selectedQty)
+        : Math.max(1, parseInt(selectedQty, 10) || 1);
+      if (!qtyNum || qtyNum <= 0) return prev;
       const existing = prev.find(i => i.sku === prod.sku);
       if (existing) {
-        return prev.map(i => (i.sku === prod.sku ? { ...i, quantity: i.quantity + selectedQty } : i));
+        return prev.map(i => (i.sku === prod.sku ? { ...i, quantity: i.quantity + qtyNum } : i));
       }
       return [
         ...prev,
         {
           sku: prod.sku,
           name: prod.name,
-          quantity: selectedQty,
+          quantity: qtyNum,
           unit_price_usd: Number(prod.price_usd) || 0
         }
       ];
     });
     setSelectedProductSku('');
-    setSelectedQty(1);
+    setSelectedQty('1');
   };
 
   const handleSaveNewOrder = async (e: React.FormEvent) => {
@@ -1602,9 +1608,10 @@ export function OrdersPage() {
                     <input
                       type="number"
                       className="input"
-                      min={1}
+                      min={isDecimalUnit(availableProducts.find(p => p.sku === selectedProductSku)?.unit) ? '0.01' : '1'}
+                      step={isDecimalUnit(availableProducts.find(p => p.sku === selectedProductSku)?.unit) ? '0.01' : '1'}
                       value={selectedQty}
-                      onChange={e => setSelectedQty(Math.max(1, parseInt(e.target.value) || 1))}
+                      onChange={e => setSelectedQty(e.target.value)}
                       onFocus={e => e.target.select()}
                       style={{ width: 70, textAlign: 'center', fontWeight: 700 }}
                       title="Cantidad manual"

@@ -42,6 +42,7 @@ import {
   formatUSD,
   formatVES
 } from '../../../lib/currency';
+import { isDecimalUnit } from '../../../lib/inventory/units';
 import { createWorksheetWithBusinessHeader, getReportHeaderHtml, getReportFooterHtml } from '../../../lib/reportUtils';
 import { getBusinessProfile } from '../../../lib/businessProfile';
 import {
@@ -2328,7 +2329,7 @@ export function MovementsPage() {
                   </label>
                   <input
                     type="number"
-                    step="1"
+                    step={isDecimalUnit(activeAdjustProduct?.unit) ? '0.01' : '1'}
                     min="0"
                     className="input"
                     value={adjustQty}

@@ -26,6 +26,7 @@ import {
 import { Card } from '../../../components/ui/Card';
 import { MobileSearchBar } from '../../../components/mobile/MobileSearchBar';
 import { MobileFilterSheet, MobileFilterTrigger } from '../../../components/mobile/MobileFilterSheet';
+import { MobileEmptyState } from '../../../components/mobile/MobileEmptyState';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { formatUSD, formatVES, getActiveExchangeRate } from '../../../lib/currency';
