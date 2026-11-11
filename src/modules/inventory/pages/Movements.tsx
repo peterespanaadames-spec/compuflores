@@ -36,6 +36,7 @@ import {
 import { Card } from '../../../components/ui/Card';
 import { MobileSearchBar } from '../../../components/mobile/MobileSearchBar';
 import { MobileFilterSheet, MobileFilterTrigger } from '../../../components/mobile/MobileFilterSheet';
+import { MobilePagination } from '../../../components/mobile/MobilePagination';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { EmptyState } from '../../../components/ui/EmptyState';
@@ -2175,8 +2176,13 @@ export function MovementsPage() {
                 </div>
               </div>
 
-              {/* Botones de navegación de página */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {/* Paginación móvil (≤640px) */}
+              <div className="mov-mobile-pager">
+                <MobilePagination page={currentPage} totalPages={totalPages} onChange={setCurrentPage} />
+              </div>
+
+              {/* Botones de navegación de página (escritorio) */}
+              <div className="mov-desktop-pager" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Button
                   variant="secondary"
                   disabled={currentPage <= 1}

@@ -3830,6 +3830,8 @@ button:active:not(:disabled) {
   }
   .mov-root .mov-mobile-controls .mobile-searchbar { flex: 1 1 auto; min-width: 0; }
   .mov-root .mov-desktop-filters { display: none !important; }
+  .mov-root .mov-mobile-pager { display: flex; }
+  .mov-root .mov-desktop-pager { display: none !important; }
   /* --- Kárdex de movimientos --- */
   .mov-root .table-wrap { overflow-x: hidden; }
   .mov-root table td[colspan] {
@@ -4187,6 +4189,7 @@ button:active:not(:disabled) {
 .mobile-searchbar { display: flex; align-items: center; gap: 8px; background: #F9FAFB; border: 1px solid var(--border); border-radius: 10px; padding: 7px 10px;}
 /* Controles móviles del Kárdex: ocultos en escritorio, visibles solo ≤640px (ver bloque mov-root). */
 .mov-mobile-controls { display: none; }
+.mov-mobile-pager { display: none; }
 /* Formulario de producto en secciones: en escritorio las secciones son neutras
    (flujo idéntico al anterior); solo ≤640px se ven como tarjetas compactas. */
 .product-form-sections .mobile-form-section { background: transparent; border: none; border-radius: 0; padding: 0; margin: 0; }
