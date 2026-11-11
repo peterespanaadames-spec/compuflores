@@ -34,6 +34,8 @@ import {
   Tag
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
+import { MobileSearchBar } from '../../../components/mobile/MobileSearchBar';
+import { MobileFilterSheet, MobileFilterTrigger } from '../../../components/mobile/MobileFilterSheet';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { EmptyState } from '../../../components/ui/EmptyState';
@@ -72,6 +74,7 @@ export function MovementsPage() {
   const [movementTypeFilter, setMovementTypeFilter] = useState<MovementFilterType>('TODOS');
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('ALL');
   const [selectedProductSku, setSelectedProductSku] = useState<string>('ALL');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Ordenamiento
   const [sortField, setSortField] = useState<SortField>('created_at');
@@ -1158,7 +1161,76 @@ export function MovementsPage() {
 
       {/* 2. BARRA DE FILTROS Y CONTROL CON BÚSQUEDA PREDICTIVA */}
       <Card style={{ padding: 12, marginBottom: 14 }}>
+        {/* Controles móviles (≤640px): búsqueda compacta + filtros en Bottom Sheet */}
+        <div className="mov-mobile-controls">
+          <MobileSearchBar
+            value={searchTerm}
+            onChange={(v) => {
+              setSearchTerm(v);
+              if (selectedProductSku !== 'ALL') setSelectedProductSku('ALL');
+            }}
+            onClear={() => setSelectedProductSku('ALL')}
+            placeholder="Buscar SKU, producto, referencia..."
+          />
+          <MobileFilterTrigger
+            onClick={() => setIsFilterOpen(true)}
+            activeCount={(selectedWarehouse !== 'ALL' ? 1 : 0) + (movementTypeFilter !== 'TODOS' ? 1 : 0) + (periodFilter !== 'ALL' ? 1 : 0) + (selectedProductSku !== 'ALL' ? 1 : 0)}
+          />
+          <MobileFilterSheet open={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
+            <select
+              value={selectedWarehouse}
+              onChange={e => setSelectedWarehouse(e.target.value)}
+              className="input"
+              style={{ height: 38, fontSize: 12, width: '100%', cursor: 'pointer' }}
+            >
+              <option value="ALL">Almacén: Todos</option>
+              <option value="PRINCIPAL">Almacén: Principal</option>
+            </select>
+            <select
+              value={movementTypeFilter}
+              onChange={e => setMovementTypeFilter(e.target.value as MovementFilterType)}
+              className="input"
+              style={{ height: 38, fontSize: 12, width: '100%', cursor: 'pointer' }}
+            >
+              <option value="TODOS">Tipo: Todos ({typeCounts.total})</option>
+              <option value="ENTRADAS">Entradas ({typeCounts.entradas})</option>
+              <option value="SALIDAS">Salidas ({typeCounts.salidas})</option>
+              <option value="VENTAS">Ventas POS ({typeCounts.ventas})</option>
+              <option value="COMPRAS">Compras Proveedores ({typeCounts.compras})</option>
+              <option value="AJUSTES">Ajustes de Stock ({typeCounts.ajustes})</option>
+            </select>
+            <select
+              value={periodFilter}
+              onChange={e => setPeriodFilter(e.target.value as PeriodFilter)}
+              className="input"
+              style={{ height: 38, fontSize: 12, width: '100%', cursor: 'pointer' }}
+            >
+              <option value="ALL">Historial completo</option>
+              <option value="TODAY">Hoy</option>
+              <option value="LAST_7_DAYS">Últimos 7 días</option>
+              <option value="THIS_MONTH">Este mes</option>
+              <option value="LAST_MONTH">Mes anterior</option>
+            </select>
+            <select
+              value={selectedProductSku}
+              onChange={e => {
+                setSelectedProductSku(e.target.value);
+                if (e.target.value !== 'ALL') setSearchTerm('');
+              }}
+              className="input"
+              style={{ height: 38, fontSize: 12, width: '100%', cursor: 'pointer' }}
+            >
+              <option value="ALL">Producto: Todos ({products.length})</option>
+              {products.map(p => (
+                <option key={p.sku} value={p.sku}>
+                  {p.sku} — {p.name} (Stock: {p.stock})
+                </option>
+              ))}
+            </select>
+          </MobileFilterSheet>
+        </div>
         <div
+          className="mov-desktop-filters"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
