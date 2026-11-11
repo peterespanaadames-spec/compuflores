@@ -2,56 +2,36 @@
 
 ## Despliegue
 - `frenyer` / `frenyer.vercel.app` es el entorno de pruebas.
-- `origin` / `compuflores.vercel.app` es comercial; se sincroniza solo con orden explícita del usuario (última: «actualiza los ambos repositorios», 2026-11-09 → `3a72db0`, igualado con `frenyer`).
+- `origin` / `compuflores.vercel.app` es comercial; se sincroniza solo con orden explícita del usuario (última: «sube los dos repositorios», 2026-11-10 → ambos quedan igualados con HEAD).
 - Trabajar sobre la rama abierta; no publicar ni sincronizar sin autorización explícita.
 
 ## Estado y decisiones vigentes
-- ERP/POS bimonetario USD/VES, multi-tenant; toda operación debe respetar organización, sucursal, tasa de cambio y redondeo monetario.
-- Supabase exige RLS y verificación de membresía; Alma nunca ejecuta SQL arbitrario desde el cliente.
-- Autorización en servidor, sesiones por cookie httpOnly y logout con revocación real. Seguimiento de sesiones 0029/0030 aplicado.
-- Inicio de sesión reemplaza la sesión anterior sin modal; al cerrar el navegador se elimina la cookie de sesión.
-- Consulta de cédula integrada por proxy del servidor, con caché y límite de solicitudes; nunca guardar claves ni tokens en memoria.
-- Tienda pública: el catálogo permite filtrar por división y agregar productos al carrito. Ajustes móviles y guardia de salida documentados en el historial anterior.
+- ERP/POS bimonetario USD/VES, multi-tenant; toda operación debe respetar organización, sucursal, tasa de cambio y redondeo monetario (2 decimales en importes y cantidades).
+- Supabase exige RLS y verificación de membresía; Alma nunca ejecuta SQL arbitrario desde el cliente. Alma permanece oculto (no listo para producción).
+- Autorización en servidor, sesiones por cookie httpOnly, logout con revocación real; consulta de cédula por proxy del servidor con caché y límite.
+- 2026-11-10 (commit 7e12acc): cantidades decimales funcionales en todo el sistema para productos con unidad Kilogramo, Litro o Metro (y abreviaturas KG/L/MTS). Núcleo en `src/lib/inventory/units.ts` (`isDecimalUnit` normaliza acentos/abreviaturas, `roundQuantity2`, `parseQuantityInput`). Cableado: POS ventas (stepper, input 0.01, validación stock con tolerancia 0.0001), Cotizaciones (carrito + ítems cargados con `unit`), Pedidos (cantidad manual), Reporte diario de inventario (formulario de movimiento, `formQty` ahora string), Kárdex/ajustes (step 0.01) y `recordInventoryAdjustmentInSupabase` redondea stock/delta a 2 decimales. Formulario Nuevo/Editar producto y ajuste de stock de Inventario ya lo tenían.
 
 ## Diseño y botones
 - Mantener el sistema existente: antracita/amarillo en el panel y colores propios de marca en la tienda; sin reestructurar páginas.
 - Botones compartidos: Primary, Secondary, Danger y Ghost; radio 10 px, transiciones 200 ms, pulsación 0.95 y foco visible.
-- 2026-11-08: componente compartido aplicado a acciones de compra de la tienda y a eliminaciones en Configuración, Bancos, Gastos, Inventario, Cotizaciones y ventas pendientes.
-- 2026-11-08: encabezados de Productos e inventario y Proveedores, más los modales Nuevo producto y Registrar proveedor, usan el amarillo corporativo; conservar la estructura existente.
-- 2026-11-09: Reporte diario de inventario abre con el periodo «Este Mes» (no «Hoy»); el resto de filtros y la exportación no cambian.
-- 2026-11-09: Reporte de Cuentas (/cuentas/reporte) con versión móvil ≤640px — patrón propio `.rep-acc-root`: botones con etiqueta corta (Act./Excel/Impr.), KPI 2 por fila conservando la tasa BCV, filtros apilados y tabla como fichas de 2 líneas (fecha · comprobante · monto [ojo] / cliente). Tipo, método, banco y monto VES solo en escritorio.
-- 2026-11-09: Rediseño móvil global (Fases 0–6, commits badcd84..9be80ed). Nuevo sistema compartido `M-SYSTEM` en globals.css: solo aplica ≤640px y solo dentro de páginas con clase raíz `m-root` (opt-in). Reglas compartidas: h1 15px, subtítulos ocultos, `.grid-4` KPI 2 por fila, botones de cabecera 32px en filas envueltas, tablas convertidas a fichas (el orden por columnas lo define cada página). Modales globales (`.modal-container`) como hoja inferior a ancho completo ≤640px. Raíces por página: fin-exp-root (Gastos), fin-cxc-root, fin-cxp-root, ped-root (Pedidos), cot-root (Cotizaciones), saldet-root (Detalle venta), crm-root (Clientes), sup-root (Proveedores), pnl-root, ch-root (Salud), mov-root (Kárdex), invcom-root (Compras internas). Pos/Shop y las raíces ya probadas (rep-sales/inv/acc, bank-*, inv-*) NO llevan m-root, por lo que no cambian. NO usar PowerShell Set-Content para editar .tsx: corrompe acentos (ya pasó en Suppliers/Customers).
-- 2026-11-09: Tramo extra compacto ≤360px (~menores a 6,2"), commit 1ad3026, bloque `POS-S` en globals.css: POS con catálogo (fichas de 92px), carrito y barra fija aún más pequeños (raíz `pos-root`), y el mismo tamaño aplicado a ped-root, cot-root, saldet-root y rep-sales-root (KPI, botones y fichas una medida menor). Escritorio y el tramo estándar ≤640px no cambian.
-- 2026-11-09: POS ≤640px (commit f79a60d): catálogo con EXACTAMENTE 3 fichas por fila (repeat(3), que encajen con elipsis), carrito reducido (padding 10, stepper 36px, importes 10px) y botones paymode/doctype/toobar/cartbar una medida menor. El tramo ≤360px mantiene 3 por fila con letra aún menor.
-- 2026-11-10: Navegación móvil global implementada (commit 44d9212): componentes `mobile/MobileHeader`, `MobileBottomNav` (5 accesos: Inicio, Ventas, Inventario, Reportes, Más) y `MobileMoreSheet` (Bottom Sheet con todos los módulos filtrados por permisos). Integrados en `DashboardLayout`: cabecera móvil compacta, barra inferior fija con área segura, oculta topbar/hamburguesa/sidebar en ≤767px. CSS global `mobile-header/bottom-nav/more-sheet` con animación de entrada. Dashboard adopta `m-root`. Escritorio intacto.
-- 2026-11-10: Cableado adicional (commit 4750a73): `MobileSearchBar` en Clientes. Build y lint limpios. Pendiente: Movimientos, formularios largos en secciones, listas de datos compactas, Configuración/Alma.
-- 2026-11-10: Cableado inicial de `MobileSearchBar` (commit cbdd46a) en Inventario, Ventas (POS), Cuentas por cobrar, Cuentas por pagar y Gastos. `FloatingActionButton` en Inventario (Nuevo producto). Build y lint limpios. Pendiente: filtros en Bottom Sheet, formularios en secciones, eliminaciones con confirmación, listas de datos compactas en el resto de módulos.
-- 2026-11-10: Filtros en Bottom Sheet (commit d825b0c): Inventario (sede/almacén) y Cuentas por cobrar (cliente + estado) usan `MobileFilterTrigger` + `MobileFilterSheet` con selects a ancho completo. Build y lint limpios. Pendiente: CxP, Gastos, Movimientos, formularios largos, listas de datos compactas, Configuración/Alma.
-- 2026-11-10: Filtros CxP y Gastos en Bottom Sheet (commit 007da68): Cuentas por pagar (proveedor + estado) y Gastos (categoría + estado) migrados a `MobileFilterTrigger` + `MobileFilterSheet`. Build y lint limpios. Pendiente: Movimientos, formularios largos en secciones, listas de datos compactas, Configuración/Alma.
-- Respetar `prefers-reduced-motion` y conservar las reglas responsive existentes.
-- Tailwind no está instalado; usar componentes y clases semánticas de `src/styles/globals.css`.
+- 2026-11-08: componente compartido aplicado a acciones de compra de la tienda y a eliminaciones en Configuración, Bancos, Gastos, Inventario, Cotizaciones y ventas pendientes; encabezados y modales de Productos/Proveedores con amarillo corporativo.
+- 2026-11-09: Reporte diario de inventario abre con periodo «Este Mes»; Reporte de Cuentas con versión móvil propia `.rep-acc-root`.
+- 2026-11-09/10 — Transformación móvil completa (commits badcd84..1444f05): sistema compartido `M-SYSTEM` en globals.css (solo ≤640px, opt-in vía `m-root`; modales `.modal-container` como hoja inferior); tramo extra ≤360px `POS-S`; POS ≤640px con 3 fichas por fila y carrito ultra-compacto (6ba4ea4); navegación móvil global (MobileHeader, MobileBottomNav 5 accesos, MobileMoreSheet filtrado por permisos) en DashboardLayout, oculta topbar/sidebar ≤767px (44d9212); Dashboard y Configuración adoptan `m-root`.
+- Librería móvil `src/components/mobile/` (14 componentes) creada y cableada: MobileSearchBar en Inventario, POS, CxC, CxP, Gastos, Clientes; MobileFilterSheet (Inventario, CxC, CxP, Gastos); MobileEmptyState/MobileLoadingState (Inventario, CxC, Gastos); FAB + ConfirmationDialog (Inventario); MobilePagination (Reporte inventario).
+- Regla permanente en AGENTS.md: todo código nuevo debe adaptarse a móvil (320-430 px y 768 px), reutilizando `src/components/mobile/` y clases compartidas, sin desbordes ni targets <28 px. No usar PowerShell Set-Content para editar .tsx: corrompe acentos.
+- Respetar `prefers-reduced-motion` y las reglas responsive existentes. Tailwind no está instalado; usar clases semánticas de `src/styles/globals.css`.
 
 ## Verificación y trampas
 - Comandos: `npm run build`, `npm run lint`, `npm run test -- --run`; Vitest puede no encontrar pruebas.
 - En cambios visuales revisar escritorio y móvil; evitar sustituir selectores personalizados por utilidades Tailwind.
-- Build puede advertir chunks minificados mayores a 500 kB; no cambiar el code-splitting sin una tarea específica.
-- Mantener las tasas históricas y los cálculos financieros; no cambiar flujos de autorización ni migraciones core sin consultar.
+- Build puede advertir chunks >500 kB; no cambiar el code-splitting sin tarea específica. `git push` suele reportar exit 1 por ruido de DNS/Select-String: verificar con `git fetch` + `rev-parse` del remoto.
+- Mantener tasas históricas y cálculos financieros; no cambiar flujos de autorización ni migraciones core sin consultar.
 
 ## Referencias útiles
 - Constitución y mapa: `02-DOCS/wiki/sdd/constitution.md`, `02-DOCS/wiki/index.md`.
 - Diseño: `docs/design-system/README.md`, `DESIGN_SYSTEM.md`, `COMPONENTS_AND_PATTERNS.md`.
-- Estado de sesiones: `02-DOCS/wiki/features/2026-11-02-reemplazo-sesion.md`, `2026-11-03-cierre-navegador.md`.
-- Adaptaciones móviles: `02-DOCS/wiki/features/2026-11-02-reporte-ventas-movil.md`, `2026-11-02-reporte-inventario-movil.md`, `2026-11-02-movimientos-bancarios-movil.md`.
-- 2026-11-10: Continuación de cableado (commit 9b52a23→379ce7f): MobileSearchBar en Clientes; filtros CxP y Gastos en Bottom Sheet. Build y lint limpios. Pendiente: Movimientos, formularios largos en secciones, listas de datos compactas, Configuración/Alma.
-- 2026-11-10: Continuación de cableado (commit ea9e721→9b52a23): filtros CxP y Gastos en Bottom Sheet. Pendiente: Movimientos, formularios largos en secciones, listas de datos compactas, Configuración/Alma.
-- 2026-11-10: Cableado adicional (commit 9b52a23→4750a73→379ce7f→ea9e721): MobileSearchBar en Clientes. Pendiente: formularios largos en secciones, listas de datos compactas, Configuración/Alma.
-- 2026-11-10: Cableado adicional (commit 9a24586): MobileEmptyState y MobileLoadingState en Inventario. Build y lint limpios. Pendiente: Movimientos, formularios largos en secciones, listas de datos compactas, Configuración/Alma.
-- 2026-11-10: Regla permanente agregada a AGENTS.md: toda funcionalidad/codigo nuevo debe disenarse y verificarse tambien para movil (320-430 px) y tablet (768 px), reutilizando componentes de src/components/mobile/ y clases compartidas, con media queries <=640px y sin desbordes. Ningun cambio se considera completo sin verificacion movil.
-- 2026-11-10: Cableado adicional (commit 0392b3a): ConfirmationDialog en eliminacion de Inventario. Regla permanente en AGENTS.md: adaptacion movil obligatoria para todo codigo nuevo. Build y lint limpios. Pendiente: MobileDataList en movimientos/transacciones, MobilePagination donde aplique, formularios largos en secciones, Configuracion/Alma (stubs).
-- 2026-11-10: POS movil ultra-compacto (commit 6ba4ea4): catalogo 3 por fila mas pequeno (gap 4px, fichas 4px padding, letra 10.5px) y carrito reducido (padding 8px, stepper 32px, importes 9.5px) para encajar perfectamente en pantallas de telefono. Build y lint limpios.
-- 2026-11-10: Ambos repositorios sincronizados (frenyer + origin/compuflores) en ec8b717. Transformacion movil sustancialmente completa: navegacion global, 14 componentes compartidos, cableado de search bars/filters/empty-loading/confirmacion/FAB en Inventario, POS, CxC, CxP, Gastos, Clientes. Pendiente: formularios largos en secciones, MobileDataList, MobilePagination, Configuracion/Alma (stubs), pruebas integrales.
-- 2026-11-10: Cableado final (commit 5652178): Configuracion adopta m-root. Ambos repositorios sincronizados (frenyer + origin) en 5652178. Build y lint limpios. Alma permanece oculta (no lista para produccion). Transformacion movil sustancialmente completa; pendiente pulido incremental (formularios en secciones, MobileDataList, MobilePagination, pruebas integrales).
-- 2026-11-10: Cableado final (commit b51faee): MobilePagination en Reporte diario de inventario. Build y lint limpios. Ambos repositorios sincronizados en b51faee. Transformacion movil sustancialmente completa; pendiente pulido incremental (formularios en secciones, MobileDataList, pruebas integrales).
-- 2026-11-10: Cableado adicional (commit f8f3f30): MobileEmptyState en Cuentas por cobrar. Build y lint limpios. Ambos repositorios sincronizados en f8f3f30. Pendiente: formularios largos en secciones, MobileDataList, MobilePagination (otros modulos), pruebas integrales.
-- 2026-11-10: Cableado adicional (commit ea872d5): MobileEmptyState en Gastos. Build y lint limpios. Ambos repositorios sincronizados en ea872d5. Pendiente: formularios largos en secciones, MobileDataList, MobilePagination (otros modulos), pruebas integrales.
-- 2026-11-10: Cableado adicional (commit 7c438b8): MobileEmptyState en Cuentas por cobrar y Gastos. Build y lint limpios. Ambos repositorios sincronizados en 7c438b8. Pendiente: formularios largos en secciones, MobileDataList, MobilePagination (otros modulos), pruebas integrales.
+- Sesiones y adaptaciones móviles: `02-DOCS/wiki/features/2026-11-*`.
+
+## Pendiente
+- Pruebas integrales en 320/360/390/430/768 px + escritorio (bloqueadas: sesión expirada sin credenciales de prueba).
+- Formularios largos en secciones (Nuevo producto, Registro de proveedor, Cuenta pendiente); MobileDataList en listas; MobilePagination en otros módulos.
