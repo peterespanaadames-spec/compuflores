@@ -3609,6 +3609,12 @@ button:active:not(:disabled) {
   .fin-cxp-root [style*="height: 40"] { height: 34px !important; }
   /* La cuadrícula principal (lista + panel) se apila a una columna */
   .fin-cxp-root [style*="2fr 1fr"] { grid-template-columns: 1fr !important; }
+  /* Formulario de Cuenta pendiente (panel lateral): campos a una columna */
+  .fin-cxp-root [style*="1.4fr 1fr"],
+  .fin-cxp-root [style*="1fr 1fr"],
+  .fin-cxp-root [style*="1fr 1.5fr"] { grid-template-columns: 1fr !important; }
+  /* Los 3 resúmenes de la cuenta (Facturado/Abonado/Pendiente) quedan en fila */
+  .fin-cxp-root [style*="1fr 1fr 1fr"] { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
 }
 
 /* =====================================================================
@@ -4194,6 +4200,11 @@ button:active:not(:disabled) {
     text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;
   }
   .product-form-sections .mobile-form-section__body { gap: 10px; }
+/* Formulario de proveedor: una sola columna en teléfono; escritorio conserva 2 columnas. */
+@media (max-width: 640px) {
+  .supplier-form-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .supplier-form-grid textarea.input { min-height: 60px; }
+}
 }
 .mobile-searchbar input { flex: 1; border: none; background: transparent; outline: none; font-size: 12px; color: #111827; }
 .mobile-searchbar button { border: none; background: transparent; color: #6B7280; display: grid; place-items: center; cursor: pointer; }

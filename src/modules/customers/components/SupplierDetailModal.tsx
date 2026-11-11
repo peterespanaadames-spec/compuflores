@@ -903,6 +903,7 @@ export function SupplierDetailModal({
 
               <form onSubmit={handleSave}>
                 <div
+                  className="supplier-form-grid"
                   style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
