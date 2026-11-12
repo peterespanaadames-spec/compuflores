@@ -4467,3 +4467,90 @@ button:active:not(:disabled) {
   .pos-root .page-head h1 { font-size: 13px !important; }
   .pos-root .page-head div[style*="width: 44px"] { width: 26px !important; height: 26px !important; }
 }
+
+/* =====================================================================
+   POS LIMPIO Y EQUILIBRADO v3 (bloque final — coordenadas exactas)
+   Medidas tipo Tailwind pedidas por el usuario:
+   py-1 · h-9 (36px) · text-xs (12px) / text-[10px] · px-3 py-1 ·
+   gap-1.5 (6px) · p-2 (8px) · h-14 (56px) · w-5 h-5 (20px).
+   ===================================================================== */
+@media (max-width: 640px) {
+  /* --- 1. Barra superior del app: py-1 --- */
+  .mobile-header { padding: 4px 12px !important; padding-top: calc(4px + env(safe-area-inset-top)) !important; }
+  .mobile-header__rate { padding: 2px 8px !important; font-size: 10px !important; }
+  .mobile-header__icon, .mobile-header__avatar { width: 28px !important; height: 28px !important; }
+
+  /* --- 2. Barra de búsqueda: h-9 (36px) · text-xs (12px) --- */
+  .pos-root .pos-search-card { padding: 6px 8px !important; }
+  .pos-root .pos-search-card .mobile-searchbar {
+    height: 36px !important;
+    padding: 0 10px !important;
+    gap: 8px !important;
+    border-radius: 9px !important;
+  }
+  .pos-root .pos-search-card .mobile-searchbar input { font-size: 12px !important; height: 32px !important; }
+  .pos-root .pos-search-card .mobile-searchbar button { width: 22px !important; height: 22px !important; }
+
+  /* --- 3. Píldoras de categorías: px-3 py-1 · text-xs · gap-1.5 --- */
+  .pos-root .pos-cat-pill { padding: 4px 12px !important; font-size: 12px !important; border-radius: 999px !important; }
+  .pos-root [style*="overflow-x"] { gap: 6px !important; scrollbar-width: none; -ms-overflow-style: none; }
+  .pos-root [style*="overflow-x"]::-webkit-scrollbar { display: none; }
+
+  /* --- 4. Botones de acción rápida: h-9 · text-xs · px-3 --- */
+  .pos-root .pos-toolbar-actions > button { height: 36px !important; padding: 0 12px !important; font-size: 12px !important; }
+  .pos-root .pos-toolbar-actions button svg { width: 14px !important; height: 14px !important; }
+  .pos-root .pos-toolbar-actions button span[style*="font-size: 10px"] { font-size: 10px !important; padding: 1px 5px !important; }
+
+  /* --- 5. Tarjetas de producto: p-2 · título text-xs · SKU text-[10px] --- */
+  .pos-root [style*="minmax(180px, 1fr)"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
+  .pos-root [style*="min-height: 140px"] {
+    min-height: 0 !important;
+    padding: 8px !important;
+    gap: 4px !important;
+    border-radius: 10px !important;
+  }
+  .pos-root [style*="min-height: 140px"] .muted { font-size: 10px !important; }
+  .pos-root [style*="min-height: 140px"] span[style*="font-size: 10px"],
+  .pos-root [style*="min-height: 140px"] span[style*="font-size: 9px"] { font-size: 10px !important; padding: 1px 5px !important; }
+  .pos-root [style*="min-height: 140px"] span[style*="font-size: 11px"] { font-size: 10px !important; }
+  /* Título del producto: text-xs, una sola línea con elipsis */
+  .pos-root [style*="min-height: 140px"] div[style*="font-size: 12px"],
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 12px"] {
+    font-size: 12px !important;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .pos-root [style*="min-height: 140px"] div[style*="padding-top: 8px"] { padding-top: 4px !important; }
+  /* Precio: text-xs */
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14px"] { font-size: 12px !important; }
+
+  /* --- Cabecera del POS: más respiro abajo para igualar el equilibrio --- */
+  .pos-root .page-head { margin-bottom: 10px !important; }
+  .pos-root .page-head h1 { font-size: 15px !important; }
+  .pos-root .page-head div[style*="width: 44px"] { width: 34px !important; height: 34px !important; }
+  .pos-root .page-head div[style*="width: 44px"] svg { width: 18px !important; height: 18px !important; }
+}
+
+/* --- 6. Barra de navegación inferior: h-14 (56px) · íconos w-5 · etiquetas text-[10px] --- */
+@media (max-width: 640px) {
+  .mobile-bottom-nav {
+    height: 56px !important;
+    padding: 0 4px !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+  .mobile-bottom-nav__item { gap: 2px !important; padding: 3px 2px !important; font-size: 10px !important; }
+  .mobile-bottom-nav__item svg { width: 20px !important; height: 20px !important; }
+}
+
+/* --- POS limpio v3: tramo <=360px (una medida menor por elemento, después del <=640px) --- */
+@media (max-width: 360px) {
+  .pos-root .pos-search-card .mobile-searchbar { height: 32px !important; padding: 0 8px !important; }
+  .pos-root .pos-search-card .mobile-searchbar input { font-size: 11px !important; height: 28px !important; }
+  .pos-root .pos-cat-pill { padding: 3px 10px !important; font-size: 11px !important; }
+  .pos-root .pos-toolbar-actions > button { height: 32px !important; padding: 0 10px !important; font-size: 11px !important; }
+  .pos-root [style*="min-height: 140px"] { padding: 6px !important; }
+  .pos-root [style*="min-height: 140px"] div[style*="font-size: 12px"],
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 12px"] { font-size: 11px !important; }
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14px"] { font-size: 11px !important; }
+  .pos-root .page-head h1 { font-size: 14px !important; }
+  .pos-root .page-head div[style*="width: 44px"] { width: 30px !important; height: 30px !important; }
+}
