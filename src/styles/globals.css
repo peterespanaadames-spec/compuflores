@@ -4393,3 +4393,77 @@ button:active:not(:disabled) {
   .pos-root [style*="width: 600px"] .input { height: 30px !important; font-size: 10.5px !important; }
   .pos-root [style*="width: 600px"] button.btn { height: 27px !important; font-size: 10px !important; }
 }
+
+/* =====================================================================
+   POS COMPACTO v2 (bloque final — prevalece sobre los anteriores)
+   Fichas con menos padding y letra menor (2 columnas), buscador bajo,
+   pills de categoria pequeñas con scroll sutil y botones superiores
+   que ocupan menos espacio vertical.
+   ===================================================================== */
+@media (max-width: 640px) {
+  /* --- Fichas de producto: menos padding, fuente menor --- */
+  .pos-root [style*="minmax(180px, 1fr)"] { gap: 5px !important; }
+  .pos-root [style*="min-height: 140px"] {
+    padding: 4px 5px !important;
+    gap: 2px !important;
+  }
+  .pos-root [style*="min-height: 140px"] .muted { font-size: 7.5px !important; }
+  .pos-root [style*="min-height: 140px"] span[style*="font-size: 10px"],
+  .pos-root [style*="min-height: 140px"] span[style*="font-size: 9px"],
+  .pos-root [style*="min-height: 140px"] span[style*="font-size: 11px"] {
+    font-size: 7.5px !important;
+    padding: 1px 3px !important;
+  }
+  .pos-root [style*="min-height: 140px"] div[style*="font-size: 12px"],
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 12px"] {
+    font-size: 9.5px !important;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .pos-root [style*="min-height: 140px"] div[style*="padding-top: 8px"] { padding-top: 3px !important; }
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14px"] { font-size: 10.5px !important; }
+
+  /* --- Buscador: menos alto --- */
+  .pos-root .pos-search-card { padding: 4px 5px !important; }
+  .pos-root .pos-search-card .mobile-searchbar {
+    padding: 3px 8px !important;
+    border-radius: 8px !important;
+    gap: 6px !important;
+  }
+  .pos-root .pos-search-card .mobile-searchbar input { font-size: 10.5px !important; height: 22px !important; }
+  .pos-root .pos-search-card .mobile-searchbar button { width: 20px !important; height: 20px !important; }
+  .pos-root .pos-search-card .mobile-searchbar button svg { width: 12px !important; height: 12px !important; }
+
+  /* --- Pills de categoria: pequeñas y scroll-x sutil (sin barra visible) --- */
+  .pos-root .pos-cat-pill { padding: 2px 9px !important; font-size: 9.5px !important; border-radius: 999px !important; }
+  .pos-root [style*="overflow-x"] { scrollbar-width: none; -ms-overflow-style: none; padding-bottom: 2px !important; }
+  .pos-root [style*="overflow-x"]::-webkit-scrollbar { display: none; }
+
+  /* --- Botones superiores: menos espacio vertical --- */
+  .pos-root .pos-toolbar-actions { gap: 5px !important; }
+  .pos-root .pos-toolbar-actions > button { height: 27px !important; padding: 0 7px !important; font-size: 9.5px !important; }
+  .pos-root .pos-toolbar-actions button svg { width: 11px !important; height: 11px !important; }
+  .pos-root .pos-toolbar-actions button span[style*="font-size: 10px"] { font-size: 8.5px !important; padding: 1px 4px !important; }
+
+  /* --- Cabecera: un punto más baja --- */
+  .pos-root .page-head { margin-bottom: 8px !important; }
+  .pos-root .page-head h1 { font-size: 14px !important; }
+  .pos-root .page-head div[style*="width: 44px"] { width: 30px !important; height: 30px !important; }
+  .pos-root .page-head div[style*="width: 44px"] svg { width: 16px !important; height: 16px !important; }
+  .pos-root .page-head div[style*="gap: 12px"] { gap: 8px !important; }
+  .pos-root .page-head .muted.small { font-size: 9.5px !important; }
+}
+
+/* --- POS compacto v2: tramo extra <=360px (despues del <=640px) --- */
+@media (max-width: 360px) {
+  .pos-root [style*="minmax(180px, 1fr)"] { gap: 4px !important; }
+  .pos-root [style*="min-height: 140px"] { padding: 3px 4px !important; }
+  .pos-root [style*="min-height: 140px"] div[style*="font-size: 12px"],
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 12px"] { font-size: 9px !important; }
+  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14px"] { font-size: 10px !important; }
+  .pos-root .pos-search-card .mobile-searchbar { padding: 2px 7px !important; }
+  .pos-root .pos-search-card .mobile-searchbar input { font-size: 10px !important; height: 20px !important; }
+  .pos-root .pos-cat-pill { padding: 2px 7px !important; font-size: 9px !important; }
+  .pos-root .pos-toolbar-actions > button { height: 25px !important; padding: 0 6px !important; font-size: 9px !important; }
+  .pos-root .page-head h1 { font-size: 13px !important; }
+  .pos-root .page-head div[style*="width: 44px"] { width: 26px !important; height: 26px !important; }
+}
