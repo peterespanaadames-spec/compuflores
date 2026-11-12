@@ -4345,3 +4345,51 @@ button:active:not(:disabled) {
   .pos-root .pos-mobile-cartbar { left: 5px; right: 5px; bottom: 6px; padding: 4px 6px 4px 8px; gap: 5px; }
   .pos-root .pos-mobile-cartbar-cta { padding: 4px 6px !important; font-size: 9px !important; }
 }
+
+/* =====================================================================
+   POS MEDIDAS ESTANDAR DE REPORTE DE VENTAS (<=640px)
+   Igualar botones, cards, cabecera tipo KPI y formulario de cobro a
+   las medidas ya probadas del Reporte de Ventas:
+   botones 30px · 10px, cards radio 10px, inputs/selects 32px · 11px.
+   Ultimo en cascada: prevalece sobre los bloques POS anteriores.
+   ===================================================================== */
+@media (max-width: 640px) {
+  /* --- Botones de cabecera/toolbar: 30px · 10px --- */
+  .pos-root .pos-toolbar-actions > button { height: 30px !important; padding: 0 8px !important; font-size: 10px !important; }
+  .pos-root .pos-toolbar-actions button svg { width: 12px !important; height: 12px !important; }
+  .pos-root .pos-toolbar-actions button span[style*="font-size: 10px"] { font-size: 9px !important; padding: 1px 5px !important; }
+  /* Pills de categoria */
+  .pos-root .pos-cat-pill { padding: 4px 10px !important; font-size: 10px !important; }
+
+  /* --- Cabecera tipo KPI: logo 34px, titulo 15px, badge compacto --- */
+  .pos-root .page-head { margin-bottom: 10px !important; }
+  .pos-root .page-head h1 { font-size: 15px !important; line-height: 1.2 !important; }
+  .pos-root .page-head div[style*="width: 44px"] { width: 34px !important; height: 34px !important; border-radius: 10px !important; }
+  .pos-root .page-head div[style*="width: 44px"] svg { width: 18px !important; height: 18px !important; }
+  .pos-root .page-head span[style*="font-size: 11px"] { font-size: 9.5px !important; padding: 1px 6px !important; }
+  .pos-root .page-head .muted.small { font-size: 10px !important; }
+
+  /* --- Cards: radio compacto (igual que rep-sales) --- */
+  .pos-root .card { border-radius: 10px !important; }
+  .pos-root .pos-search-card { padding: 6px 7px !important; }
+  .pos-root .pos-search-card .mobile-searchbar input { font-size: 11px !important; }
+
+  /* --- Formulario de cobro (checkout): inputs/selects 32px · 11px --- */
+  .pos-root [style*="width: 600px"] .input { height: 32px !important; font-size: 11px !important; }
+  .pos-root [style*="width: 600px"] .form-grid { gap: 8px !important; }
+  .pos-root [style*="width: 600px"] .form-grid .btn,
+  .pos-root [style*="width: 600px"] button.btn { height: 30px !important; font-size: 10.5px !important; }
+}
+
+/* --- POS medidas estandar: tramo <=360px (despues del <=640px) --- */
+@media (max-width: 360px) {
+  .pos-root .pos-toolbar-actions > button { height: 27px !important; padding: 0 6px !important; font-size: 9.5px !important; }
+  .pos-root .pos-toolbar-actions button svg { width: 11px !important; height: 11px !important; }
+  .pos-root .pos-cat-pill { padding: 3px 8px !important; font-size: 9.5px !important; }
+  .pos-root .page-head h1 { font-size: 13px !important; }
+  .pos-root .page-head div[style*="width: 44px"] { width: 28px !important; height: 28px !important; }
+  .pos-root .page-head div[style*="width: 44px"] svg { width: 15px !important; height: 15px !important; }
+  .pos-root .pos-search-card .mobile-searchbar input { font-size: 10.5px !important; }
+  .pos-root [style*="width: 600px"] .input { height: 30px !important; font-size: 10.5px !important; }
+  .pos-root [style*="width: 600px"] button.btn { height: 27px !important; font-size: 10px !important; }
+}
