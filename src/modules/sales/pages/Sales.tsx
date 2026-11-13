@@ -38,7 +38,10 @@ import {
   createCustomerInSupabase,
   recordSaleInSupabase,
   fetchBankAccountsFromSupabase,
-  createProductInSupabase
+  createProductInSupabase,
+  fetchParkedInvoicesFromSupabase,
+  createParkedInvoiceInSupabase,
+  deleteParkedInvoiceFromSupabase
 } from '../../../lib/supabase/db';
 import { MobileSearchBar } from '../../../components/mobile/MobileSearchBar';
 import { authenticatedFetch } from '../../../lib/supabase/api';
@@ -418,7 +421,7 @@ export function Sales() {
       .catch(() => {});
 
     const ts = Date.now();
-    const [dbProds, dbCusts, accountsRes, bcvRes] = await Promise.all([
+    const [dbProds, dbCusts, accountsRes, bcvRes, dbParked] = await Promise.all([
       fetchProductsFromSupabase(),
       fetchCustomersFromSupabase(),
       authenticatedFetch(`/api/bank-accounts?t=${ts}`).then(async (r) => { 
@@ -429,7 +432,8 @@ export function Sales() {
         console.error('accountsRes error:', e); 
         return await fetchBankAccountsFromSupabase(); 
       }),
-      fetch(`/api/bcv/rates?t=${ts}`).then(r => r.json()).catch(() => null)
+      fetch(`/api/bcv/rates?t=${ts}`).then(r => r.json()).catch(() => null),
+      fetchParkedInvoicesFromSupabase()
     ]);
 
     if (bcvRes) {
@@ -457,6 +461,18 @@ export function Sales() {
         phone: c.phone,
         email: c.email,
         address: c.address
+      })));
+
+    // Facturas/pedidos en espera persistidos (sobreviven recargas y cierres)
+    setParkedInvoices((dbParked || []).map(p => ({
+        id: p.control_number,
+        clientName: p.client_name || 'Cliente sin registrar',
+        clientRif: p.client_rif || '',
+        clientPhone: p.client_phone || '',
+        clientAddress: p.client_address || '',
+        items: Array.isArray(p.items) ? (p.items as CartItem[]) : [],
+        totalUSD: Number(p.total_usd) || 0,
+        createdAt: new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       })));
 
     // Filter to only display Active accounts in Checkout Form Payment dropdowns
@@ -944,6 +960,21 @@ export function Sales() {
     setCart([]);
     setCheckoutStep(null);
     showToast(`${parked.clientName} en espera con control ${parked.id}.`);
+
+    // Persistencia: la factura en espera sobrevive recargas y cierres.
+    createParkedInvoiceInSupabase({
+      control_number: parked.id,
+      client_name: parked.clientName,
+      client_rif: parked.clientRif,
+      client_phone: parked.clientPhone,
+      client_address: parked.clientAddress,
+      items: parked.items as unknown[],
+      total_usd: parked.totalUSD
+    }).then((created) => {
+      if (!created) showToast('La factura quedó en memoria local; no se pudo guardar en la base de datos.', 'info');
+    }).catch(() => {
+      showToast('La factura quedó en memoria local; no se pudo guardar en la base de datos.', 'info');
+    });
   };
 
   // Restore parked invoice
@@ -956,6 +987,14 @@ export function Sales() {
     setParkedInvoices(parkedInvoices.filter(p => p.id !== parked.id));
     setIsParkedModalOpen(false);
     showToast(`Pedido ${parked.id} de ${parked.clientName} recuperado.`);
+    // Ya se va a cobrar: la fila persistida deja de estar en espera.
+    deleteParkedInvoiceFromSupabase(parked.id).catch(() => {});
+  };
+
+  // Descartar una factura en espera (memoria local + base de datos)
+  const handleDiscardParkedInvoice = (controlNumber: string) => {
+    setParkedInvoices(parkedInvoices.filter(p => p.id !== controlNumber));
+    deleteParkedInvoiceFromSupabase(controlNumber).catch(() => {});
   };
 
   // Finalize Sale & Emit to Supabase
@@ -3284,7 +3323,7 @@ export function Sales() {
                               type="button"
                               variant="danger"
                               className="btn-icon danger-subtle"
-                              onClick={() => setParkedInvoices(parkedInvoices.filter(p => p.id !== parked.id))}
+                              onClick={() => handleDiscardParkedInvoice(parked.id)}
                               aria-label={`Eliminar venta pendiente de ${parked.clientName}`}
                             >
                               <Trash2 size={16} />

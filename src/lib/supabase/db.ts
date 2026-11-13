@@ -3613,5 +3613,88 @@ export async function fetchPublicConfigFromApi(): Promise<any> {
   return null;
 }
 
+// ---------------------------------------------------------------------------
+// FACTURAS / PEDIDOS EN ESPERA DEL POS (parked_invoices)
+// ---------------------------------------------------------------------------
+
+export interface DbParkedInvoice {
+  id: string;
+  control_number: string;
+  client_name: string;
+  client_rif?: string;
+  client_phone?: string;
+  client_address?: string;
+  items: unknown[];
+  total_usd: number;
+  created_at: string;
+}
+
+export async function fetchParkedInvoicesFromSupabase(): Promise<DbParkedInvoice[]> {
+  try {
+    const orgId = await getActiveOrgId();
+    let query = supabase
+      .from('parked_invoices')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (orgId) query = query.eq('organization_id', orgId);
+
+    const { data, error } = await query;
+    if (error) {
+      console.error('Error fetching parked invoices from Supabase:', error.message);
+      return [];
+    }
+    return (data || []) as DbParkedInvoice[];
+  } catch (err) {
+    console.error('Network error fetching parked invoices from Supabase:', err);
+    return [];
+  }
+}
+
+export async function createParkedInvoiceInSupabase(
+  payload: Omit<DbParkedInvoice, 'id' | 'created_at'>
+): Promise<DbParkedInvoice | null> {
+  try {
+    const orgId = await getActiveOrgId();
+    const row: any = { ...payload };
+    if (orgId) row.organization_id = orgId;
+
+    const { data, error } = await supabase
+      .from('parked_invoices')
+      .insert([row])
+      .select();
+
+    if (error) {
+      console.error('Error creating parked invoice in Supabase:', error.message);
+      return null;
+    }
+    return Array.isArray(data) ? data[0] : null;
+  } catch (err) {
+    console.error('Network error creating parked invoice in Supabase:', err);
+    return null;
+  }
+}
+
+export async function deleteParkedInvoiceFromSupabase(controlNumber: string): Promise<boolean> {
+  try {
+    const orgId = await getActiveOrgId();
+    let query = supabase
+      .from('parked_invoices')
+      .delete()
+      .eq('control_number', controlNumber);
+    if (orgId) query = query.eq('organization_id', orgId);
+
+    const { error } = await query;
+    if (error) {
+      console.error('Error deleting parked invoice from Supabase:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Network error deleting parked invoice from Supabase:', err);
+    return false;
+  }
+}
+
 
 
