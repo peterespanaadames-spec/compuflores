@@ -5503,4 +5503,9 @@ button:active:not(:disabled) {
   .pos-root [style*="max-width: 960px"] button[style*="padding: 10px 24px"] { height: 27px !important; padding: 0 12px !important; font-size: 10px !important; }
 }
 
+/* --- Cobranza paso 2: sin el aviso «Sistema Multi-Abonos» en móvil --- */
+@media (max-width: 640px) {
+  .pos-root [style*="max-width: 960px"] [style*="dashed #cbd5e1"] { display: none !important; }
+}
+
 
