@@ -2929,6 +2929,8 @@ button:active:not(:disabled) {
    ===================================================================== */
 /* En escritorio solo se ven las etiquetas largas del tipo de comprobante */
 .rep-short { display: none; }
+/* Título del Reporte Diario: en escritorio se ve el nombre completo */
+.rep-diario-short { display: none; }
 /* Punto de estado junto al monto: solo en móvil (la columna Estado se retira) */
 .rep-dot {
   display: none;
@@ -3121,6 +3123,9 @@ button:active:not(:disabled) {
   /* Encabezados abreviados: Registrar Movimiento y Sincronizar, Exportar solo icono */
   .rep-inv-root .rep-long { display: none !important; }
   .rep-inv-root .rep-short { display: inline !important; }
+  /* Título de la página en móvil: «Movimientos» en una línea horizontal */
+  .rep-inv-root .rep-diario-long { display: none !important; }
+  .rep-inv-root .rep-diario-short { display: inline !important; font-weight: 800; }
 
   /* KPI: 2 tarjetas por fila, sin subtítulos */
   .rep-inv-root .grid-4 {
@@ -5528,6 +5533,97 @@ button:active:not(:disabled) {
 /* --- Cobranza paso 2: tramo extra <=360px --- */
 @media (max-width: 360px) {
   .pos-root .pos-paymode-btn { padding: 5px 3px !important; font-size: 9.5px !important; }
+}
+
+/* =====================================================================
+   COTIZACIONES (cot-root) — COMPACTACIÓN EXTRA MÓVIL
+   Solo ≤640px, escritorio intacto. Cabecera con título e icono más
+   pequeños y botones a 28px; KPI con números discretos y tarjetas
+   ceñidas; barra de filtros apilada y baja; fichas de cotización
+   en 2 líneas con solo lo esencial (folio · monto [acciones] /
+   cliente · estado). Tramo ≤360px aún más ceñido.
+   ===================================================================== */
+@media (max-width: 640px) {
+  /* --- Cabecera: título, icono y acciones ceñidos --- */
+  .cot-root .page-head { margin-bottom: 8px !important; }
+  .cot-root .page-head [style*="width: 40"] { width: 28px !important; height: 28px !important; border-radius: 9px !important; }
+  .cot-root .page-head [style*="width: 40"] svg { width: 15px; height: 15px; }
+  .cot-root .page-head h1 { font-size: 14px !important; line-height: 1.2 !important; }
+  .cot-root .page-head .actions { gap: 5px !important; }
+  .cot-root .page-head .actions .btn {
+    height: 28px !important;
+    padding: 0 8px !important;
+    font-size: 10.5px !important;
+    border-radius: 8px;
+  }
+  .cot-root .page-head .actions .btn svg { width: 12px; height: 12px; }
+
+  /* --- KPI: tarjetas ceñidas, número grande más discreto --- */
+  .cot-root [style*="minmax(230px, 1fr)"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    margin-bottom: 10px !important;
+  }
+  .cot-root [style*="minmax(230px, 1fr)"] .card { padding: 8px 7px !important; border-radius: 10px; }
+  .cot-root [style*="minmax(230px, 1fr)"] [style*="margin-bottom: 10"] { margin-bottom: 4px !important; }
+  .cot-root [style*="minmax(230px, 1fr)"] [style*="font-size: 26"] { font-size: 15px !important; }
+  .cot-root [style*="minmax(230px, 1fr)"] [style*="font-size: 11"] { font-size: 8.5px !important; letter-spacing: 0.3px !important; }
+  .cot-root [style*="minmax(230px, 1fr)"] [style*="font-size: 12"] { font-size: 9.5px !important; }
+  .cot-root [style*="minmax(230px, 1fr)"] [style*="width: 36"] { width: 26px !important; height: 26px !important; border-radius: 8px !important; }
+  .cot-root [style*="minmax(230px, 1fr)"] [style*="width: 36"] svg { width: 13px; height: 13px; }
+
+  /* --- Barra de filtros: apilada y baja --- */
+  .cot-root [style*="padding: 12px 16px"] {
+    padding: 8px 8px !important;
+    gap: 6px !important;
+    margin-bottom: 10px !important;
+    border-radius: 12px;
+  }
+  .cot-root [style*="padding: 12px 16px"] [style*="width: 300"] { width: 100% !important; min-width: 0 !important; }
+  .cot-root [style*="padding: 12px 16px"] [style*="width: 190"] { width: 100% !important; }
+  .cot-root [style*="padding: 12px 16px"] [style*="width: 250"] { width: 100% !important; }
+  .cot-root [style*="padding: 12px 16px"] .input,
+  .cot-root [style*="padding: 12px 16px"] select.input { height: 30px !important; font-size: 11.5px !important; }
+  /* El buscador vive dentro de una caja con su propio relleno: altura libre */
+  .cot-root [style*="padding: 12px 16px"] [style*="width: 300"] .input { height: auto !important; }
+  .cot-root [style*="padding: 12px 16px"] [style*="height: 38"] { height: 30px !important; font-size: 11.5px !important; }
+  .cot-root [style*="padding: 12px 16px"] [style*="height: 38"] > div > span { font-size: 11px !important; }
+  .cot-root [style*="padding: 12px 16px"] [style*="height: 38"] svg { width: 13px; height: 13px; }
+
+  /* --- Fichas de cotización: ceñidas a 2 líneas esenciales --- */
+  .cot-root table tr { padding: 4px 6px !important; gap: 3px !important; }
+  .cot-root table td { padding: 1px 0 !important; }
+  /* Folio en línea 1 */
+  .cot-root table td:nth-child(1) { font-size: 10px !important; }
+  /* Monto: solo el total USD; Bs y tasa fuera de la ficha */
+  .cot-root table td:nth-child(5) [style*="font-size: 14"] { font-size: 12px !important; }
+  .cot-root table td:nth-child(5) [style*="font-size: 11"],
+  .cot-root table td:nth-child(5) [style*="font-size: 10"] { display: none !important; }
+  /* Cliente: solo el nombre; documento y teléfono fuera de la ficha */
+  .cot-root table td:nth-child(3) [style*="font-size: 13"] { font-size: 10.5px !important; }
+  .cot-root table td:nth-child(3) [style*="font-size: 11"] { display: none !important; }
+  /* Estado: insignia pequeña */
+  .cot-root table td:nth-child(6) { font-size: 9px !important; }
+  .cot-root table td:nth-child(6) span { font-size: 9px !important; padding: 1px 5px !important; }
+  /* Acciones: botones de icono 26px */
+  .cot-root table td:nth-child(7) .btn,
+  .cot-root table td:nth-child(7) button { width: 26px !important; height: 26px !important; }
+  .cot-root table td:nth-child(7) svg { width: 12px; height: 12px; }
+}
+
+/* --- Cotizaciones: tramo extra <=360px --- */
+@media (max-width: 360px) {
+  .cot-root { padding: 10px !important; }
+  .cot-root .page-head .actions .btn { height: 26px !important; padding: 0 6px !important; font-size: 9.5px !important; }
+  .cot-root [style*="minmax(230px, 1fr)"] { gap: 5px !important; }
+  .cot-root [style*="minmax(230px, 1fr)"] .card { padding: 7px 6px !important; }
+  .cot-root [style*="minmax(230px, 1fr)"] [style*="font-size: 26"] { font-size: 13px !important; }
+  .cot-root [style*="padding: 12px 16px"] .input,
+  .cot-root [style*="padding: 12px 16px"] select.input,
+  .cot-root [style*="padding: 12px 16px"] [style*="height: 38"] { height: 28px !important; font-size: 10.5px !important; }
+  .cot-root table tr { padding: 3px 5px !important; }
+  .cot-root table td:nth-child(7) .btn,
+  .cot-root table td:nth-child(7) button { width: 25px !important; height: 25px !important; }
 }
 
 
