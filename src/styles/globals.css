@@ -2950,7 +2950,7 @@ button:active:not(:disabled) {
   .rep-sales-root .grid-4 .kpi-value { font-size: 14px; margin: 2px 0 0; }
   .rep-sales-root .grid-4 .muted.small { display: none !important; }
 
-  /* --- Cabecera: «Reporte de Ventas» con Sinc + icono Exportar al lado --- */
+  /* --- Cabecera: «Reporte de Ventas» con botones Sinc y Exportar al lado en la cabecera --- */
   .rep-sales-root .page-head {
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -2960,12 +2960,12 @@ button:active:not(:disabled) {
     margin-bottom: 10px !important;
   }
   .rep-sales-root .page-head > div:first-child { min-width: 0; flex: 1 1 auto; }
-  .rep-sales-root .page-head h1 { font-size: 13.5px !important; line-height: 1.2 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; margin: 0 !important; }
+  .rep-sales-root .page-head h1 { font-size: 13px !important; line-height: 1.2 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; margin: 0 !important; }
   .rep-sales-root .rep-head-actions {
     width: auto;
     flex: 0 0 auto;
     flex-wrap: nowrap !important;
-    gap: 6px !important;
+    gap: 4px !important;
   }
   .rep-sales-root .rep-head-actions .btn {
     flex: 0 0 auto;
