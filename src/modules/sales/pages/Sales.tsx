@@ -2110,7 +2110,7 @@ export function Sales() {
               <div className="card pos-payment-box" style={{ width: '600px', maxWidth: '100%', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
                 
                 {/* Contado vs Crédito Buttons */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div className="pos-paymode-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <button
                     className="pos-paymode-btn"
                     onClick={() => setPaymentType('CONTADO')}
@@ -2295,7 +2295,7 @@ export function Sales() {
                     {/* Recorded Payments List (Multi-abonos) */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {payments.length === 0 ? (
-                        <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 8, padding: '12px 14px', fontSize: 11, color: '#64748b', textAlign: 'center' }}>
+                        <div className="pos-multiabonos-hint" style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 8, padding: '12px 14px', fontSize: 11, color: '#64748b', textAlign: 'center' }}>
                           💡 <b>Sistema Multi-Abonos:</b> Ingrese el monto y presione <b>+ Abonar a cuenta</b> para registrar un pago. Puede dividir el total en diferentes cuentas bancarias (USD / VES) hasta completarlo.
                         </div>
                       ) : (
