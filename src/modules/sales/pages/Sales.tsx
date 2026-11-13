@@ -28,7 +28,8 @@ import {
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { CedulaLookupButton } from '../../../components/ui/CedulaLookupButton';
-import { isConsultaDocType, useCedulaAutofill } from '../../../lib/cedulaLookup';
+import { buildCedulaLocationText, isConsultaDocType, useCedulaAutofill } from '../../../lib/cedulaLookup';
+import { ConfirmationDialog } from '../../../components/mobile/ConfirmationDialog';
 import { Badge } from '../../../components/ui/Badge';
 import { getActiveExchangeRate, setActiveExchangeRate, convertUSDtoVES, formatUSD, formatVES } from '../../../lib/currency';
 import {
@@ -224,6 +225,95 @@ export function Sales() {
     setNewCustomerCreditLimit('0');
     setNewCustomerAddress('');
     setIsNewCustomerModalOpen(true);
+  };
+
+  // Cliente sugerido tras una consulta de cédula que no existe en la base
+  // de clientes: se pregunta al usuario si desea guardarlo.
+  const [pendingCustomerSuggestion, setPendingCustomerSuggestion] = useState<{
+    doc: string;
+    name: string;
+    address: string;
+    phone: string;
+  } | null>(null);
+  const [isSavingSuggestedCustomer, setIsSavingSuggestedCustomer] = useState(false);
+
+  /** Normaliza documentos (quita espacios, puntos y guiones) para comparar. */
+  const normalizeDocForMatch = (value: string) => value.trim().toUpperCase().replace(/[\s.\-–]/g, '');
+  /** ¿Existe ya un cliente registrado con este documento? */
+  const findCustomerByDoc = (doc: string) => {
+    const target = normalizeDocForMatch(doc);
+    if (!target) return undefined;
+    return customers.find((c) => {
+      const cust = normalizeDocForMatch(c.rif);
+      if (!cust) return false;
+      // Coincidencia directa o por RIF de persona natural (cédula + dígito verificador)
+      return cust === target || cust.replace(/^[VE]/, '') === target.replace(/^[VE]/, '');
+    });
+  };
+
+  /** Después de autocompletar por cédula: revisa la base de clientes y,
+   * si la persona no está registrada, pregunta si desea guardarla. */
+  const checkCustomerAfterCedulaLookup = (doc: string, name: string, address: string) => {
+    const existing = findCustomerByDoc(doc);
+    if (existing) {
+      // La cédula ya es un cliente registrado: el nombre y los datos de la
+      // base interna tienen prioridad sobre el registro público.
+      setClientName(existing.name);
+      if (existing.phone) setClientPhone(existing.phone);
+      if (existing.email) setClientEmail(existing.email);
+      if (existing.address) setClientAddress(existing.address);
+      showToast(`Cliente registrado: ${existing.name}.`);
+      return;
+    }
+    setPendingCustomerSuggestion({
+      doc: doc.trim(),
+      name: name.trim(),
+      address: address.trim(),
+      phone: clientPhone.trim()
+    });
+  };
+
+  const handleSaveSuggestedCustomer = async () => {
+    const suggestion = pendingCustomerSuggestion;
+    if (!suggestion || !suggestion.name || !suggestion.doc) {
+      setPendingCustomerSuggestion(null);
+      return;
+    }
+    setIsSavingSuggestedCustomer(true);
+    try {
+      const nextNum = customers.length + 1;
+      const created = await createCustomerInSupabase({
+        code: `CLI-${nextNum.toString().padStart(4, '0')}`,
+        name: suggestion.name,
+        doc_type: 'Natural (V / E)',
+        doc_number: suggestion.doc,
+        phone: suggestion.phone,
+        email: '',
+        credit_limit: 0,
+        address: suggestion.address,
+        status: 'Activo',
+        orders_count: 0,
+        total_spent_usd: 0,
+        last_order_date: new Date().toISOString()
+      });
+      if (created) {
+        const newCust: Customer = {
+          id: created.id,
+          rif: created.doc_number,
+          name: created.name,
+          phone: created.phone,
+          email: created.email,
+          address: created.address
+        };
+        setCustomers((prev) => [newCust, ...prev]);
+        showToast(`Cliente ${created.name} guardado en la base de clientes.`);
+      } else {
+        showToast('No se pudo guardar el cliente en la base de datos.', 'info');
+      }
+    } finally {
+      setIsSavingSuggestedCustomer(false);
+      setPendingCustomerSuggestion(null);
+    }
   };
 
   const handleSaveNewCustomer = async (e: React.FormEvent) => {
@@ -1851,11 +1941,20 @@ export function Sales() {
                       docInput={clientRif}
                       compact
                       onError={(m) => showToast(m, 'info')}
-                      onFound={(d) => applyClientFieldsCedula(d, {
-                        setDoc: setClientRif,
-                        setName: setClientName,
-                        setAddress: setClientAddress
-                      }, { name: clientName, address: clientAddress })}
+                      onFound={(d) => {
+                        // Autocompleta RIF, nombre y dirección desde el registro.
+                        applyClientFieldsCedula(d, {
+                          setDoc: setClientRif,
+                          setName: setClientName,
+                          setAddress: setClientAddress
+                        }, { name: clientName, address: clientAddress });
+                        // Verifica la base de clientes y ofrece guardar si no existe.
+                        checkCustomerAfterCedulaLookup(
+                          d.identity.rif.trim() || clientRif,
+                          d.identity.fullName,
+                          buildCedulaLocationText(d.location)
+                        );
+                      }}
                     />
                   </div>
                 </div>
@@ -3669,6 +3768,21 @@ export function Sales() {
           </div>
         </div>
       )}
+
+      {/* Confirmación: guardar en la base de clientes a una persona
+          encontrada por cédula que aún no está registrada */}
+      <ConfirmationDialog
+        open={pendingCustomerSuggestion !== null}
+        title="Guardar cliente"
+        message={
+          pendingCustomerSuggestion
+            ? `${pendingCustomerSuggestion.name} (${pendingCustomerSuggestion.doc}) no está registrado en tu base de clientes. ¿Deseas guardarlo?`
+            : ''
+        }
+        confirmLabel={isSavingSuggestedCustomer ? 'Guardando...' : 'Guardar cliente'}
+        onCancel={() => setPendingCustomerSuggestion(null)}
+        onConfirm={handleSaveSuggestedCustomer}
+      />
 
       {/* Modal / Ventana Emergente: Alerta Producto sin Stock */}
       {stockAlertModal.isOpen && (
