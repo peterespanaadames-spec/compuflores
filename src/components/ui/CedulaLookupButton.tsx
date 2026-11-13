@@ -12,12 +12,14 @@ import { lookupCedula, parseCedulaDoc, type CedulaLookupData } from '../../lib/c
 export function CedulaLookupButton({
   docInput,
   disabled,
+  compact,
   onFound,
   onError
 }: {
   /** Valor actual del campo «Cédula / RIF» del formulario. */
   docInput: string;
   disabled?: boolean;
+  compact?: boolean;
   /** Datos confirmados por el registro (nombres, RIF, ubicación). */
   onFound: (data: CedulaLookupData) => void;
   /** Mensaje para la UI (toast) cuando la consulta no produce datos. */
@@ -47,11 +49,25 @@ export function CedulaLookupButton({
       variant="secondary"
       onClick={runLookup}
       disabled={disabled || isConsulting}
-      title="Consulta los datos de la persona en el registro y rellena el formulario"
-      style={{ height: 34, fontSize: 12, fontWeight: 700, padding: '0 14px', whiteSpace: 'nowrap', background: '#111827', color: '#ffffff', border: '1px solid #111827', boxShadow: 'none' }}
+      title={isConsulting ? 'Consultando...' : 'Consultar cédula en el registro'}
+      style={{
+        height: 38,
+        width: compact ? 38 : undefined,
+        padding: compact ? '0' : '0 14px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        whiteSpace: 'nowrap',
+        background: '#111827',
+        color: '#ffffff',
+        border: '1px solid #111827',
+        borderRadius: compact ? 8 : 8,
+        boxShadow: 'none',
+        flexShrink: 0
+      }}
     >
-      <Search size={14} style={{ marginRight: 6 }} />
-      {isConsulting ? 'Consultando…' : 'Consultar cédula'}
+      <Search size={compact ? 16 : 14} style={{ marginRight: compact ? 0 : 6 }} />
+      {!compact && (isConsulting ? 'Consultando…' : 'Consultar cédula')}
     </Button>
   );
 }

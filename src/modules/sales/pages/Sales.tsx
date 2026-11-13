@@ -1838,15 +1838,18 @@ export function Sales() {
               <div className="form-grid">
                 <div className="field">
                   <label>Cédula / RIF *</label>
-                  <input
-                    className="input"
-                    value={clientRif}
-                    onChange={(e) => setClientRif(e.target.value)}
-                    required
-                  />
-                  <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end' }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input
+                      className="input"
+                      value={clientRif}
+                      onChange={(e) => setClientRif(e.target.value)}
+                      placeholder="V-12345678"
+                      style={{ flex: 1, minWidth: 0 }}
+                      required
+                    />
                     <CedulaLookupButton
                       docInput={clientRif}
+                      compact
                       onError={(m) => showToast(m, 'info')}
                       onFound={(d) => applyClientFieldsCedula(d, {
                         setDoc: setClientRif,
