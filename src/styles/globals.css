@@ -5420,4 +5420,87 @@ button:active:not(:disabled) {
   }
 }
 
+/* =====================================================================
+   POS COBRANZA: PASO «DATOS DEL CLIENTE» COMPACTO (bloque final, <=640px)
+   La vista de cobro (VIEW B, contenedor max-width 960px) dentro de
+   .pos-root: cabecera, stepper (los «KPI» numerados), tarjeta del paso,
+   búsqueda de cliente, sugerencias, formulario y botones más pequeños.
+   ===================================================================== */
+@media (max-width: 640px) {
+  /* --- Contenedor general: respiro para la barra inferior --- */
+  .pos-root [style*="max-width: 960px"] { padding-bottom: 76px !important; }
+
+  /* --- Cabecera de cobranza: «Volver» + «MÓDULO DE COBRANZA» --- */
+  .pos-root [style*="max-width: 960px"] > div:first-child { margin-bottom: 10px !important; gap: 6px !important; }
+  .pos-root [style*="max-width: 960px"] > div:first-child button { font-size: 10px !important; gap: 4px !important; }
+  .pos-root [style*="max-width: 960px"] > div:first-child button svg { width: 12px !important; height: 12px !important; }
+  .pos-root [style*="max-width: 960px"] > div:first-child span { font-size: 8.5px !important; }
+
+  /* --- Stepper de 3 pasos (indicadores tipo KPI) --- */
+  .pos-root .pos-stepper { gap: 12px !important; margin-bottom: 12px !important; }
+  .pos-root .pos-stepper-connector { width: 14px !important; }
+  .pos-root .pos-stepper div[style*="width: 28px"] { width: 22px !important; height: 22px !important; font-size: 10px !important; }
+  .pos-root .pos-stepper span { font-size: 8.5px !important; }
+
+  /* --- Tarjeta del paso: padding y respiros menores --- */
+  .pos-root [style*="max-width: 960px"] .card[style*="padding: 24px"] {
+    padding: 10px 10px 12px !important;
+    gap: 10px !important;
+    border-radius: 10px !important;
+  }
+  .pos-root [style*="max-width: 960px"] .card[style*="padding: 24px"] label { font-size: 9.5px !important; }
+
+  /* --- Inputs y buscador: más bajos --- */
+  .pos-root [style*="max-width: 960px"] .card[style*="padding: 24px"] .input {
+    height: 30px !important;
+    font-size: 11px !important;
+    padding: 0 8px !important;
+  }
+
+  /* --- Botón «Consultar cédula» (compacto) --- */
+  .pos-root [style*="max-width: 960px"] .card[style*="padding: 24px"] button[style*="width: 38px"] {
+    width: 30px !important;
+    height: 30px !important;
+  }
+  .pos-root [style*="max-width: 960px"] .card[style*="padding: 24px"] button[style*="width: 38px"] svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  /* --- Sugerencias de clientes: lista más corta y apretada --- */
+  .pos-root [style*="max-height: 220px"] { max-height: 170px !important; padding: 5px !important; gap: 3px !important; }
+  .pos-root [style*="max-height: 220px"] div[style*="font-size: 10px"] { font-size: 8.5px !important; }
+  .pos-root [style*="max-height: 220px"] div[style*="padding: 8px 10px"] { padding: 5px 7px !important; font-size: 10.5px !important; }
+  .pos-root [style*="max-height: 220px"] div[style*="padding: 8px 10px"] b { font-size: 10.5px !important; }
+
+  /* --- Cabecera «Datos del Cliente para la Venta» + botón Nuevo --- */
+  .pos-root [style*="max-width: 960px"] [style*="padding-top: 14px"] { padding-top: 8px !important; }
+  .pos-root [style*="max-width: 960px"] [style*="padding-top: 14px"] span { font-size: 10px !important; }
+  .pos-root [style*="max-width: 960px"] .card[style*="padding: 24px"] button[style*="height: 34px"] {
+    height: 28px !important;
+    font-size: 10px !important;
+    padding: 0 10px !important;
+  }
+
+  /* --- Botón «Confirmar Datos >» --- */
+  .pos-root [style*="max-width: 960px"] [style*="margin-top: 12px"] { margin-top: 6px !important; }
+  .pos-root [style*="max-width: 960px"] button[style*="padding: 10px 24px"] {
+    height: 30px !important;
+    padding: 0 14px !important;
+    font-size: 10.5px !important;
+  }
+}
+
+/* --- Cobranza «Datos del Cliente»: tramo extra <=360px --- */
+@media (max-width: 360px) {
+  .pos-root [style*="max-width: 960px"] .card[style*="padding: 24px"] { padding: 8px 8px 10px !important; gap: 8px !important; }
+  .pos-root [style*="max-width: 960px"] .card[style*="padding: 24px"] .input { height: 28px !important; font-size: 10.5px !important; }
+  .pos-root [style*="max-width: 960px"] .card[style*="padding: 24px"] label { font-size: 9px !important; }
+  .pos-root .pos-stepper div[style*="width: 28px"] { width: 20px !important; height: 20px !important; font-size: 9px !important; }
+  .pos-root .pos-stepper span { font-size: 8px !important; }
+  .pos-root [style*="max-width: 960px"] .card[style*="padding: 24px"] button[style*="width: 38px"] { width: 28px !important; height: 28px !important; }
+  .pos-root [style*="max-width: 960px"] .card[style*="padding: 24px"] button[style*="height: 34px"] { height: 26px !important; padding: 0 8px !important; }
+  .pos-root [style*="max-width: 960px"] button[style*="padding: 10px 24px"] { height: 27px !important; padding: 0 12px !important; font-size: 10px !important; }
+}
+
 
