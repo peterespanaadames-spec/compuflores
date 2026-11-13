@@ -2953,13 +2953,14 @@ button:active:not(:disabled) {
   /* --- Cabecera: «Reporte de Ventas» con Sinc + icono Exportar al lado --- */
   .rep-sales-root .page-head {
     flex-direction: row !important;
-    flex-wrap: nowrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
     margin-bottom: 10px !important;
   }
-  .rep-sales-root .page-head h1 { font-size: 15px; line-height: 1.2; margin: 0; }
+  .rep-sales-root .page-head > div:first-child { min-width: 0; flex: 1 1 auto; }
+  .rep-sales-root .page-head h1 { font-size: 13.5px !important; line-height: 1.2 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; margin: 0 !important; }
   .rep-sales-root .rep-head-actions {
     width: auto;
     flex: 0 0 auto;
