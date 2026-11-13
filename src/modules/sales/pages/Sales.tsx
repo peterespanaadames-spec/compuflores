@@ -162,6 +162,8 @@ export function Sales() {
   // Parked Invoices
   const [parkedInvoices, setParkedInvoices] = useState<ParkedInvoice[]>([]);
   const [isParkedModalOpen, setIsParkedModalOpen] = useState(false);
+  // Búsqueda de facturas en espera por nombre del cliente o número de control
+  const [parkedSearch, setParkedSearch] = useState('');
 
   // Modal: Alerta de Producto sin Stock
   const [stockAlertModal, setStockAlertModal] = useState<{
@@ -920,9 +922,16 @@ export function Sales() {
   const handleParkInvoice = () => {
     if (cart.length === 0) return;
 
+    // Número de control secuencial que lleva el propio POS (ESP-001, ESP-002, ...)
+    const maxNum = parkedInvoices.reduce((max, p) => {
+      const match = p.id.match(/^ESP-(\d+)$/);
+      return match ? Math.max(max, parseInt(match[1], 10)) : max;
+    }, 0);
+    const controlNumber = `ESP-${(maxNum + 1).toString().padStart(3, '0')}`;
+
     const parked: ParkedInvoice = {
-      id: `ESP-${Date.now().toString().slice(-4)}`,
-      clientName,
+      id: controlNumber,
+      clientName: clientName.trim() || 'Cliente sin registrar',
       clientRif,
       clientPhone,
       clientAddress,
@@ -934,19 +943,19 @@ export function Sales() {
     setParkedInvoices([parked, ...parkedInvoices]);
     setCart([]);
     setCheckoutStep(null);
-    showToast(`Pedido de ${parked.clientName} colocado en espera (#${parked.id}).`);
+    showToast(`${parked.clientName} en espera con control ${parked.id}.`);
   };
 
   // Restore parked invoice
   const handleRestoreParkedInvoice = (parked: ParkedInvoice) => {
     setCart(parked.items);
-    setClientName(parked.clientName);
+    setClientName(parked.clientName === 'Cliente sin registrar' ? '' : parked.clientName);
     setClientRif(parked.clientRif);
     if (parked.clientPhone) setClientPhone(parked.clientPhone);
     if (parked.clientAddress) setClientAddress(parked.clientAddress);
     setParkedInvoices(parkedInvoices.filter(p => p.id !== parked.id));
     setIsParkedModalOpen(false);
-    showToast(`Pedido de ${parked.clientName} recuperado.`);
+    showToast(`Pedido ${parked.id} de ${parked.clientName} recuperado.`);
   };
 
   // Finalize Sale & Emit to Supabase
@@ -3203,51 +3212,90 @@ export function Sales() {
                 <p style={{ margin: 0, fontSize: 13 }}>No hay facturas pausadas en este momento.</p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 340, overflowY: 'auto' }}>
-                {parkedInvoices.map(parked => (
-                  <div
-                    key={parked.id}
-                    style={{
-                      border: '1px solid var(--border)',
-                      borderRadius: 8,
-                      padding: 12,
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      background: '#fafbfc'
-                    }}
-                  >
-                    <div>
-                      <b style={{ fontSize: 13, color: '#0f172a' }}>{parked.clientName}</b>
-                      <span className="muted small" style={{ display: 'block', fontSize: 11 }}>
-                        {parked.items.length} productos · Creado a las {parked.createdAt}
-                      </span>
-                      <b style={{ fontSize: 12, color: 'var(--brand-700)' }}>
-                        {formatUSD(parked.totalUSD)} · {formatVES(convertUSDtoVES(parked.totalUSD, activeRate))}
-                      </b>
-                    </div>
+              <>
+                {/* Búsqueda por nombre del cliente o número de control */}
+                <input
+                  className="input"
+                  placeholder="Buscar por nombre o número de control (ESP-001)..."
+                  value={parkedSearch}
+                  onChange={(e) => setParkedSearch(e.target.value)}
+                  style={{ marginBottom: 10, fontSize: 12 }}
+                />
+                {(() => {
+                  const term = parkedSearch.trim().toLowerCase();
+                  const filtered = parkedInvoices.filter(
+                    (p) => !term || p.clientName.toLowerCase().includes(term) || p.id.toLowerCase().includes(term)
+                  );
+                  if (filtered.length === 0) {
+                    return (
+                      <div style={{ textAlign: 'center', padding: '18px 0', color: '#94a3b8', fontSize: 12 }}>
+                        Sin resultados para «{parkedSearch}».
+                      </div>
+                    );
+                  }
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 340, overflowY: 'auto' }}>
+                      {filtered.map(parked => (
+                        <div
+                          key={parked.id}
+                          style={{
+                            border: '1px solid var(--border)',
+                            borderRadius: 8,
+                            padding: 12,
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            background: '#fafbfc'
+                          }}
+                        >
+                          <div>
+                            <b style={{ fontSize: 13, color: '#0f172a' }}>{parked.clientName}</b>
+                            <span
+                              style={{
+                                marginLeft: 6,
+                                fontSize: 10,
+                                fontWeight: 800,
+                                color: 'var(--brand-700)',
+                                background: 'var(--brand-accent)',
+                                border: '1px solid var(--brand-200, #e2e8f0)',
+                                borderRadius: 6,
+                                padding: '1px 6px'
+                              }}
+                            >
+                              {parked.id}
+                            </span>
+                            <span className="muted small" style={{ display: 'block', fontSize: 11 }}>
+                              {parked.items.length} productos · Creado a las {parked.createdAt}
+                            </span>
+                            <b style={{ fontSize: 12, color: 'var(--brand-700)' }}>
+                              {formatUSD(parked.totalUSD)} · {formatVES(convertUSDtoVES(parked.totalUSD, activeRate))}
+                            </b>
+                          </div>
 
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <Button
-                        variant="primary"
-                        onClick={() => handleRestoreParkedInvoice(parked)}
-                        style={{ fontSize: 11, padding: '6px 12px' }}
-                      >
-                        Enganchar / Cobrar
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="danger"
-                        className="btn-icon danger-subtle"
-                        onClick={() => setParkedInvoices(parkedInvoices.filter(p => p.id !== parked.id))}
-                        aria-label={`Eliminar venta pendiente de ${parked.clientName}`}
-                      >
-                        <Trash2 size={16} />
-                      </Button>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <Button
+                              variant="primary"
+                              onClick={() => handleRestoreParkedInvoice(parked)}
+                              style={{ fontSize: 11, padding: '6px 12px' }}
+                            >
+                              Enganchar / Cobrar
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="danger"
+                              className="btn-icon danger-subtle"
+                              onClick={() => setParkedInvoices(parkedInvoices.filter(p => p.id !== parked.id))}
+                              aria-label={`Eliminar venta pendiente de ${parked.clientName}`}
+                            >
+                              <Trash2 size={16} />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                ))}
-              </div>
+                  );
+                })()}
+              </>
             )}
           </div>
         </div>
