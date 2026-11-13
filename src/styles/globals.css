@@ -5506,6 +5506,26 @@ button:active:not(:disabled) {
 /* --- Cobranza paso 2: sin el aviso «Sistema Multi-Abonos» en móvil --- */
 @media (max-width: 640px) {
   .pos-root [style*="max-width: 960px"] [style*="dashed #cbd5e1"] { display: none !important; }
+
+  /* «AL CONTADO» y «CRÉDITO (CxC)» en la misma línea, pequeños y ajustados */
+  .pos-root div[style*="grid-template-columns: 1fr 1fr"]:has(> .pos-paymode-btn) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+  .pos-root .pos-paymode-btn {
+    padding: 6px 4px !important;
+    font-size: 10px !important;
+    border-radius: 9px !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* --- Cobranza paso 2: tramo extra <=360px --- */
+@media (max-width: 360px) {
+  .pos-root .pos-paymode-btn { padding: 5px 3px !important; font-size: 9.5px !important; }
 }
 
 
