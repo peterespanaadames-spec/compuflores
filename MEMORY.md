@@ -34,6 +34,7 @@
 
 ## Pendiente
 - Pruebas integrales en 320/360/390/430/768 px + escritorio (bloqueadas: sesión expirada sin credenciales de prueba).
+- 2026-11-13 (commit 9b51576): Ambos repos sincronizados en el mismo SHA. Nota: los cambios del 12/11 (sesión única/iframe, optimización API, unificación móvil 767px) se habían subido a `frenyer` en 4 commits en inglés desde otra sesión sin commit local; se realineó `main` sobre `frenyer`, se limpiaron marcadores de plantilla `<TOOL>` de `.env.example` y `origin` (compuflores) se actualizó con force-with-lease. rsc actualizado a 4.1.5 (`.rsc.json`/`.gitignore` de harness commiteados aparte). Fallas intermitentes de DNS (`Could not resolve host: github.com`) al empujar: reintentar tras verificar `Resolve-DnsName github.com`.
 - 2026-11-10 (commits d5ce122..9f5e6b4): Adaptación móvil completada en Kárdex (`mov-*` + `MobilePagination`), Producto (`MobileFormSection`), Proveedor/CxP (1 columna ≤640px), Reporte de Ventas y PyG (`MobileEmptyState`); `MobileDataList` descartado por redundancia con fichas CSS.
 - 2026-11-12: `InactivityLock` seguro para `window.fetch` (`setInactivityLocked` en `authenticatedFetch`); login por contraseña y sesión única automática reparados para iframes (`SameSite=None; Secure; Partitioned` + `X-Frenyer-Session` opaco).
 - 2026-11-12: Móvil Ventas POS (`.pos-*`), Nueva Cotización (`.cot-create-*`, 6 productos iniciales) y revisión integral del panel (`globals.css`, `Customers`, `NewPurchaseModal`, `Config`, `Inventory`) unificados bajo `@media (max-width: 767px)` y `≤360px`. Escritorio intacto.
