@@ -2929,8 +2929,6 @@ button:active:not(:disabled) {
    ===================================================================== */
 /* En escritorio solo se ven las etiquetas largas del tipo de comprobante */
 .rep-short { display: none; }
-/* Título del Reporte Diario: en escritorio se ve el nombre completo */
-.rep-diario-short { display: none; }
 /* Punto de estado junto al monto: solo en móvil (la columna Estado se retira) */
 .rep-dot {
   display: none;
@@ -3123,9 +3121,8 @@ button:active:not(:disabled) {
   /* Encabezados abreviados: Registrar Movimiento y Sincronizar, Exportar solo icono */
   .rep-inv-root .rep-long { display: none !important; }
   .rep-inv-root .rep-short { display: inline !important; }
-  /* Título de la página en móvil: «Movimientos» en una línea horizontal */
-  .rep-inv-root .rep-diario-long { display: none !important; }
-  .rep-inv-root .rep-diario-short { display: inline !important; font-weight: 800; }
+  /* Sin título en la cabecera móvil: solo los botones, en una línea horizontal */
+  .rep-inv-root .page-head h1 { display: none !important; }
 
   /* KPI: 2 tarjetas por fila, sin subtítulos */
   .rep-inv-root .grid-4 {

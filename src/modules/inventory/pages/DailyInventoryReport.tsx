@@ -788,10 +788,7 @@ export function DailyInventoryReportPage() {
       {/* Cabecera Estándar Frenyer */}
       <div className="page-head">
         <div>
-          <h1>
-            <span className="rep-diario-long">Reporte Diario de Inventario</span>
-            <span className="rep-diario-short">Movimientos</span>
-          </h1>
+          <h1>Reporte Diario de Inventario</h1>
           <p>
             Movimientos consolidados, rotación y valorización bimonetaria a tasa oficial BCV vigente ({activeRate.toFixed(2)} VES/USD).
           </p>
