@@ -396,7 +396,7 @@ export function NewPurchaseModal({ isOpen, onClose, onSuccess }: NewPurchaseModa
   const selectedBank = bankAccounts.find(b => b.id === selectedBankId);
 
   return (
-    <div style={{
+    <div className="npm-overlay" style={{
       position: 'fixed',
       inset: 0,
       background: 'rgba(15, 23, 42, 0.65)',
@@ -407,7 +407,7 @@ export function NewPurchaseModal({ isOpen, onClose, onSuccess }: NewPurchaseModa
       padding: 16,
       backdropFilter: 'blur(4px)'
     }}>
-      <div style={{
+      <div className="npm-dialog" style={{
         width: 'min(1150px, 98vw)',
         maxHeight: '94vh',
         background: '#fff',
@@ -419,7 +419,7 @@ export function NewPurchaseModal({ isOpen, onClose, onSuccess }: NewPurchaseModa
         border: '1px solid rgba(226, 232, 240, 0.8)'
       }}>
         {/* HEADER BRAND (Morado del Sistema) */}
-        <div style={{
+        <div className="npm-header" style={{
           background: 'linear-gradient(135deg, #111827 0%, #2D2E32 55%, #2D2E32 100%)',
           padding: '16px 24px',
           display: 'flex',
@@ -486,7 +486,7 @@ export function NewPurchaseModal({ isOpen, onClose, onSuccess }: NewPurchaseModa
         </div>
 
         {/* STEPPER BAR (Pasos 1 a 4) */}
-        <div style={{
+        <div className="npm-stepper" style={{
           background: '#f8fafc',
           borderBottom: '1px solid var(--border)',
           padding: '12px 24px',
@@ -540,7 +540,7 @@ export function NewPurchaseModal({ isOpen, onClose, onSuccess }: NewPurchaseModa
         </div>
 
         {/* CONTENEDOR PRINCIPAL CON SCROLL */}
-        <div style={{ flex: 1, height: '600px', overflowY: 'auto', padding: '24px 28px' }}>
+        <div className="npm-body" style={{ flex: 1, height: '600px', overflowY: 'auto', padding: '24px 28px' }}>
           {errorMessage && (
             <div style={{
               background: '#fee2e2',
@@ -727,7 +727,7 @@ export function NewPurchaseModal({ isOpen, onClose, onSuccess }: NewPurchaseModa
           {/* PASO 2: CATÁLOGO Y CESTA (Imagen 2)                                      */}
           {/* ========================================================================= */}
           {step === 2 && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 20 }}>
+            <div className="npm-step2-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 20 }}>
               {/* COLUMNA IZQUIERDA: CATÁLOGO */}
               <Card style={{ padding: 18, borderRadius: 16, background: '#fff', border: '1px solid #e2e8f0' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -793,7 +793,7 @@ export function NewPurchaseModal({ isOpen, onClose, onSuccess }: NewPurchaseModa
                 </div>
 
                 {/* GRID DE PRODUCTOS */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, maxHeight: 420, overflowY: 'auto' }}>
+                <div className="npm-products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, maxHeight: 420, overflowY: 'auto' }}>
                   {filteredProducts.map(p => (
                     <div
                       key={p.sku}
@@ -1315,7 +1315,7 @@ export function NewPurchaseModal({ isOpen, onClose, onSuccess }: NewPurchaseModa
               </Card>
 
               {/* BANNER TOTAL FACTURA (Degradado morado) */}
-              <div style={{
+              <div className="npm-total-banner" style={{
                 background: 'linear-gradient(135deg, #111827 0%, #2D2E32 100%)',
                 borderRadius: 16,
                 padding: '20px 24px',
@@ -1347,7 +1347,7 @@ export function NewPurchaseModal({ isOpen, onClose, onSuccess }: NewPurchaseModa
         </div>
 
         {/* FOOTER ACCIONES INFERIORES */}
-        <div style={{
+        <div className="npm-footer" style={{
           background: '#fff',
           borderTop: '1px solid var(--border)',
           padding: '16px 24px',

@@ -352,6 +352,26 @@ export function QuotesPage() {
     return matchesSearch && matchesCategory;
   });
 
+  // Vista móvil (≤767 px): mostrar máximo 6 productos iniciales (3 filas de 2) si no hay búsqueda activa
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+  );
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    const handleViewportChange = (event: MediaQueryListEvent) => setIsMobileViewport(event.matches);
+    mediaQuery.addEventListener('change', handleViewportChange);
+    return () => mediaQuery.removeEventListener('change', handleViewportChange);
+  }, []);
+  const visibleProducts = useMemo(() => {
+    if (!isMobileViewport || catalogSearch.trim() !== '') {
+      return filteredProducts;
+    }
+    const availableFirst = [...filteredProducts].sort(
+      (a, b) => (b.stock > 0 ? 1 : 0) - (a.stock > 0 ? 1 : 0)
+    );
+    return availableFirst.slice(0, 6);
+  }, [filteredProducts, isMobileViewport, catalogSearch]);
+
   const filteredCustomers = customers.filter(c =>
     !customerSearch.trim()
     || c.name.toLowerCase().includes(customerSearch.toLowerCase())
@@ -1559,8 +1579,9 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
 
       {/* ================= CREATE MODAL (full-screen overlay) ================= */}
       {isCreateOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 1300, display: 'flex', flexDirection: 'column' }}>
+        <div className="cot-create-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 1300, display: 'flex', flexDirection: 'column' }}>
           <div
+            className="cot-create-dialog"
             style={{
               flex: 1,
               maxWidth: 1280,
@@ -1575,27 +1596,30 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
             }}
           >
             {/* Modal header */}
-            <div style={{ background: 'var(--brand-accent)', borderBottom: '1px solid #FDF06F', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div className="cot-create-header" style={{ background: 'var(--brand-accent)', borderBottom: '1px solid #FDF06F', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="cot-create-header-main" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <button
                   type="button"
+                  className="cot-create-back-btn"
                   onClick={() => { setIsCreateOpen(false); resetDraft(); }}
                   title="Volver a la pantalla anterior"
                   style={{ background: 'transparent', border: 'none', color: '#111827', cursor: 'pointer', padding: 6, borderRadius: 8, display: 'grid', placeItems: 'center' }}
                 >
                   <ArrowLeft size={18} />
                 </button>
-                <div style={{ width: 36, height: 36, borderRadius: 9, background: '#111827', color: '#fff', display: 'grid', placeItems: 'center' }}>
+                <div className="cot-create-icon" style={{ width: 36, height: 36, borderRadius: 9, background: '#111827', color: '#fff', display: 'grid', placeItems: 'center' }}>
                   <FileText size={18} />
                 </div>
-                <div>
-                  <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#111827' }}>
+                <div className="cot-create-title-wrap">
+                  <h2 className="cot-create-title" style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#111827' }}>
                     {editingQuote ? `Modificar cotización COT-${editingQuote.doc_number}` : 'Nueva cotización'}
                   </h2>
-                  <span style={{ fontSize: 12, color: '#374151' }}>Documento expresado en USD ($)</span>
+                  <span className="cot-create-subtitle" style={{ fontSize: 12, color: '#374151' }}>Documento expresado en USD ($)</span>
                 </div>
               </div>
               <button
+                type="button"
+                className="cot-create-close-btn"
                 onClick={() => { setIsCreateOpen(false); resetDraft(); }}
                 style={{ background: 'transparent', border: 'none', color: '#111827', cursor: 'pointer', padding: 6 }}
               >
@@ -1604,19 +1628,19 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
             </div>
 
             {/* Modal body */}
-            <div style={{ flex: 1, overflow: 'auto', padding: 24, display: 'grid', gridTemplateColumns: '1fr 400px', gap: 20, alignItems: 'start', maxWidth: 1500, margin: '0 auto', width: '100%' }}>
+            <div className="cot-create-body" style={{ flex: 1, overflow: 'auto', padding: 24, display: 'grid', gridTemplateColumns: '1fr 400px', gap: 20, alignItems: 'start', maxWidth: 1500, margin: '0 auto', width: '100%' }}>
               {/* LEFT: Customer + product board */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="cot-create-left" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {/* Customer selector */}
-                <Card style={{ padding: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, color: '#1e293b', fontWeight: 700, fontSize: 13 }}>
+                <Card className="cot-create-card cot-create-customer-card" style={{ padding: 16 }}>
+                  <div className="cot-create-section-title" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, color: '#1e293b', fontWeight: 700, fontSize: 13 }}>
                     <User size={15} /> Cliente
                   </div>
                   <div style={{ position: 'relative' }}>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <div style={{ position: 'relative', flex: 1 }}>
+                    <div className="cot-create-customer-row" style={{ display: 'flex', gap: 8 }}>
+                      <div className="cot-create-customer-input-wrap" style={{ position: 'relative', flex: 1 }}>
                         <input
-                          className="input"
+                          className="input cot-create-customer-input"
                           placeholder="Buscar cliente por nombre o documento..."
                           value={customerSearch}
                           onFocus={() => setIsCustomerDropdownOpen(true)}
@@ -1625,6 +1649,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                         />
                         {draftCustomerId && (
                           <button
+                            type="button"
                             onClick={() => { setDraftCustomerId(''); setCustomerSearch(''); }}
                             style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 0 }}
                           >
@@ -1634,6 +1659,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                       </div>
                       <Button
                         variant="accent"
+                        className="cot-create-new-client-btn"
                         onClick={handleOpenNewCustomerModal}
                         style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', color: '#111827' }}
                       >
@@ -1646,7 +1672,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                           style={{ position: 'fixed', inset: 0, zIndex: 45 }}
                           onClick={() => setIsCustomerDropdownOpen(false)}
                         />
-                        <div style={{ position: 'absolute', top: 44, left: 0, right: 0, background: '#fff', border: '1px solid var(--border)', borderRadius: 10, boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 50, maxHeight: 220, overflowY: 'auto' }}>
+                        <div className="cot-create-customer-dropdown" style={{ position: 'absolute', top: 44, left: 0, right: 0, background: '#fff', border: '1px solid var(--border)', borderRadius: 10, boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 50, maxHeight: 220, overflowY: 'auto' }}>
                           {filteredCustomers.length === 0 ? (
                             <div style={{ padding: 14, fontSize: 12, color: '#94a3b8', textAlign: 'center' }}>
                               Sin resultados. Registra un nuevo cliente.
@@ -1669,7 +1695,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                     )}
                   </div>
                   {draftCustomerId && (
-                    <div style={{ marginTop: 10, padding: '8px 12px', background: 'var(--brand-50)', borderRadius: 8, fontSize: 12, color: 'var(--brand-700)', fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="cot-create-selected-client" style={{ marginTop: 10, padding: '8px 12px', background: 'var(--brand-50)', borderRadius: 8, fontSize: 12, color: 'var(--brand-700)', fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span>Cliente seleccionado: {customers.find(c => c.id === draftCustomerId)?.name}</span>
                       <button
                         type="button"
@@ -1685,7 +1711,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                     </div>
                   )}
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 14 }}>
+                  <div className="cot-create-meta-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 14 }}>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 6 }}>
                         <Calendar size={12} style={{ marginRight: 4 }} /> Vigencia (días)
@@ -1693,7 +1719,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                       <input
                         type="number"
                         min={1}
-                        className="input"
+                        className="input cot-create-meta-input"
                         value={validityDays}
                         onChange={(e) => setValidityDays(parseInt(e.target.value) || 7)}
                         style={{ height: 38 }}
@@ -1707,7 +1733,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                         type="number"
                         min={0}
                         max={100}
-                        className="input"
+                        className="input cot-create-meta-input"
                         value={discountPercent}
                         onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)}
                         style={{ height: 38 }}
@@ -1715,10 +1741,10 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                     </div>
                   </div>
 
-                  <div style={{ marginTop: 12 }}>
+                  <div className="cot-create-notes-wrap" style={{ marginTop: 12 }}>
                     <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 6 }}>Notas / observaciones</label>
                     <textarea
-                      className="input"
+                      className="input cot-create-notes-input"
                       rows={2}
                       placeholder="Condiciones de pago, validez, entrega..."
                       value={notes}
@@ -1727,7 +1753,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                     />
                   </div>
 
-                  <div style={{ display: 'flex', gap: 16, marginTop: 12, fontSize: 12, color: '#64748b' }}>
+                  <div className="cot-create-tax-checks" style={{ display: 'flex', gap: 16, marginTop: 12, fontSize: 12, color: '#64748b' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
                       <input type="checkbox" checked={isTaxSubject} onChange={(e) => setIsTaxSubject(e.target.checked)} />
                       Sujeto a IVA (16%)
@@ -1740,15 +1766,15 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                 </Card>
 
                 {/* Product board */}
-                <Card style={{ padding: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, color: '#1e293b', fontWeight: 700, fontSize: 13 }}>
+                <Card className="cot-create-card cot-create-board-card" style={{ padding: 16 }}>
+                  <div className="cot-create-section-title" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, color: '#1e293b', fontWeight: 700, fontSize: 13 }}>
                     <ShoppingCart size={15} /> Tablero de productos
                   </div>
-                  <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: '#f8fafc', padding: '0 12px', borderRadius: 9, border: '1px solid var(--border)' }}>
+                  <div className="cot-create-search-row" style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                    <div className="cot-create-search-box" style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: '#f8fafc', padding: '0 12px', borderRadius: 9, border: '1px solid var(--border)' }}>
                       <Search size={15} style={{ color: '#94a3b8' }} />
                       <input
-                        className="input"
+                        className="input cot-create-search-input"
                         placeholder="Buscar por SKU o nombre..."
                         value={catalogSearch}
                         onChange={(e) => setCatalogSearch(e.target.value)}
@@ -1756,10 +1782,12 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                       />
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 8, marginBottom: 10 }}>
+                  <div className="cot-create-cats-scroll" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 8, marginBottom: 10 }}>
                     {categories.map(cat => (
                       <button
                         key={cat}
+                        type="button"
+                        className="cot-create-cat-pill"
                         onClick={() => setSelectedCategory(cat)}
                         style={{
                           padding: '5px 12px', borderRadius: 20, border: selectedCategory === cat ? '1px solid var(--brand-500)' : '1px solid var(--border)',
@@ -1772,10 +1800,12 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                       </button>
                     ))}
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
-                    {filteredProducts.map(p => (
+                  <div className="cot-create-products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+                    {visibleProducts.map(p => (
                       <button
                         key={p.sku}
+                        type="button"
+                        className="cot-create-product-card"
                         onClick={() => addProductToDraft(p)}
                         disabled={p.stock <= 0}
                         style={{
@@ -1784,22 +1814,25 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                           textAlign: 'left', opacity: p.stock <= 0 ? 0.55 : 1, transition: 'all 0.12s ease'
                         }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8' }}>{p.sku}</span>
-                          <span style={{
-                            fontSize: 10, fontWeight: 700,
-                            color: p.stock <= 0 ? '#dc2626' : p.stock <= 5 ? '#d97706' : '#15803D',
-                            background: p.stock <= 0 ? '#fee2e2' : p.stock <= 5 ? '#fef3c7' : '#ecfdf5',
-                            padding: '2px 6px', borderRadius: 6
-                          }}>
+                        <div className="cot-create-product-top" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <span className="cot-create-product-sku" style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8' }}>{p.sku}</span>
+                          <span
+                            className="cot-create-product-stock"
+                            style={{
+                              fontSize: 10, fontWeight: 700,
+                              color: p.stock <= 0 ? '#dc2626' : p.stock <= 5 ? '#d97706' : '#15803D',
+                              background: p.stock <= 0 ? '#fee2e2' : p.stock <= 5 ? '#fef3c7' : '#ecfdf5',
+                              padding: '2px 6px', borderRadius: 6
+                            }}
+                          >
                             {p.stock <= 0 ? 'SIN STOCK' : `${p.stock} disp.`}
                           </span>
                         </div>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: '#1e293b', lineHeight: 1.3 }}>{p.name}</div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>${p.priceUSD.toFixed(2)}</div>
+                        <div className="cot-create-product-name" style={{ fontSize: 12, fontWeight: 700, color: '#1e293b', lineHeight: 1.3 }}>{p.name}</div>
+                        <div className="cot-create-product-price" style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>${p.priceUSD.toFixed(2)}</div>
                       </button>
                     ))}
-                    {filteredProducts.length === 0 && (
+                    {visibleProducts.length === 0 && (
                       <div style={{ gridColumn: '1 / -1', padding: 24, textAlign: 'center', color: '#94a3b8', fontSize: 12 }}>
                         Sin productos para este filtro.
                       </div>
@@ -1809,40 +1842,41 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
               </div>
 
               {/* RIGHT: Detail table */}
-              <div style={{ position: 'sticky', top: 16 }}>
-                <Card style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
+              <div className="cot-create-right" style={{ position: 'sticky', top: 16 }}>
+                <Card className="cot-create-card cot-create-detail-card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div className="cot-create-detail-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
                     <b style={{ fontSize: 13, color: '#1e293b' }}>Detalle de la cotización ({draftItems.length})</b>
                     {draftItems.length > 0 && (
-                      <button onClick={() => setDraftItems([])} style={{ background: 'transparent', border: 'none', color: '#DC2626', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                      <button type="button" className="cot-create-clear-btn" onClick={() => setDraftItems([])} style={{ background: 'transparent', border: 'none', color: '#DC2626', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
                         Limpiar
                       </button>
                     )}
                   </div>
 
                   {draftItems.length === 0 ? (
-                    <div style={{ padding: '28px 0', textAlign: 'center', color: '#94a3b8' }}>
+                    <div className="cot-create-detail-empty" style={{ padding: '28px 0', textAlign: 'center', color: '#94a3b8' }}>
                       <ShoppingCart size={30} strokeWidth={1.5} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
                       <div style={{ fontSize: 12 }}>Selecciona productos del tablero<br />para cotizarlos.</div>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 380, overflowY: 'auto' }}>
+                    <div className="cot-create-items-list" style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 380, overflowY: 'auto' }}>
                       {draftItems.map(it => (
-                        <div key={it.sku} style={{ border: '1px solid #f1f5f9', borderRadius: 9, padding: '10px 12px', background: '#fafbfc', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                        <div key={it.sku} className="cot-create-item" style={{ border: '1px solid #f1f5f9', borderRadius: 9, padding: '10px 12px', background: '#fafbfc', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <div className="cot-create-item-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 12, fontWeight: 700, color: '#1e293b' }}>{it.name}</div>
-                              <span style={{ fontSize: 10, color: '#94a3b8' }}>{it.sku}</span>
+                              <div className="cot-create-item-name" style={{ fontSize: 12, fontWeight: 700, color: '#1e293b' }}>{it.name}</div>
+                              <span className="cot-create-item-sku" style={{ fontSize: 10, color: '#94a3b8' }}>{it.sku}</span>
                             </div>
-                            <button onClick={() => removeDraftItem(it.sku)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 2 }}>
+                            <button type="button" className="cot-create-item-remove" title="Quitar producto" onClick={() => removeDraftItem(it.sku)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 2 }}>
                               <Trash2 size={14} />
                             </button>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 7, background: '#fff', overflow: 'hidden' }}>
-                              <button type="button" onClick={() => updateDraftQuantity(it.sku, -1)} style={{ width: 26, height: 26, background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 700, color: '#64748b' }}>-</button>
+                          <div className="cot-create-item-controls" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div className="cot-create-stepper" style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 7, background: '#fff', overflow: 'hidden' }}>
+                              <button type="button" className="cot-create-stepper-btn" onClick={() => updateDraftQuantity(it.sku, -1)} style={{ width: 26, height: 26, background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 700, color: '#64748b' }}>-</button>
                               <input
                                 type="number"
+                                className="cot-create-stepper-input"
                                 min={isDecimalUnit(it.unit) ? '0.01' : '1'}
                                 max={it.stock}
                                 step={isDecimalUnit(it.unit) ? '0.01' : '1'}
@@ -1871,12 +1905,13 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                                 }}
                                 title={`Stock disponible: ${it.stock}. Puedes escribir la cantidad deseada.`}
                               />
-                              <button type="button" onClick={() => updateDraftQuantity(it.sku, 1)} style={{ width: 26, height: 26, background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 700, color: '#64748b' }}>+</button>
+                              <button type="button" className="cot-create-stepper-btn" onClick={() => updateDraftQuantity(it.sku, 1)} style={{ width: 26, height: 26, background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 700, color: '#64748b' }}>+</button>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1 }}>
+                            <div className="cot-create-price-wrap" style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1 }}>
                               <span style={{ fontSize: 11, color: '#64748b' }}>$</span>
                               <input
                                 type="number"
+                                className="cot-create-price-input"
                                 min={0}
                                 step={0.01}
                                 value={it.unitPriceUSD}
@@ -1884,7 +1919,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                                 style={{ width: '100%', height: 30, border: '1px solid var(--border)', borderRadius: 7, padding: '0 8px', fontSize: 12, fontWeight: 600 }}
                               />
                             </div>
-                            <div style={{ textAlign: 'right', minWidth: 72 }}>
+                            <div className="cot-create-item-subtotal" style={{ textAlign: 'right', minWidth: 72 }}>
                               <b style={{ fontSize: 12, color: '#0f172a' }}>${(it.unitPriceUSD * it.quantity).toFixed(2)}</b>
                             </div>
                           </div>
@@ -1894,7 +1929,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                   )}
 
                   {draftItems.length > 0 && (
-                    <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12 }}>
+                    <div className="cot-create-summary" style={{ borderTop: '1px solid var(--border)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
                         <span>Subtotal</span>
                         <span style={{ fontWeight: 600, color: '#0f172a' }}>{formatUSD(rawSubtotalUSD, '$ ')}</span>
@@ -1917,14 +1952,14 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                           <span style={{ fontWeight: 600, color: '#0f172a' }}>{formatUSD(igtfAmountUSD, '$ ')}</span>
                         </div>
                       )}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: '1px dashed var(--border)', paddingTop: 8, marginTop: 4 }}>
+                      <div className="cot-create-total-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: '1px dashed var(--border)', paddingTop: 8, marginTop: 4 }}>
                         <span style={{ fontWeight: 800, color: '#1e293b' }}>TOTAL</span>
                         <div style={{ textAlign: 'right' }}>
-                          <b style={{ fontSize: 18, color: 'var(--brand-700)', display: 'block' }}>{formatUSD(totalUSD, '$ ')}</b>
-                          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{formatVES(totalVES)}</span>
+                          <b className="cot-create-total-usd" style={{ fontSize: 18, color: 'var(--brand-700)', display: 'block' }}>{formatUSD(totalUSD, '$ ')}</b>
+                          <span className="cot-create-total-ves" style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{formatVES(totalVES)}</span>
                         </div>
                       </div>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#475569', cursor: 'pointer', margin: '8px 0 2px' }}>
+                      <label className="cot-create-autogen-label" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#475569', cursor: 'pointer', margin: '8px 0 2px' }}>
                         <input
                           type="checkbox"
                           checked={autoGenerateFile}
@@ -1934,6 +1969,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                       </label>
                       <Button
                         variant="primary"
+                        className="cot-create-submit-btn"
                         onClick={handleCotizar}
                         disabled={isSubmitting}
                         style={{ width: '100%', height: 44, fontSize: 14, fontWeight: 700, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 6 }}
@@ -1951,6 +1987,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
           {/* ================= MODAL: NUEVO CLIENTE (idéntico al módulo Clientes) ================= */}
           {isNewCustomerOpen && (
             <div
+              className="cot-submodal-overlay"
               style={{
                 position: 'fixed',
                 top: 0,
@@ -1966,7 +2003,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
               }}
             >
               <div
-                className="card"
+                className="card cot-submodal-card"
                 style={{
                   width: '100%',
                   maxWidth: 480,
@@ -1978,6 +2015,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
               >
                 {/* Modal Header con gradiente violeta */}
                 <div
+                  className="cot-submodal-header"
                   style={{
                     background: 'var(--brand-accent)',
                     color: '#111827',
@@ -2004,7 +2042,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                 </div>
 
                 {/* Formulario idéntico a imagen y módulo Clientes */}
-                <form onSubmit={handleSaveNewCustomer} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <form className="cot-submodal-form" onSubmit={handleSaveNewCustomer} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <div className="field">
                       <label style={{ fontSize: 11, fontWeight: 700, color: '#334155', textTransform: 'uppercase', marginBottom: 4 }}>
@@ -2117,7 +2155,7 @@ _Válida por ${docData.validityDays || 7} días. Cotizado con ${getBusinessProfi
                     />
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, borderTop: '1px solid #f1f5f9', paddingTop: 14, marginTop: 4 }}>
+                  <div className="cot-submodal-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, borderTop: '1px solid #f1f5f9', paddingTop: 14, marginTop: 4 }}>
                     <button
                       type="button"
                       onClick={() => setIsNewCustomerOpen(false)}

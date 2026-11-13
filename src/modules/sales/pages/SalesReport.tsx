@@ -177,7 +177,7 @@ export const SalesReportPage = () => {
 
       // 6. Consultar pedidos web desde /api/orders (para incluir pedidos web que aún no se hayan facturado en sales)
       try {
-        const ordersRes = await fetch('/api/orders');
+        const ordersRes = await authenticatedFetch('/api/orders');
         if (ordersRes.ok) {
           const json = await ordersRes.json();
           if (json.success && Array.isArray(json.data)) {

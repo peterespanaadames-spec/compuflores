@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { formatUSD, formatVES } from '../../../lib/currency';
 import { lookupCedula, parseCedulaDoc, useCedulaAutofill } from '../../../lib/cedulaLookup';
+import { withSessionInit } from '../../../lib/supabase/api';
 
 interface CustomerPortalOrderItem {
   sku?: string;
@@ -235,7 +236,7 @@ export function CustomerPortal({
     setIsLoadingMeta(true);
     setMetaError('');
     try {
-      const res = await fetch('/api/customer/portal?section=profile', { credentials: 'include' });
+      const res = await fetch('/api/customer/portal?section=profile', withSessionInit());
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.success) {
         setMetaError(json?.error || 'No se pudo cargar tu cuenta de cliente.');
@@ -266,7 +267,7 @@ export function CustomerPortal({
       setSectionLoading(prev => ({ ...prev, [section]: true }));
       setSectionError(prev => ({ ...prev, [section]: '' }));
       try {
-        const res = await fetch(`/api/customer/portal?section=${section}`, { credentials: 'include' });
+        const res = await fetch(`/api/customer/portal?section=${section}`, withSessionInit());
         const json = await res.json().catch(() => null);
         if (!res.ok || !json?.success) {
           setSectionError(prev => ({ ...prev, [section]: json?.error || 'No se pudieron cargar tus datos.' }));
@@ -309,18 +310,20 @@ export function CustomerPortal({
     async (item: CustomerPortalWishlistItem) => {
       if (!item.product_id) return;
       try {
-        const res = await fetch('/api/customer/wishlist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            product_id: item.product_id,
-            sku: item.sku,
-            name: item.name,
-            price_usd: item.price_usd,
-            image_url: item.image_url
+        const res = await fetch(
+          '/api/customer/wishlist',
+          withSessionInit({
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              product_id: item.product_id,
+              sku: item.sku,
+              name: item.name,
+              price_usd: item.price_usd,
+              image_url: item.image_url
+            })
           })
-        });
+        );
         const json = await res.json().catch(() => null);
         if (res.ok && json?.success) {
           setWishlist(json.data.wishlist || []);
@@ -337,16 +340,18 @@ export function CustomerPortal({
     setIsSavingProfile(true);
     setProfileSuccessMsg('');
     try {
-      const res = await fetch('/api/customer/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          full_name: editFullName,
-          document_id: editDocId,
-          phone: editPhone
+      const res = await fetch(
+        '/api/customer/profile',
+        withSessionInit({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            full_name: editFullName,
+            document_id: editDocId,
+            phone: editPhone
+          })
         })
-      });
+      );
       const json = await res.json().catch(() => null);
       if (res.ok && json?.success) {
         setCustomer(prev =>
@@ -377,12 +382,14 @@ export function CustomerPortal({
     if (!newAddressText.trim()) return;
     setIsSavingAddress(true);
     try {
-      const res = await fetch('/api/customer/addresses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ action: 'add', address: newAddressText.trim() })
-      });
+      const res = await fetch(
+        '/api/customer/addresses',
+        withSessionInit({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'add', address: newAddressText.trim() })
+        })
+      );
       const json = await res.json().catch(() => null);
       if (res.ok && json?.success) {
         setCustomer(prev =>
@@ -405,12 +412,14 @@ export function CustomerPortal({
 
   const handleRemoveAddress = async (addrToRemove: string) => {
     try {
-      const res = await fetch('/api/customer/addresses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ action: 'remove', address: addrToRemove })
-      });
+      const res = await fetch(
+        '/api/customer/addresses',
+        withSessionInit({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'remove', address: addrToRemove })
+        })
+      );
       const json = await res.json().catch(() => null);
       if (res.ok && json?.success) {
         setCustomer(prev =>
@@ -441,12 +450,14 @@ export function CustomerPortal({
     }
     setIsSavingPassword(true);
     try {
-      const res = await fetch('/api/customer/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ password: newPassword })
-      });
+      const res = await fetch(
+        '/api/customer/change-password',
+        withSessionInit({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: newPassword })
+        })
+      );
       const json = await res.json().catch(() => null);
       if (res.ok && json?.success) {
         setPasswordSuccess('¡Contraseña actualizada con éxito!');

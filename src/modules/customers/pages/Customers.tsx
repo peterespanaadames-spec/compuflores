@@ -444,7 +444,7 @@ export function Customers() {
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         
         {/* Toolbar Header */}
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, width: 1000, maxWidth: '100%' }}>
+        <div className="crm-toolbar-head" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, width: 1000, maxWidth: '100%' }}>
           
           {/* Search Bar */}
           <div style={{ flex: 1, minWidth: 0, maxWidth: 440 }}>
@@ -632,6 +632,7 @@ export function Customers() {
       {/* MODAL: NUEVO CLIENTE / EDITAR CLIENTE */}
       {isModalOpen && (
         <div
+          className="crm-form-overlay"
           style={{
             position: 'fixed',
             top: 0,
@@ -647,7 +648,7 @@ export function Customers() {
           }}
         >
           <div
-            className="card"
+            className="card crm-form-modal"
             style={{
               width: '100%',
               maxWidth: 600,
@@ -659,6 +660,7 @@ export function Customers() {
           >
             {/* Modal Header */}
             <div
+              className="crm-form-header"
               style={{
                 background: 'var(--brand-accent)',
                 color: '#111827',
@@ -684,9 +686,9 @@ export function Customers() {
             </div>
 
             {/* Modal Form Fields */}
-            <form onSubmit={handleSaveCustomer} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <form className="crm-form-body" onSubmit={handleSaveCustomer} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="crm-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div className="field">
                   <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', textTransform: 'uppercase', marginBottom: 8, display: 'block' }}>
                     TIPO IDENTIFICACIÓN *
@@ -747,7 +749,7 @@ export function Customers() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="crm-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div className="field">
                   <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', textTransform: 'uppercase', marginBottom: 8, display: 'block' }}>
                     TELÉFONO / WHATSAPP
@@ -805,9 +807,10 @@ export function Customers() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, borderTop: '1px solid #f1f5f9', paddingTop: 14, marginTop: 4 }}>
+              <div className="crm-form-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, borderTop: '1px solid #f1f5f9', paddingTop: 14, marginTop: 4 }}>
                 <button
                   type="button"
+                  className="crm-cancel-btn"
                   onClick={() => setIsModalOpen(false)}
                   style={{
                     width: 100,
@@ -857,6 +860,7 @@ export function Customers() {
       {/* CLIENT DETAILS DRAWER WITH REAL-TIME ORDERS & TOP PRODUCTS */}
       {selectedClient && (
         <div
+          className="crm-detail-overlay"
           style={{
             position: 'fixed',
             top: 0,
@@ -872,6 +876,7 @@ export function Customers() {
           }}
         >
           <div
+            className="crm-detail-card"
             style={{
               width: 980,
               height: 600,
@@ -885,13 +890,13 @@ export function Customers() {
               overflowY: 'auto'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border)', paddingBottom: 14 }}>
+            <div className="crm-detail-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border)', paddingBottom: 14 }}>
               <div>
                 <span className="muted small" style={{ fontWeight: 800 }}>{selectedClient.code || selectedClient.id}</span>
                 <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>{selectedClient.name}</h2>
                 <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--brand-700)' }}>{selectedClient.doc_number}</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className="crm-detail-header-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Button
                   variant="primary"
                   onClick={() => {
@@ -913,7 +918,7 @@ export function Customers() {
             </div>
 
             {/* Details List */}
-            <div style={{ display: 'flex', gap: 16, fontSize: 12, background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
+            <div className="crm-detail-contacts" style={{ display: 'flex', gap: 16, fontSize: 12, background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Phone size={14} style={{ color: '#64748b' }} />
                 <span><b>Teléfono:</b> {selectedClient.phone || 'No registrado'}</span>
@@ -931,7 +936,7 @@ export function Customers() {
             {/* Metrics */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}>
               {/* Row 1: Total Gastado, Producto más Comprado, Ticket Promedio */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+              <div className="crm-detail-kpis" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
                 <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12, background: '#fafbfc' }}>
                   <span className="muted small" style={{ fontSize: 10, fontWeight: 700 }}>TOTAL GASTADO</span>
                   <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', marginTop: 2 }}>
@@ -963,7 +968,7 @@ export function Customers() {
               </div>
 
               {/* Row 2: Fecha de Ultima Compra & Cuenta por Cobrar */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="crm-detail-subkpis" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12, background: '#fafbfc' }}>
                   <span className="muted small" style={{ fontSize: 10, fontWeight: 700 }}>FECHA DE ÚLTIMA COMPRA</span>
                   <div style={{ fontSize: 16, fontWeight: 800, color: '#0f172a', marginTop: 2 }}>
@@ -985,7 +990,7 @@ export function Customers() {
                 <ShoppingBag size={15} style={{ color: 'var(--brand-500)' }} />
                 <span>ÚLTIMAS ÓRDENES ({clientOrders.length})</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, overflowY: 'auto' }}>
+              <div className="crm-detail-orders" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, overflowY: 'auto' }}>
                 {clientOrders.map(ord => (
                   <div key={ord.id} style={{ padding: '8px 10px', background: '#f8fafc', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 11 }}>
                     <div style={{ fontWeight: 700, color: '#0f172a' }}>{ord.doc_number}</div>

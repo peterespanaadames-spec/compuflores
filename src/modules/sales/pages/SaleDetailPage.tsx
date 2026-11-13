@@ -171,7 +171,7 @@ export function SaleDetailPage({ saleId: propSaleId, onBack }: SaleDetailPagePro
       }
 
       // 2. Si no es de sales, consultar /api/orders (pedidos web)
-      const ordersRes = await fetch('/api/orders');
+      const ordersRes = await authenticatedFetch('/api/orders');
       if (ordersRes.ok) {
         const json = await ordersRes.json();
         if (json.success && Array.isArray(json.data)) {

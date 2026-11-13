@@ -15,7 +15,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(cors());
+app.set('trust proxy', 1);
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
@@ -273,19 +274,66 @@ const REFRESH_COOKIE = 'frenyer_refresh';
 const SESSION_MAX_AGE_MS = 12 * 60 * 60 * 1000; // 12 horas
 const LOCAL_TOKEN_PREFIX = 'local';
 
-// Cookies de SESIÓN (sin Max-Age): el navegador las elimina al cerrarse,
-// por lo que reabrir el navegador siempre exige iniciar sesión de nuevo.
-function setSessionCookie(res: Response, name: string, value: string): void {
-  res.cookie(name, value, {
-    httpOnly: true,
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/'
-  });
+function isHttpsRequest(req?: Request): boolean {
+  if (process.env.NODE_ENV === 'production') return true;
+  if (!req) return false;
+  const proto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim().toLowerCase();
+  const origin = String(req.headers.origin || '').trim().toLowerCase();
+  const referer = String(req.headers.referer || '').trim().toLowerCase();
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').toLowerCase();
+  const forwarded = String(req.headers.forwarded || '').toLowerCase();
+  return (
+    Boolean(req.secure) ||
+    proto === 'https' ||
+    forwarded.includes('proto=https') ||
+    origin.startsWith('https://') ||
+    referer.startsWith('https://') ||
+    host.includes('.run.app')
+  );
 }
 
-function clearSessionCookie(res: Response, name: string): void {
+function shouldUseCrossSiteCookie(req?: Request): boolean {
+  if (!req) return false;
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').toLowerCase();
+  const secFetchDest = String(req.headers['sec-fetch-dest'] || '').toLowerCase();
+  const secFetchSite = String(req.headers['sec-fetch-site'] || '').toLowerCase();
+  return (
+    host.includes('.run.app') ||
+    secFetchDest === 'iframe' ||
+    secFetchSite === 'cross-site' ||
+    process.env.NODE_ENV !== 'production'
+  );
+}
+
+function getSessionCookieOptions(req?: Request) {
+  const secure = isHttpsRequest(req);
+  if (secure && shouldUseCrossSiteCookie(req)) {
+    return {
+      httpOnly: true,
+      sameSite: 'none' as const,
+      secure: true,
+      partitioned: true,
+      path: '/'
+    };
+  }
+  return {
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    secure,
+    path: '/'
+  };
+}
+
+// Cookies de SESIÓN (sin Max-Age): el navegador las elimina al cerrarse,
+// por lo que reabrir el navegador siempre exige iniciar sesión de nuevo.
+function setSessionCookie(res: Response, name: string, value: string, req?: Request): void {
+  res.cookie(name, value, getSessionCookieOptions(req));
+}
+
+function clearSessionCookie(res: Response, name: string, req?: Request): void {
   res.clearCookie(name, { httpOnly: true, sameSite: 'strict', path: '/' });
+  res.clearCookie(name, { httpOnly: true, sameSite: 'lax', path: '/' });
+  res.clearCookie(name, getSessionCookieOptions(req));
 }
 
 function readCookie(req: Request, name: string): string {
@@ -340,6 +388,86 @@ interface LocalSessionPayload {
   role: string;
   organizationId: string;
   exp: number;
+  jti?: string;
+}
+
+const activeLocalSessionBySub = new Map<string, string>();
+
+interface OpaqueSessionEntry {
+  token: string;
+  refreshToken?: string;
+  userId: string;
+  isLocal: boolean;
+  expiresAt: number;
+}
+
+const opaqueSessions = new Map<string, OpaqueSessionEntry>();
+
+function pruneExpiredOpaqueSessions(): void {
+  if (opaqueSessions.size <= 500) return;
+  const now = Date.now();
+  for (const [sid, entry] of opaqueSessions.entries()) {
+    if (entry.expiresAt <= now) {
+      opaqueSessions.delete(sid);
+    }
+  }
+}
+
+function issueOpaqueSession(
+  token: string,
+  userId: string,
+  refreshToken?: string,
+  isLocal: boolean = false
+): string {
+  pruneExpiredOpaqueSessions();
+  const sid = `sid_${crypto.randomBytes(32).toString('base64url')}`;
+  opaqueSessions.set(sid, {
+    token,
+    refreshToken,
+    userId,
+    isLocal,
+    expiresAt: Date.now() + SESSION_MAX_AGE_MS
+  });
+  return sid;
+}
+
+function findOrIssueOpaqueSession(
+  token: string,
+  userId: string,
+  refreshToken?: string,
+  isLocal: boolean = false
+): string {
+  const now = Date.now();
+  for (const [sid, entry] of opaqueSessions.entries()) {
+    if (entry.token === token && entry.expiresAt > now) {
+      if (refreshToken && !entry.refreshToken) {
+        entry.refreshToken = refreshToken;
+      }
+      return sid;
+    }
+  }
+  return issueOpaqueSession(token, userId, refreshToken, isLocal);
+}
+
+function readOpaqueSessionHeader(req: Request): string {
+  return String(req.header('x-frenyer-session') || '').trim();
+}
+
+function purgeOpaqueSessionsByToken(token: string): void {
+  for (const [sid, entry] of opaqueSessions.entries()) {
+    if (entry.token === token) {
+      opaqueSessions.delete(sid);
+    }
+  }
+}
+
+function purgeOpaqueSessionsByUser(userId: string): void {
+  if (!userId) return;
+  for (const [sid, entry] of opaqueSessions.entries()) {
+    if (entry.userId === userId) {
+      opaqueSessions.delete(sid);
+    }
+  }
 }
 
 function signLocalSession(payload: LocalSessionPayload): string {
@@ -365,6 +493,9 @@ function verifyLocalSessionToken(token: string): LocalSessionPayload | null {
   try {
     const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf-8')) as LocalSessionPayload;
     if (!payload.exp || payload.exp < Date.now()) return null;
+    if (payload.jti && activeLocalSessionBySub.has(payload.sub) && activeLocalSessionBySub.get(payload.sub) !== payload.jti) {
+      return null;
+    }
     return payload;
   } catch {
     return null;
@@ -457,7 +588,8 @@ const authRequiredPrefixes = [
   '/api/customer',
   '/api/business-profile',
   '/api/users',
-  '/api/backup'
+  '/api/backup',
+  '/api/dashboard'
 ];
 
 /**
@@ -502,16 +634,32 @@ function isAdminOnlyApiPath(originalPath: string): boolean {
   return false;
 }
 
-/** Lee el token de sesion desde la cookie httpOnly o la cabecera Authorization. */
+/** Lee el token de sesion desde la cookie httpOnly, Authorization o el identificador opaco X-Frenyer-Session. */
 function readSessionToken(req: Request): string {
   const fromCookie = readCookie(req, SESSION_COOKIE);
   if (fromCookie) return fromCookie;
   const match = (req.header('Authorization') || '').match(/^Bearer\s+(.+)$/i);
-  return match ? match[1].trim() : '';
+  if (match) return match[1].trim();
+  const sid = readOpaqueSessionHeader(req);
+  if (sid) {
+    const entry = opaqueSessions.get(sid);
+    if (entry && entry.expiresAt > Date.now()) {
+      return entry.token;
+    }
+    if (entry) opaqueSessions.delete(sid);
+  }
+  return '';
 }
 
 /** Resuelve el usuario y su membresia de organizacion a partir de un token de Supabase. */
-async function resolveSessionUser(accessToken: string): Promise<{ user: any; role: string; organizationId: string } | null> {
+async function resolveSessionUser(accessToken: string): Promise<{
+  user: any;
+  role: string;
+  organizationId: string;
+  name?: string;
+  permissions?: string[];
+  active?: boolean;
+} | null> {
   const { data: userData, error: userError } = await supabaseServer.auth.getUser(accessToken);
   if (userError || !userData?.user) return null;
 
@@ -519,39 +667,37 @@ async function resolveSessionUser(accessToken: string): Promise<{ user: any; rol
   const internalAdminEmails = ['sharkvenimport@gmail.com', 'fotocopiasfyp@gmail.com'];
   const isInternalAdminEmail = internalAdminEmails.includes(email);
 
-  // 1. Consultar rol en la tabla profiles
-  let profileRole: string | undefined;
-  try {
-    const { data: profileRow } = await supabaseServer
-      .from('profiles')
-      .select('role, full_name')
-      .eq('id', userData.user.id)
-      .maybeSingle();
-    if (profileRow?.role) {
-      profileRole = profileRow.role;
-    }
-  } catch (err) {
-    console.warn('Aviso consultando profile en resolveSessionUser:', err);
-  }
+  // Consultar perfil y membresía en paralelo (ahorra 1 viaje secuencial a Supabase).
+  const [profileQueryResult, membershipQueryResult] = await Promise.all([
+    Promise.resolve(
+      supabaseServer
+        .from('profiles')
+        .select('*')
+        .eq('id', userData.user.id)
+        .maybeSingle()
+    ).catch((err) => {
+      console.warn('Aviso consultando profile en resolveSessionUser:', err);
+      return { data: null };
+    }),
+    Promise.resolve(
+      supabaseServer
+        .from('organization_members')
+        .select('organization_id, role')
+        .eq('user_id', userData.user.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+    ).catch((err) => {
+      console.warn('Aviso consultando organization_members en resolveSessionUser:', err);
+      return { data: null };
+    })
+  ]);
 
-  // 2. Consultar membresia de organizacion si existe
-  let membershipOrgId = '00000000-0000-0000-0000-000000000001';
-  let membershipRole: string | undefined;
-  try {
-    const { data: membership } = await supabaseServer
-      .from('organization_members')
-      .select('organization_id, role')
-      .eq('user_id', userData.user.id)
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    if (membership) {
-      membershipOrgId = membership.organization_id || membershipOrgId;
-      membershipRole = membership.role;
-    }
-  } catch (err) {
-    console.warn('Aviso consultando organization_members en resolveSessionUser:', err);
-  }
+  const profileRow = (profileQueryResult as any)?.data || null;
+  const membership = (membershipQueryResult as any)?.data || null;
+  const profileRole: string | undefined = profileRow?.role;
+  const membershipOrgId: string = membership?.organization_id || '00000000-0000-0000-0000-000000000001';
+  const membershipRole: string | undefined = membership?.role;
 
   // 3. Consultar metadata del usuario en Auth
   const metadataRole = userData.user.user_metadata?.role;
@@ -559,6 +705,10 @@ async function resolveSessionUser(accessToken: string): Promise<{ user: any; rol
   // 4. Consultar lista local de persistencia
   const localUsers = loadPersistedUsers();
   const localMatch = localUsers.find(u => u.email && u.email.toLowerCase() === email);
+
+  if (profileRow?.active === false || localMatch?.active === false) {
+    return null;
+  }
 
   let resolvedRole =
     (profileRole && profileRole !== 'cliente' ? profileRole : undefined) ||
@@ -576,10 +726,28 @@ async function resolveSessionUser(accessToken: string): Promise<{ user: any; rol
     resolvedRole = 'cliente';
   }
 
+  const resolvedName =
+    profileRow?.full_name ||
+    profileRow?.name ||
+    localMatch?.name ||
+    userData.user.user_metadata?.full_name ||
+    userData.user.user_metadata?.name ||
+    '';
+
+  const resolvedPermissions = resolveEffectivePermissions(
+    resolvedRole,
+    Array.isArray(profileRow?.permissions) && profileRow.permissions.length > 0
+      ? profileRow.permissions
+      : localMatch?.permissions
+  );
+
   return {
     user: userData.user,
     role: resolvedRole,
-    organizationId: membershipOrgId
+    organizationId: membershipOrgId,
+    name: resolvedName,
+    permissions: resolvedPermissions,
+    active: true
   };
 }
 
@@ -761,162 +929,193 @@ function fetchBcvDirectText(url: string, timeoutMs = 7000): Promise<string> {
   });
 }
 
+// Caché breve para evitar scraping externo al BCV en cada cambio de pantalla o carga de layout.
+const BCV_CACHE_TTL_MS = 10 * 60_000;
+let bcvExternalCache: any = null;
+let bcvExternalCachedAt = 0;
+let bcvExternalInflight: Promise<any> | null = null;
+
 // ---------------------------------------------------------------------------
 // 1. ENDPOINT: /api/bcv/rates
 // ---------------------------------------------------------------------------
 app.get('/api/bcv/rates', async (req, res) => {
-  const timeInfo = getCaracasTimeInfo();
-
   const forceRefresh = req.query.refresh === 'true';
 
-  let usdRate = 0;
-  let eurRate = 0;
-  let valueDate = timeInfo.todayCaracasStr;
-  let source: 'BCV_DIRECT' | 'DOLAR_API_FALLBACK' | 'MANUAL' = 'BCV_DIRECT';
-  let sourceDetails = 'ExtracciÃ³n directa portal oficial BCV';
-
-  let bcvSuccess = false;
-  try {
-    const html = await fetchBcvDirectText('https://www.bcv.org.ve/glosario/cambio-oficial', 8000);
-
-    // Parse USD rate from BCV official page: matches <strong class="strong-tb">872,39270000</strong> inside #dolar div
-    const dolarMatch = html.match(/id=["']dolar["'][\s\S]*?<strong[^>]*>\s*([\d.,]+)\s*<\/strong>/i) ||
-                       html.match(/id=["']dolar["'][\s\S]*?<strong>\s*([\d.,]+)\s*<\/strong>/i);
-    const euroMatch = html.match(/id=["']euro["'][\s\S]*?<strong[^>]*>\s*([\d.,]+)\s*<\/strong>/i) ||
-                      html.match(/id=["']euro["'][\s\S]*?<strong>\s*([\d.,]+)\s*<\/strong>/i);
-    const dateMatch = html.match(/class=["']date-display-single["'][^>]*content=["']([^"']+)["']/i) ||
-                      html.match(/Fecha Valor:[\s\S]*?content=["']([^"']+)["']/i) ||
-                      html.match(/Fecha Valor:\s*<span[^>]*>\s*([^<]+)\s*<\/span>/i);
-
-    if (dolarMatch && dolarMatch[1]) {
-      const cleanDolar = dolarMatch[1].replace(/\./g, '').replace(',', '.').trim();
-      usdRate = parseFloat(cleanDolar);
-
-      if (euroMatch && euroMatch[1]) {
-        const cleanEuro = euroMatch[1].replace(/\./g, '').replace(',', '.').trim();
-        eurRate = parseFloat(cleanEuro);
-      }
-
-      if (dateMatch && dateMatch[1]) {
-        valueDate = dateMatch[1].trim();
-      }
-
-      if (usdRate > 0) {
-        bcvSuccess = true;
-        source = 'BCV_DIRECT';
-        sourceDetails = 'Portal oficial BCV (https://www.bcv.org.ve/glosario/cambio-oficial)';
-      }
-    }
-  } catch (error) {
-    console.warn('No se pudo consultar directamente la tasa BCV:', error);
-    bcvSuccess = false;
+  if (!forceRefresh && bcvExternalCache && (Date.now() - bcvExternalCachedAt < BCV_CACHE_TTL_MS)) {
+    return res.json(bcvExternalCache);
   }
 
-  if (!bcvSuccess) {
+  const fetchRatePayload = async () => {
+    const timeInfo = getCaracasTimeInfo();
+
+    let usdRate = 0;
+    let eurRate = 0;
+    let valueDate = timeInfo.todayCaracasStr;
+    let source: 'BCV_DIRECT' | 'DOLAR_API_FALLBACK' | 'MANUAL' = 'BCV_DIRECT';
+    let sourceDetails = 'Extracción directa portal oficial BCV';
+
+    let bcvSuccess = false;
     try {
-      source = 'DOLAR_API_FALLBACK';
-      sourceDetails = 'Fallback automÃ¡tico ve.dolarapi.com/v1/dolares/oficial';
+      const html = await fetchBcvDirectText('https://www.bcv.org.ve/glosario/cambio-oficial', 4500);
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const dolarMatch = html.match(/id=["']dolar["'][\s\S]*?<strong[^>]*>\s*([\d.,]+)\s*<\/strong>/i) ||
+                         html.match(/id=["']dolar["'][\s\S]*?<strong>\s*([\d.,]+)\s*<\/strong>/i);
+      const euroMatch = html.match(/id=["']euro["'][\s\S]*?<strong[^>]*>\s*([\d.,]+)\s*<\/strong>/i) ||
+                        html.match(/id=["']euro["'][\s\S]*?<strong>\s*([\d.,]+)\s*<\/strong>/i);
+      const dateMatch = html.match(/class=["']date-display-single["'][^>]*content=["']([^"']+)["']/i) ||
+                        html.match(/Fecha Valor:[\s\S]*?content=["']([^"']+)["']/i) ||
+                        html.match(/Fecha Valor:\s*<span[^>]*>\s*([^<]+)\s*<\/span>/i);
 
-      const [dolarRes, euroRes] = await Promise.all([
-        fetch('https://ve.dolarapi.com/v1/dolares/oficial', { signal: controller.signal }),
-        fetch('https://ve.dolarapi.com/v1/euros/oficial', { signal: controller.signal }).catch(() => null)
-      ]);
+      if (dolarMatch && dolarMatch[1]) {
+        const cleanDolar = dolarMatch[1].replace(/\./g, '').replace(',', '.').trim();
+        usdRate = parseFloat(cleanDolar);
 
-      clearTimeout(timeoutId);
+        if (euroMatch && euroMatch[1]) {
+          const cleanEuro = euroMatch[1].replace(/\./g, '').replace(',', '.').trim();
+          eurRate = parseFloat(cleanEuro);
+        }
 
-      if (dolarRes.ok) {
-        const dolarJson: any = await dolarRes.json();
-        usdRate = Number(dolarJson.promedio || dolarJson.precio) || 0;
-        if (dolarJson.fechaActualizacion) {
-          valueDate = new Date(dolarJson.fechaActualizacion).toLocaleDateString('es-VE');
+        if (dateMatch && dateMatch[1]) {
+          valueDate = dateMatch[1].trim();
+        }
+
+        if (usdRate > 0) {
+          bcvSuccess = true;
+          source = 'BCV_DIRECT';
+          sourceDetails = 'Portal oficial BCV (https://www.bcv.org.ve/glosario/cambio-oficial)';
         }
       }
-
-      if (euroRes && euroRes.ok) {
-        const euroJson: any = await euroRes.json();
-        eurRate = Number(euroJson.promedio || euroJson.precio) || 0;
-      }
     } catch (error) {
-      console.warn('No se pudo consultar el servicio alternativo de tasas:', error);
-      if (lastCertifiedRate && lastCertifiedRate.source !== 'MANUAL') {
-        return res.json({
-          ...lastCertifiedRate,
-          sourceDetails: 'Ãšltima tasa externa certificada disponible en cachÃ©',
-          checkedAt: new Date().toISOString()
-        });
-      }
-      return res.status(503).json({
-        success: false,
-        error: 'No hay una tasa BCV disponible. Intenta de nuevo cuando el servicio estÃ© accesible.'
-      });
+      console.warn('No se pudo consultar directamente la tasa BCV:', error);
+      bcvSuccess = false;
     }
-  }
 
-  if (!Number.isFinite(usdRate) || usdRate <= 0) {
-    if (lastCertifiedRate && lastCertifiedRate.source !== 'MANUAL') {
-      return res.json({
-        ...lastCertifiedRate,
-        sourceDetails: 'Ãšltima tasa externa certificada disponible en cachÃ©',
-        checkedAt: new Date().toISOString()
-      });
+    if (!bcvSuccess) {
+      try {
+        source = 'DOLAR_API_FALLBACK';
+        sourceDetails = 'Fallback automático ve.dolarapi.com/v1/dolares/oficial';
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+        const [dolarRes, euroRes] = await Promise.all([
+          fetch('https://ve.dolarapi.com/v1/dolares/oficial', { signal: controller.signal }),
+          fetch('https://ve.dolarapi.com/v1/euros/oficial', { signal: controller.signal }).catch(() => null)
+        ]);
+
+        clearTimeout(timeoutId);
+
+        if (dolarRes.ok) {
+          const dolarJson: any = await dolarRes.json();
+          usdRate = Number(dolarJson.promedio || dolarJson.precio) || 0;
+          if (dolarJson.fechaActualizacion) {
+            valueDate = new Date(dolarJson.fechaActualizacion).toLocaleDateString('es-VE');
+          }
+        }
+
+        if (euroRes && euroRes.ok) {
+          const euroJson: any = await euroRes.json();
+          eurRate = Number(euroJson.promedio || euroJson.precio) || 0;
+        }
+      } catch (error) {
+        console.warn('No se pudo consultar el servicio alternativo de tasas:', error);
+        if (lastCertifiedRate && lastCertifiedRate.source !== 'MANUAL') {
+          return {
+            status: 200,
+            payload: {
+              ...lastCertifiedRate,
+              sourceDetails: 'Última tasa externa certificada disponible en caché',
+              checkedAt: new Date().toISOString()
+            }
+          };
+        }
+        return {
+          status: 503,
+          payload: {
+            success: false,
+            error: 'No hay una tasa BCV disponible. Intenta de nuevo cuando el servicio esté accesible.'
+          }
+        };
+      }
     }
-    return res.status(503).json({
-      success: false,
-      error: 'El servicio de tasas no devolviÃ³ un valor vÃ¡lido.'
+
+    if (!Number.isFinite(usdRate) || usdRate <= 0) {
+      if (lastCertifiedRate && lastCertifiedRate.source !== 'MANUAL') {
+        return {
+          status: 200,
+          payload: {
+            ...lastCertifiedRate,
+            sourceDetails: 'Última tasa externa certificada disponible en caché',
+            checkedAt: new Date().toISOString()
+          }
+        };
+      }
+      return {
+        status: 503,
+        payload: {
+          success: false,
+          error: 'El servicio de tasas no devolvió un valor válido.'
+        }
+      };
+    }
+
+    const isDateFuture = valueDate > timeInfo.todayCaracasStr || valueDate > timeInfo.todayCaracasIso;
+    const isFutureTime = isDateFuture || timeInfo.isAfter4PM;
+
+    let currentRate = usdRate;
+    let futureRate: number | null = null;
+
+    if (isFutureTime) {
+      futureRate = usdRate;
+      currentRate = lastCertifiedRate?.currentRate || (usdRate > 10 ? Math.round((usdRate * 0.998) * 10000) / 10000 : usdRate);
+    } else {
+      currentRate = usdRate;
+      futureRate = null;
+    }
+
+    let appliedRate = currentRate;
+    let isFutureApplied = false;
+
+    if (futureRate !== null && futureRate > 0) {
+      appliedRate = futureRate;
+      isFutureApplied = true;
+    } else {
+      appliedRate = currentRate;
+      isFutureApplied = false;
+    }
+
+    const result = {
+      usdRate: Math.round(appliedRate * 10000) / 10000,
+      currentRate: Math.round(currentRate * 10000) / 10000,
+      futureRate: futureRate ? Math.round(futureRate * 10000) / 10000 : null,
+      appliedRate: Math.round(appliedRate * 10000) / 10000,
+      eurRate: Math.round(eurRate * 10000) / 10000,
+      valueDate,
+      isFutureRate: isFutureApplied,
+      isFutureApplied,
+      futureRateHigher: futureRate !== null && futureRate > currentRate,
+      source,
+      sourceDetails: isFutureApplied
+        ? `Tasa futura BCV grabada y aplicada (${appliedRate} con fecha valor ${valueDate})`
+        : `Tasa actual BCV grabada y aplicada (${appliedRate})`,
+      checkedAt: new Date().toISOString()
+    };
+
+    lastCertifiedRate = result;
+    bcvExternalCache = result;
+    bcvExternalCachedAt = Date.now();
+
+    return { status: 200, payload: result };
+  };
+
+  if (!bcvExternalInflight || forceRefresh) {
+    bcvExternalInflight = fetchRatePayload().finally(() => {
+      bcvExternalInflight = null;
     });
   }
 
-  const isDateFuture = valueDate > timeInfo.todayCaracasStr || valueDate > timeInfo.todayCaracasIso;
-  const isFutureTime = isDateFuture || timeInfo.isAfter4PM;
-
-  // Regla de Tasa Futura del usuario:
-  // "en el momento de buscar el valor de la tasa, si existe una tasa futura es la que grabaras, de lo contrario te quedas con la tasa actual."
-  let currentRate = usdRate;
-  let futureRate: number | null = null;
-
-  if (isFutureTime) {
-    futureRate = usdRate;
-    currentRate = lastCertifiedRate?.currentRate || (usdRate > 10 ? Math.round((usdRate * 0.998) * 10000) / 10000 : usdRate);
-  } else {
-    currentRate = usdRate;
-    futureRate = null;
-  }
-
-  let appliedRate = currentRate;
-  let isFutureApplied = false;
-
-  // Si existe tasa futura, es la que se graba y aplica directamente
-  if (futureRate !== null && futureRate > 0) {
-    appliedRate = futureRate;
-    isFutureApplied = true;
-  } else {
-    appliedRate = currentRate;
-    isFutureApplied = false;
-  }
-
-  const result = {
-    usdRate: Math.round(appliedRate * 10000) / 10000,
-    currentRate: Math.round(currentRate * 10000) / 10000,
-    futureRate: futureRate ? Math.round(futureRate * 10000) / 10000 : null,
-    appliedRate: Math.round(appliedRate * 10000) / 10000,
-    eurRate: Math.round(eurRate * 10000) / 10000,
-    valueDate,
-    isFutureRate: isFutureApplied,
-    isFutureApplied,
-    futureRateHigher: futureRate !== null && futureRate > currentRate,
-    source,
-    sourceDetails: isFutureApplied
-      ? `Tasa futura BCV grabada y aplicada (${appliedRate} con fecha valor ${valueDate})`
-      : `Tasa actual BCV grabada y aplicada (${appliedRate})`,
-    checkedAt: new Date().toISOString()
-  };
-
-  lastCertifiedRate = result;
-
-  return res.json(result);
+  const outcome = await bcvExternalInflight;
+  return res.status(outcome.status).json(outcome.payload);
 });
 
 // Endpoint historial de tasas de cambio
@@ -1215,6 +1414,12 @@ app.get('/api/cedula-lookup', async (req, res) => {
 // ---------------------------------------------------------------------------
 // 4. SUPABASE BACKEND PROXY (Garantiza cero problemas de CORS o Iframe)
 // ---------------------------------------------------------------------------
+const supabaseHttpsAgent = new https.Agent({
+  keepAlive: true,
+  keepAliveMsecs: 30_000,
+  maxSockets: 64
+});
+
 function supabaseRestRequest(
   endpoint: string,
   options: { method?: string; body?: any; headers?: Record<string, string> } = {},
@@ -1241,7 +1446,7 @@ function supabaseRestRequest(
       headers['Content-Length'] = Buffer.byteLength(bodyStr).toString();
     }
 
-    const req = https.request(url, { method, headers, timeout: 8000 }, (res) => {
+    const req = https.request(url, { method, headers, timeout: 8000, agent: supabaseHttpsAgent }, (res) => {
       let raw = '';
       res.on('data', (c) => (raw += c));
       res.on('end', () => {
@@ -1325,7 +1530,7 @@ function supabaseAuthRequest(
       headers['Content-Length'] = Buffer.byteLength(bodyStr).toString();
     }
 
-    const req = https.request(url, { method, headers, timeout: 15000 }, (res) => {
+    const req = https.request(url, { method, headers, timeout: 15000, agent: supabaseHttpsAgent }, (res) => {
       let raw = '';
       res.on('data', (c) => (raw += c));
       res.on('end', () => {
@@ -1903,24 +2108,19 @@ app.get('/api/inventory/movements', async (req, res) => {
       return supabaseRestRequest(endpoint, options, SUPABASE_ANON_KEY);
     };
 
-    // 1. Consultar movimientos registrados directamente en inventory_movements (si la tabla existe)
-    let rawMovements: any[] = [];
-    try {
-      const movRes = await queryDb(
-        `inventory_movements?organization_id=eq.${encodeURIComponent(orgId)}&select=*&order=created_at.desc`
-      );
-      if (!movRes.error && Array.isArray(movRes.data)) {
-        rawMovements = movRes.data;
-      }
-    } catch {
-      rawMovements = [];
-    }
+    // Consultar movimientos, ventas y compras en paralelo (antes 3 viajes en serie).
+    const [movRes, salesRes, purchasesRes] = await Promise.all([
+      queryDb(`inventory_movements?organization_id=eq.${encodeURIComponent(orgId)}&select=*&order=created_at.desc`).catch(() => ({ error: 'err', data: null })),
+      queryDb(`sales?organization_id=eq.${encodeURIComponent(orgId)}&status=eq.COMPLETADA&select=id,doc_number,doc_type,created_at,exchange_rate,customers(id,name),sale_items(*)&order=created_at.desc&limit=250`),
+      queryDb(`purchases?organization_id=eq.${encodeURIComponent(orgId)}&status=eq.COMPLETADA&select=id,doc_number,invoice_number,purchase_date,created_at,exchange_rate,suppliers(id,name),purchase_items(*)&order=created_at.desc&limit=250`)
+    ]);
 
-    // Cargar ajustes histÃ³ricos y persistentes locales
+    let rawMovements: any[] = (!movRes.error && Array.isArray(movRes.data)) ? movRes.data : [];
+
+    // Cargar ajustes históricos y persistentes locales
     const persistedAdjustments = loadPersistedAdjustments(orgId);
     const loggedKeys = new Set(rawMovements.map((m: any) => `${m.doc_number}-${m.sku}`));
-    
-    // Integrar ajustes persistentes que no estÃ©n ya en la tabla de Supabase
+
     for (const adj of persistedAdjustments) {
       const key = `${adj.doc_number}-${adj.sku}`;
       if (!loggedKeys.has(key)) {
@@ -1930,11 +2130,6 @@ app.get('/api/inventory/movements', async (req, res) => {
     }
 
     const loggedDocKeys = new Set(rawMovements.map((m: any) => `${m.doc_number}-${m.sku}`));
-
-    // 2. Consultar ventas reales para integrar sus lÃ­neas al kÃ¡rdex si no estÃ¡n registradas
-    const salesRes = await queryDb(
-      `sales?organization_id=eq.${encodeURIComponent(orgId)}&status=eq.COMPLETADA&select=id,doc_number,doc_type,created_at,exchange_rate,customers(id,name),sale_items(*)&order=created_at.desc&limit=250`
-    );
 
     const syntheticSalesMovements: any[] = [];
     if (!salesRes.error && Array.isArray(salesRes.data)) {
@@ -1970,11 +2165,6 @@ app.get('/api/inventory/movements', async (req, res) => {
         }
       }
     }
-
-    // 3. Consultar compras reales para integrar sus lÃ­neas al kÃ¡rdex si no estÃ¡n registradas
-    const purchasesRes = await queryDb(
-      `purchases?organization_id=eq.${encodeURIComponent(orgId)}&status=eq.COMPLETADA&select=id,doc_number,invoice_number,purchase_date,created_at,exchange_rate,suppliers(id,name),purchase_items(*)&order=created_at.desc&limit=250`
-    );
 
     const syntheticPurchasesMovements: any[] = [];
     if (!purchasesRes.error && Array.isArray(purchasesRes.data)) {
@@ -6102,92 +6292,49 @@ app.get('/api/sales/report', async (_req, res: AuthenticatedResponse) => {
     warnings: []
   };
 
-  // 1. Tasa vigente: historial de tasas registrado, o la aplicada en caché del servidor.
-  try {
-    const rateRes = await authenticatedSupabaseRestRequest(
-      res,
-      'exchange_rates?select=rate&order=observed_at.desc&limit=1'
-    );
-    const rateValue = Array.isArray(rateRes.data) && rateRes.data.length > 0 ? Number(rateRes.data[0]?.rate) : NaN;
-    result.rate = Number.isFinite(rateValue) && rateValue > 0 ? rateValue : (lastCertifiedRate?.appliedRate ?? null);
-  } catch {
-    result.rate = lastCertifiedRate?.appliedRate ?? null;
-  }
-
-  // 2. Ventas completas (fila completa, sin joins complejos).
-  try {
-    const salesRes = await authenticatedSupabaseRestRequest(
-      res,
-      'sales?select=*&order=created_at.desc&limit=1000'
-    );
-    if (salesRes.error) {
-      result.warnings.push(`sales: ${salesRes.error}`);
-      result.sales = localSales.load(orgId);
-    } else {
-      result.sales = salesRes.data || [];
-    }
-  } catch (err: any) {
-    result.warnings.push(`sales: ${err?.message || 'error'}`);
-    result.sales = localSales.load(orgId);
-  }
-
-  // 3. Clientes para mapear nombres y documentos.
-  try {
-    const customersRes = await authenticatedSupabaseRestRequest(
-      res,
-      'customers?select=id,name,doc_number,doc_type,phone&limit=2000'
-    );
-    result.customers = customersRes.error ? [] : (customersRes.data || []);
-    if (customersRes.error) result.warnings.push(`customers: ${customersRes.error}`);
-  } catch (err: any) {
-    result.warnings.push(`customers: ${err?.message || 'error'}`);
-  }
-
-  // 4. Cuentas bancarias para mapear destinatario de pagos.
-  try {
-    const banksRes = await authenticatedSupabaseRestRequest(
-      res,
-      'bank_accounts?select=id,bank_name,account_number&limit=2000'
-    );
-    result.bankAccounts = banksRes.error ? [] : (banksRes.data || []);
-    if (banksRes.error) result.warnings.push(`bank_accounts: ${banksRes.error}`);
-  } catch (err: any) {
-    result.warnings.push(`bank_accounts: ${err?.message || 'error'}`);
-  }
-
-  // 5. Pagos vinculados a ventas y artículos vendidos. Probe tolerante: la tabla
-  // 'payments' puede no existir aún o carecer de la columna created_at.
-  try {
-    let paymentsRes = await authenticatedSupabaseRestRequest(
-      res,
-      'payments?select=*&order=created_at.desc&limit=5000'
-    );
-    if (paymentsRes.error) {
-      const retry = await authenticatedSupabaseRestRequest(
-        res,
-        'payments?select=*&limit=5000'
-      );
-      if (!retry.error) {
-        paymentsRes = retry;
-      } else {
-        result.warnings.push(`payments: ${paymentsRes.error}`);
+  // Ejecutar las 6 consultas independientes en paralelo en vez de esperarlas una tras otra.
+  const [rateRes, salesRes, customersRes, banksRes, paymentsRes, itemsRes] = await Promise.all([
+    authenticatedSupabaseRestRequest(res, 'exchange_rates?select=rate&order=observed_at.desc&limit=1')
+      .catch(() => ({ status: 500, data: null, error: 'error' })),
+    authenticatedSupabaseRestRequest(res, 'sales?select=*&order=created_at.desc&limit=1000')
+      .catch((err: any) => ({ status: 500, data: null, error: err?.message || 'error' })),
+    authenticatedSupabaseRestRequest(res, 'customers?select=id,name,doc_number,doc_type,phone&limit=2000')
+      .catch((err: any) => ({ status: 500, data: null, error: err?.message || 'error' })),
+    authenticatedSupabaseRestRequest(res, 'bank_accounts?select=id,bank_name,account_number&limit=2000')
+      .catch((err: any) => ({ status: 500, data: null, error: err?.message || 'error' })),
+    (async () => {
+      let pRes = await authenticatedSupabaseRestRequest(res, 'payments?select=*&order=created_at.desc&limit=5000');
+      if (pRes.error) {
+        const retry = await authenticatedSupabaseRestRequest(res, 'payments?select=*&limit=5000');
+        if (!retry.error) return retry;
       }
-    }
-    result.payments = paymentsRes.error ? [] : (paymentsRes.data || []);
-  } catch (err: any) {
-    result.warnings.push(`payments: ${err?.message || 'error'}`);
+      return pRes;
+    })().catch((err: any) => ({ status: 500, data: null, error: err?.message || 'error' })),
+    authenticatedSupabaseRestRequest(res, 'sale_items?select=sale_id,sku,name,quantity,unit_price_usd,total_usd&limit=5000')
+      .catch((err: any) => ({ status: 500, data: null, error: err?.message || 'error' }))
+  ]);
+
+  const rateValue = Array.isArray(rateRes.data) && rateRes.data.length > 0 ? Number(rateRes.data[0]?.rate) : NaN;
+  result.rate = Number.isFinite(rateValue) && rateValue > 0 ? rateValue : (lastCertifiedRate?.appliedRate ?? null);
+
+  if (salesRes.error) {
+    result.warnings.push(`sales: ${salesRes.error}`);
+    result.sales = localSales.load(orgId);
+  } else {
+    result.sales = salesRes.data || [];
   }
 
-  try {
-    const itemsRes = await authenticatedSupabaseRestRequest(
-      res,
-      'sale_items?select=sale_id,sku,name,quantity,unit_price_usd,total_usd&limit=5000'
-    );
-    result.saleItems = itemsRes.error ? [] : (itemsRes.data || []);
-    if (itemsRes.error) result.warnings.push(`sale_items: ${itemsRes.error}`);
-  } catch (err: any) {
-    result.warnings.push(`sale_items: ${err?.message || 'error'}`);
-  }
+  result.customers = customersRes.error ? [] : (customersRes.data || []);
+  if (customersRes.error) result.warnings.push(`customers: ${customersRes.error}`);
+
+  result.bankAccounts = banksRes.error ? [] : (banksRes.data || []);
+  if (banksRes.error) result.warnings.push(`bank_accounts: ${banksRes.error}`);
+
+  result.payments = paymentsRes.error ? [] : (paymentsRes.data || []);
+  if (paymentsRes.error) result.warnings.push(`payments: ${paymentsRes.error}`);
+
+  result.saleItems = itemsRes.error ? [] : (itemsRes.data || []);
+  if (itemsRes.error) result.warnings.push(`sale_items: ${itemsRes.error}`);
 
   return res.json(result);
 });
@@ -6587,123 +6734,118 @@ function savePersistedPurchase(purchase: any) {
   }
 }
 
+async function fetchReconciledAccountsReceivable(orgId: string): Promise<any[]> {
+  let dbItems: any[] = [];
+  try {
+    const [primaryRes, directPaymentsRes] = await Promise.all([
+      supabaseRestRequest('accounts_receivable?select=*,customers(*),receivable_payments(*),sales(*,sale_items(*))&order=created_at.desc'),
+      supabaseRestRequest('receivable_payments?select=*&order=payment_date.desc')
+    ]);
+
+    if (!primaryRes.error && Array.isArray(primaryRes.data)) {
+      dbItems = primaryRes.data;
+    } else {
+      const fallbackRes = await supabaseRestRequest('accounts_receivable?select=*,customers(*)&order=created_at.desc');
+      if (!fallbackRes.error && Array.isArray(fallbackRes.data)) {
+        dbItems = fallbackRes.data;
+      }
+    }
+
+    const saleIds = dbItems.map((r: any) => r.sale_id).filter(Boolean);
+    let salePayments: any[] = [];
+    if (saleIds.length > 0) {
+      const salePaysRes = await supabaseRestRequest(`payments?sale_id=in.(${saleIds.join(',')})&order=created_at.desc`);
+      if (!salePaysRes.error && Array.isArray(salePaysRes.data)) {
+        salePayments = salePaysRes.data;
+      }
+    }
+
+    const directPaymentsMap = new Map<string, any[]>();
+    if (!directPaymentsRes.error && Array.isArray(directPaymentsRes.data)) {
+      for (const p of directPaymentsRes.data) {
+        if (p.receivable_id) {
+          const arr = directPaymentsMap.get(p.receivable_id) || [];
+          arr.push(p);
+          directPaymentsMap.set(p.receivable_id, arr);
+        }
+      }
+    }
+
+    for (const item of dbItems) {
+      const recPays = item.receivable_payments || directPaymentsMap.get(item.id) || [];
+      const matchingSalePays = salePayments
+        .filter((p: any) => p.sale_id === item.sale_id)
+        .map((p: any) => ({
+          id: p.id,
+          receivable_id: item.id,
+          amount_usd: Number(p.amount_usd) || 0,
+          amount_ves: Number(p.amount_ves) || 0,
+          exchange_rate: Number(p.exchange_rate) || 1,
+          payment_method: p.method || 'Efectivo USD',
+          reference: p.reference_number || 'PAGO CONTADO/CRÉDITO',
+          payment_date: p.created_at
+        }));
+
+      const payMap = new Map<string, any>();
+      for (const p of [...recPays, ...matchingSalePays]) {
+        const k = p.id || `${p.payment_date || p.date}-${p.amount_usd}`;
+        payMap.set(k, p);
+      }
+
+      const mergedPayments = Array.from(payMap.values());
+      const total = Number(item.total_usd) || 0;
+      const balance = Number(item.balance_usd != null ? item.balance_usd : 0);
+      const paidDiff = Math.round(Math.max(0, total - balance) * 100) / 100;
+      const currentSum = mergedPayments.reduce((s: number, p: any) => s + (Number(p.amount_usd) || 0), 0);
+
+      if (paidDiff > currentSum + 0.01) {
+        const missing = Math.round((paidDiff - currentSum) * 100) / 100;
+        mergedPayments.unshift({
+          id: `pago-registrado-${item.id}`,
+          receivable_id: item.id,
+          amount_usd: missing,
+          amount_ves: Math.round(missing * (Number(item.sales?.exchange_rate || item.exchange_rate) || 877.90) * 100) / 100,
+          exchange_rate: Number(item.sales?.exchange_rate || item.exchange_rate) || 877.90,
+          payment_method: 'Cancelación registrada',
+          reference: 'PAGO-COMPLETO',
+          payment_date: item.updated_at || item.created_at || new Date().toISOString()
+        });
+      }
+
+      item.receivable_payments = mergedPayments;
+      item.customer_name = item.customers?.name || item.customer_name || 'Cliente';
+      item.customer_doc = item.customers?.doc_number || item.customer_doc || '';
+      item.customer_phone = item.customers?.phone || '';
+    }
+
+    try {
+      const localRows = loadPersistedReceivables(orgId);
+      const known = new Set(dbItems.map((i: any) => String(i.id)));
+      const missingLocal = localRows.filter((r: any) => !known.has(String(r.id)));
+      if (missingLocal.length > 0) {
+        dbItems = [...missingLocal, ...dbItems];
+      }
+    } catch {}
+
+    if (dbItems.length > 0) {
+      try {
+        fs.writeFileSync(ACCOUNTS_RECEIVABLE_FILE, JSON.stringify(dbItems, null, 2), 'utf-8');
+      } catch {}
+      return dbItems;
+    }
+  } catch (sbErr) {
+    console.warn('Aviso consultando accounts_receivable en Supabase:', sbErr);
+  }
+
+  return loadPersistedReceivables(orgId);
+}
+
 app.get('/api/accounts-receivable', async (_req, res: AuthenticatedResponse) => {
   try {
     const orgId = res.locals.supabaseContext?.organizationId || '00000000-0000-0000-0000-000000000001';
-    let dbItems: any[] = [];
-
-    // 1. Consultar Supabase con relaciÃ³n de clientes, pagos y ventas con Ã­tems
-    try {
-      const result = await supabaseRestRequest(
-        'accounts_receivable?select=*,customers(*),receivable_payments(*),sales(*,sale_items(*))&order=created_at.desc'
-      );
-      if (!result.error && Array.isArray(result.data)) {
-        dbItems = result.data;
-      } else {
-        const fallbackRes = await supabaseRestRequest('accounts_receivable?select=*,customers(*)&order=created_at.desc');
-        if (!fallbackRes.error && Array.isArray(fallbackRes.data)) {
-          dbItems = fallbackRes.data;
-        }
-      }
-
-      // 2. Consultar pagos registrados en Supabase (tabla payments para ventas directas/POS y receivable_payments para abonos)
-      const saleIds = dbItems.map((r: any) => r.sale_id).filter(Boolean);
-      let salePayments: any[] = [];
-      if (saleIds.length > 0) {
-        const salePaysRes = await supabaseRestRequest(`payments?sale_id=in.(${saleIds.join(',')})&order=created_at.desc`);
-        if (!salePaysRes.error && Array.isArray(salePaysRes.data)) {
-          salePayments = salePaysRes.data;
-        }
-      }
-
-      const directPaymentsRes = await supabaseRestRequest('receivable_payments?select=*&order=payment_date.desc');
-      const directPaymentsMap = new Map<string, any[]>();
-      if (!directPaymentsRes.error && Array.isArray(directPaymentsRes.data)) {
-        for (const p of directPaymentsRes.data) {
-          if (p.receivable_id) {
-            const arr = directPaymentsMap.get(p.receivable_id) || [];
-            arr.push(p);
-            directPaymentsMap.set(p.receivable_id, arr);
-          }
-        }
-      }
-
-      // 3. Procesar y unificar los pagos reales de cada cuenta por cobrar
-      for (const item of dbItems) {
-        const recPays = item.receivable_payments || directPaymentsMap.get(item.id) || [];
-        const matchingSalePays = salePayments
-          .filter((p: any) => p.sale_id === item.sale_id)
-          .map((p: any) => ({
-            id: p.id,
-            receivable_id: item.id,
-            amount_usd: Number(p.amount_usd) || 0,
-            amount_ves: Number(p.amount_ves) || 0,
-            exchange_rate: Number(p.exchange_rate) || 1,
-            payment_method: p.method || 'Efectivo USD',
-            reference: p.reference_number || 'PAGO CONTADO/CRÃ‰DITO',
-            payment_date: p.created_at
-          }));
-
-        // Deduplicar pagos
-        const payMap = new Map<string, any>();
-        for (const p of [...recPays, ...matchingSalePays]) {
-          const k = p.id || `${p.payment_date || p.date}-${p.amount_usd}`;
-          payMap.set(k, p);
-        }
-
-        const mergedPayments = Array.from(payMap.values());
-        const total = Number(item.total_usd) || 0;
-        const balance = Number(item.balance_usd != null ? item.balance_usd : 0);
-        const paidDiff = Math.round(Math.max(0, total - balance) * 100) / 100;
-        const currentSum = mergedPayments.reduce((s: number, p: any) => s + (Number(p.amount_usd) || 0), 0);
-
-        // Si la orden estÃ¡ cancelada/pagada en Supabase y no habÃ­a fila explÃ­cita en payments ni receivable_payments
-        if (paidDiff > currentSum + 0.01) {
-          const missing = Math.round((paidDiff - currentSum) * 100) / 100;
-          mergedPayments.unshift({
-            id: `pago-registrado-${item.id}`,
-            receivable_id: item.id,
-            amount_usd: missing,
-            amount_ves: Math.round(missing * (Number(item.sales?.exchange_rate || item.exchange_rate) || 877.90) * 100) / 100,
-            exchange_rate: Number(item.sales?.exchange_rate || item.exchange_rate) || 877.90,
-            payment_method: 'CancelaciÃ³n registrada',
-            reference: 'PAGO-COMPLETO',
-            payment_date: item.updated_at || item.created_at || new Date().toISOString()
-          });
-        }
-
-        item.receivable_payments = mergedPayments;
-        item.customer_name = item.customers?.name || item.customer_name || 'Cliente';
-        item.customer_doc = item.customers?.doc_number || item.customer_doc || '';
-        item.customer_phone = item.customers?.phone || '';
-      }
-
-      // Mezclar cuentas guardadas solo localmente (p.ej. cuando la insercion en
-      // Supabase fallo por esquema): deben seguir visibles en el resumen.
-      try {
-        const localRows = loadPersistedReceivables(orgId);
-        const known = new Set(dbItems.map((i: any) => String(i.id)));
-        const missingLocal = localRows.filter((r: any) => !known.has(String(r.id)));
-        if (missingLocal.length > 0) {
-          dbItems = [...missingLocal, ...dbItems];
-        }
-      } catch {}
-
-      // Si obtuvimos registros reales de Supabase, actualizamos la cachÃ© local con los datos reales
-      if (dbItems.length > 0) {
-        try {
-          fs.writeFileSync(ACCOUNTS_RECEIVABLE_FILE, JSON.stringify(dbItems, null, 2), 'utf-8');
-        } catch {}
-        return res.json({ success: true, data: dbItems });
-      }
-    } catch (sbErr) {
-      console.warn('Aviso consultando accounts_receivable en Supabase:', sbErr);
-    }
-
-    // 4. Si Supabase no devolviÃ³ registros o hubo error de red, usar respaldo local
-    const fallbackData = loadPersistedReceivables(orgId);
-    return res.json({ success: true, data: fallbackData });
-  } catch (err: any) {
+    const data = await fetchReconciledAccountsReceivable(orgId);
+    return res.json({ success: true, data });
+  } catch {
     return res.status(200).json({ success: true, data: loadPersistedReceivables() });
   }
 });
@@ -7213,112 +7355,277 @@ app.put('/api/print-settings', async (req, res: AuthenticatedResponse) => {
   }
 });
 
+async function fetchReconciledAccountsPayable(orgId: string): Promise<any[]> {
+  let dbItems: any[] = [];
+
+  try {
+    const [result, directPaymentsRes] = await Promise.all([
+      supabaseRestRequest('accounts_payable?select=*,payable_payments(*),suppliers(id,name,doc_number,phone,email,contact_person)&order=created_at.desc'),
+      supabaseRestRequest('payable_payments?select=*&order=payment_date.desc')
+    ]);
+
+    if (!result.error && Array.isArray(result.data)) {
+      dbItems = result.data;
+    } else {
+      const simpleResult = await supabaseRestRequest('accounts_payable?select=*,payable_payments(*)&order=created_at.desc');
+      if (!simpleResult.error && Array.isArray(simpleResult.data)) {
+        dbItems = simpleResult.data;
+      } else {
+        const fallbackResult = await supabaseRestRequest('accounts_payable?select=*&order=created_at.desc');
+        if (!fallbackResult.error && Array.isArray(fallbackResult.data)) {
+          dbItems = fallbackResult.data;
+        }
+      }
+    }
+
+    const directPaymentsMap = new Map<string, any[]>();
+    if (!directPaymentsRes.error && Array.isArray(directPaymentsRes.data)) {
+      for (const p of directPaymentsRes.data) {
+        if (p.payable_id) {
+          const arr = directPaymentsMap.get(p.payable_id) || [];
+          arr.push(p);
+          directPaymentsMap.set(p.payable_id, arr);
+        }
+      }
+    }
+
+    for (const item of dbItems) {
+      if ((!item.payable_payments || item.payable_payments.length === 0) && directPaymentsMap.has(item.id)) {
+        item.payable_payments = directPaymentsMap.get(item.id);
+      }
+    }
+  } catch (sbErr) {
+    console.warn('Aviso consultando accounts_payable en Supabase:', sbErr);
+  }
+
+  const localItems = loadPersistedPayables(orgId);
+  const map = new Map<string, any>();
+  for (const p of localItems) {
+    if (p.id) map.set(p.id, p);
+  }
+  for (const p of dbItems) {
+    if (p.id) {
+      const local = map.get(p.id) || {};
+      const localPays = Array.isArray(local.payable_payments) ? local.payable_payments : [];
+      const remotePays = Array.isArray(p.payable_payments) ? p.payable_payments : [];
+      const payMap = new Map<string, any>();
+      for (const pay of localPays) {
+        const k = pay.id || `${pay.payment_date || pay.date}-${pay.amount_usd || pay.amount}`;
+        payMap.set(k, pay);
+      }
+      for (const pay of remotePays) {
+        const k = pay.id || `${pay.payment_date || pay.date}-${pay.amount_usd || pay.amount}`;
+        payMap.set(k, pay);
+      }
+      const mergedBalance = (() => {
+        const remoteBal = Number(p.balance_usd);
+        const localBal = Number(local.balance_usd);
+        const st = String(p.status || local.status || '').toUpperCase();
+        if (remoteBal > 0) return remoteBal;
+        if (localBal > 0 && st !== 'PAGADO' && st !== 'PAGADA') return localBal;
+        return remoteBal;
+      })();
+      map.set(p.id, { ...local, ...p, balance_usd: mergedBalance, payable_payments: Array.from(payMap.values()) });
+    }
+  }
+
+  for (const [id, item] of map.entries()) {
+    const tot = Number(item.total_usd) || 0;
+    const bal = Number(item.balance_usd != null ? item.balance_usd : tot);
+    const paidDiff = Math.round(Math.max(0, tot - bal) * 100) / 100;
+    const pays = Array.isArray(item.payable_payments) ? item.payable_payments : [];
+    const currentSum = pays.reduce((s: number, p: any) => s + (Number(p.amount_usd || p.amount) || 0), 0);
+    const st = String(item.status || '').toUpperCase();
+    if (st !== 'PAGADO' && st !== 'PAGADA' && Number(item.balance_usd) === 0 && tot > 0) {
+      item.balance_usd = Math.max(0, Math.round((tot - currentSum) * 100) / 100);
+    }
+    if (paidDiff > currentSum + 0.01) {
+      const missing = Math.round((paidDiff - currentSum) * 100) / 100;
+      pays.unshift({
+        id: `abono-pay-${id}`,
+        payable_id: id,
+        amount_usd: missing,
+        amount_ves: missing * (Number(item.exchange_rate) || 1),
+        exchange_rate: Number(item.exchange_rate) || 1,
+        payment_method: 'Abono registrado',
+        reference: 'ABONO',
+        payment_date: item.updated_at || item.created_at || new Date().toISOString()
+      });
+      item.payable_payments = pays;
+    }
+  }
+
+  return Array.from(map.values());
+}
+
 app.get('/api/accounts-payable', async (_req, res: AuthenticatedResponse) => {
   try {
     const orgId = res.locals.supabaseContext?.organizationId || '00000000-0000-0000-0000-000000000001';
-    let dbItems: any[] = [];
-
-    try {
-      const result = await supabaseRestRequest('accounts_payable?select=*,payable_payments(*),suppliers(id,name,doc_number,phone,email,contact_person)&order=created_at.desc');
-      if (!result.error && Array.isArray(result.data)) {
-        dbItems = result.data;
-      } else {
-        const simpleResult = await supabaseRestRequest('accounts_payable?select=*,payable_payments(*)&order=created_at.desc');
-        if (!simpleResult.error && Array.isArray(simpleResult.data)) {
-          dbItems = simpleResult.data;
-        } else {
-          const fallbackResult = await supabaseRestRequest('accounts_payable?select=*&order=created_at.desc');
-          if (!fallbackResult.error && Array.isArray(fallbackResult.data)) {
-            dbItems = fallbackResult.data;
-          }
-        }
-      }
-
-      // Consultar payable_payments directamente por si el join vino vacÃ­o
-      const directPaymentsRes = await supabaseRestRequest('payable_payments?select=*&order=payment_date.desc');
-      const directPaymentsMap = new Map<string, any[]>();
-      if (!directPaymentsRes.error && Array.isArray(directPaymentsRes.data)) {
-        for (const p of directPaymentsRes.data) {
-          if (p.payable_id) {
-            const arr = directPaymentsMap.get(p.payable_id) || [];
-            arr.push(p);
-            directPaymentsMap.set(p.payable_id, arr);
-          }
-        }
-      }
-
-      for (const item of dbItems) {
-        if ((!item.payable_payments || item.payable_payments.length === 0) && directPaymentsMap.has(item.id)) {
-          item.payable_payments = directPaymentsMap.get(item.id);
-        }
-      }
-    } catch (sbErr) {
-      console.warn('Aviso consultando accounts_payable en Supabase:', sbErr);
-    }
-
-    const localItems = loadPersistedPayables(orgId);
-    const map = new Map<string, any>();
-    for (const p of localItems) {
-      if (p.id) map.set(p.id, p);
-    }
-    for (const p of dbItems) {
-      if (p.id) {
-        const local = map.get(p.id) || {};
-        const localPays = Array.isArray(local.payable_payments) ? local.payable_payments : [];
-        const remotePays = Array.isArray(p.payable_payments) ? p.payable_payments : [];
-        const payMap = new Map<string, any>();
-        for (const pay of localPays) {
-          const k = pay.id || `${pay.payment_date || pay.date}-${pay.amount_usd || pay.amount}`;
-          payMap.set(k, pay);
-        }
-        for (const pay of remotePays) {
-          const k = pay.id || `${pay.payment_date || pay.date}-${pay.amount_usd || pay.amount}`;
-          payMap.set(k, pay);
-        }
-        const mergedBalance = (() => {
-          const remoteBal = Number(p.balance_usd);
-          const localBal = Number(local.balance_usd);
-          const st = String(p.status || local.status || '').toUpperCase();
-          if (remoteBal > 0) return remoteBal;
-          if (localBal > 0 && st !== 'PAGADO' && st !== 'PAGADA') return localBal;
-          return remoteBal;
-        })();
-        map.set(p.id, { ...local, ...p, balance_usd: mergedBalance, payable_payments: Array.from(payMap.values()) });
-      }
-    }
-
-    // Reconciliar pagos para registros con saldo amortizado
-    for (const [id, item] of map.entries()) {
-      const tot = Number(item.total_usd) || 0;
-      const bal = Number(item.balance_usd != null ? item.balance_usd : tot);
-      const paidDiff = Math.round(Math.max(0, tot - bal) * 100) / 100;
-      const pays = Array.isArray(item.payable_payments) ? item.payable_payments : [];
-      const currentSum = pays.reduce((s: number, p: any) => s + (Number(p.amount_usd || p.amount) || 0), 0);
-      // Recalcular saldo real cuando el almacenado es 0 pero hay total pendiente
-      // (evita que el dashboard y la pantalla muestren 0 por datos desfasados).
-      const st = String(item.status || '').toUpperCase();
-      if (st !== 'PAGADO' && st !== 'PAGADA' && Number(item.balance_usd) === 0 && tot > 0) {
-        item.balance_usd = Math.max(0, Math.round((tot - currentSum) * 100) / 100);
-      }
-      if (paidDiff > currentSum + 0.01) {
-        const missing = Math.round((paidDiff - currentSum) * 100) / 100;
-        pays.unshift({
-          id: `abono-pay-${id}`,
-          payable_id: id,
-          amount_usd: missing,
-          amount_ves: missing * (Number(item.exchange_rate) || 1),
-          exchange_rate: Number(item.exchange_rate) || 1,
-          payment_method: 'Abono registrado',
-          reference: 'ABONO',
-          payment_date: item.updated_at || item.created_at || new Date().toISOString()
-        });
-        item.payable_payments = pays;
-      }
-    }
-
-    return res.json({ success: true, data: Array.from(map.values()) });
-  } catch (err: any) {
+    const data = await fetchReconciledAccountsPayable(orgId);
+    return res.json({ success: true, data });
+  } catch {
     return res.status(200).json({ success: true, data: loadPersistedPayables() });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// RESUMEN OPERATIVO AGREGADO: consolida en una sola petición paralela todas
+// las métricas del Dashboard (antes requería 8 peticiones + 2 repetidas en serie).
+// ---------------------------------------------------------------------------
+app.get('/api/dashboard/summary', async (req, res: AuthenticatedResponse) => {
+  try {
+    const orgId = res.locals.supabaseContext?.organizationId || '00000000-0000-0000-0000-000000000001';
+    const queryRate = Number(req.query.rate);
+    const activeRate = Number.isFinite(queryRate) && queryRate > 0
+      ? queryRate
+      : (lastCertifiedRate?.appliedRate || 1);
+
+    const [productsRes, salesRes, saleItemsRes, expensesRes, allReceivables, allPayables] = await Promise.all([
+      (res.locals?.supabaseContext
+        ? authenticatedSupabaseRestRequest(res, 'products?select=id,sku,name,stock,min_stock,cost_usd,price_usd&order=name.asc')
+        : supabaseRestRequest('products?select=id,sku,name,stock,min_stock,cost_usd,price_usd&order=name.asc')
+      ).catch(() => ({ error: 'err', data: null })),
+      authenticatedSupabaseRestRequest(
+        res,
+        `sales?organization_id=eq.${encodeURIComponent(orgId)}&select=id,total_usd,status&order=created_at.desc&limit=200`
+      ).catch(() => ({ error: 'err', data: null })),
+      authenticatedSupabaseRestRequest(
+        res,
+        'sale_items?select=sale_id,sku,name,quantity&limit=2000'
+      ).catch(() => ({ error: 'err', data: null })),
+      authenticatedSupabaseRestRequest(
+        res,
+        `expenses?organization_id=eq.${encodeURIComponent(orgId)}&select=amount,currency,exchange_rate`
+      ).catch(() => ({ error: 'err', data: null })),
+      fetchReconciledAccountsReceivable(orgId).catch(() => loadPersistedReceivables(orgId)),
+      fetchReconciledAccountsPayable(orgId).catch(() => loadPersistedPayables(orgId))
+    ]);
+
+    const rawProducts = (!productsRes.error && Array.isArray(productsRes.data) && productsRes.data.length > 0)
+      ? productsRes.data
+      : DEFAULT_CATALOG_PRODUCTS;
+    const prodDedup = new Map<string, any>();
+    for (const p of rawProducts) {
+      if (p?.sku && !prodDedup.has(p.sku)) prodDedup.set(p.sku, p);
+    }
+    const productList = Array.from(prodDedup.values());
+
+    const allSales = (!salesRes.error && Array.isArray(salesRes.data))
+      ? salesRes.data
+      : localSales.load(orgId);
+    const sales = allSales.filter((s: any) => !s.status || s.status === 'COMPLETADA');
+    const saleItems = (!saleItemsRes.error && Array.isArray(saleItemsRes.data)) ? saleItemsRes.data : [];
+    const expenses = (!expensesRes.error && Array.isArray(expensesRes.data))
+      ? expensesRes.data
+      : localExpenses.load(orgId);
+
+    const productCostMap = new Map<string, number>();
+    const productMap = new Map<string, any>();
+    for (const p of productList) {
+      if (p.sku) productCostMap.set(p.sku, Number(p.cost_usd) || 0);
+      if (p.id) productMap.set(p.id, p);
+    }
+
+    const costBySale = new Map<string, number>();
+    const productSales = new Map<string, number>();
+    for (const it of saleItems) {
+      const qty = Number(it.quantity) || 0;
+      if (it.sale_id) {
+        const unitCost = (it.sku ? productCostMap.get(it.sku) : 0) || 0;
+        const itemTotalCost = unitCost * (qty || 1);
+        costBySale.set(it.sale_id, (costBySale.get(it.sale_id) || 0) + itemTotalCost);
+      }
+      if (qty > 0) {
+        const prodName = it.name || (it.sku ? productMap.get(it.sku)?.name : null) || it.sku || 'Producto';
+        productSales.set(prodName, (productSales.get(prodName) || 0) + qty);
+      }
+    }
+
+    let totalSalesUsd = 0;
+    let totalCostUsd = 0;
+    for (const s of sales) {
+      const amount = Number(s.total_usd) || 0;
+      const saleCost = costBySale.get(s.id) || (amount * 0.45);
+      totalSalesUsd += amount;
+      totalCostUsd += saleCost;
+    }
+
+    let totalExpensesUsd = 0;
+    for (const e of expenses) {
+      const amt = Number(e.amount) || 0;
+      const rate = Number(e.exchange_rate) || activeRate || 1;
+      const expenseUsd = e.currency === 'VES' && rate > 0 ? amt / rate : amt;
+      totalExpensesUsd += expenseUsd;
+    }
+
+    const utilidadNeta = Math.round(((totalSalesUsd - totalCostUsd) - totalExpensesUsd) * 100) / 100;
+
+    const topProducts = Array.from(productSales.entries())
+      .map(([name, totalQuantity]) => ({ name, totalQuantity }))
+      .sort((a, b) => b.totalQuantity - a.totalQuantity)
+      .slice(0, 5);
+
+    const lowStockProductsList = productList
+      .filter((p) => Number(p.stock) <= Number(p.min_stock))
+      .sort((a, b) => Number(a.stock) - Number(b.stock))
+      .slice(0, 5);
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const limit21Days = new Date(today.getTime() + 21 * 86400000);
+    limit21Days.setHours(23, 59, 59, 999);
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    const isDueSoonOrThisMonth = (item: any): boolean => {
+      const st = String(item.status || '').toUpperCase();
+      if (st === 'PAGADO' || st === 'PAGADA') return false;
+      const rawDate = item.due_date || item.dueDate;
+      if (!rawDate) {
+        const created = item.created_at ? new Date(item.created_at) : null;
+        if (created && !isNaN(created.getTime())) {
+          return created.getFullYear() === currentYear && created.getMonth() === currentMonth;
+        }
+        return true;
+      }
+      const dueDate = new Date(rawDate);
+      if (isNaN(dueDate.getTime())) return true;
+      const isUpcoming21Days = dueDate >= today && dueDate <= limit21Days;
+      const isThisMonth = dueDate.getFullYear() === currentYear && dueDate.getMonth() === currentMonth;
+      return isUpcoming21Days || isThisMonth;
+    };
+
+    const filteredReceivables = (allReceivables || []).filter(isDueSoonOrThisMonth);
+    const receivableDue = filteredReceivables.reduce(
+      (acc: number, c: any) => acc + Math.max(0, Number(c.balance_usd ?? c.remaining_amount ?? 0)),
+      0
+    );
+
+    const filteredPayables = (allPayables || []).filter(isDueSoonOrThisMonth);
+    const payableDue = filteredPayables.reduce(
+      (acc: number, p: any) => acc + Math.max(0, Number(p.balance_usd ?? p.remaining_amount ?? 0)),
+      0
+    );
+
+    return res.json({
+      success: true,
+      data: {
+        salesUsd: totalSalesUsd,
+        monthlyProfit: utilidadNeta,
+        receivableDueUsd: Math.round(receivableDue * 100) / 100,
+        receivableDueCount: filteredReceivables.length,
+        receivables: filteredReceivables.slice(0, 10),
+        payableDueUsd: Math.round(payableDue * 100) / 100,
+        payableDueCount: filteredPayables.length,
+        payables: filteredPayables.slice(0, 10),
+        stockUnits: productList.reduce((acc, p) => acc + Number(p.stock || 0), 0),
+        lowStockProductsCount: productList.filter((p) => Number(p.stock) <= Number(p.min_stock)).length,
+        topProducts,
+        lowStockProductsList
+      }
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'Error calculando resumen operativo.' });
   }
 });
 
@@ -7947,16 +8254,26 @@ interface CachedSession {
   organizationId: string;
   email: string;
   userId: string;
+  name?: string;
+  permissions?: string[];
   expiresAt: number;
 }
 
 const sessionCache = new Map<string, CachedSession>();
 
 // Singleflight: cuando varias peticiones paralelas traen el mismo token
-// (el dashboard dispara ~6 fetch a la vez), todas comparten UNA sola
+// (el dashboard dispara varias peticiones a la vez), todas comparten UNA sola
 // resolución en vuelo en lugar de consultar Supabase cada una por su cuenta.
-type ResolvedRemoteSession = { user: any; role: string; organizationId: string };
+type ResolvedRemoteSession = {
+  user: any;
+  role: string;
+  organizationId: string;
+  name?: string;
+  permissions?: string[];
+  active?: boolean;
+};
 const sessionInflight = new Map<string, Promise<ResolvedRemoteSession | null>>();
+const sessionSyncInflight = new Map<string, Promise<{ revoked: boolean }>>();
 
 // ---------------------------------------------------------------------------
 // SEGUIMIENTO DE SESIONES (requiere migracion 0029_app_sessions_tracking.sql)
@@ -7965,7 +8282,7 @@ const sessionInflight = new Map<string, Promise<ResolvedRemoteSession | null>>()
 // token del propio usuario; si la tabla no existe (migracion pendiente), el
 // sistema degrada con un aviso y las sesiones siguen funcionando como antes.
 // ---------------------------------------------------------------------------
-const APP_SESSIONS_SYNC_MIN_MS = 60_000; // cadencia de escritura/verificacion
+const APP_SESSIONS_SYNC_MIN_MS = 10_000; // cadencia de escritura/verificacion
 const IDLE_LIMIT_INTERNAL_MS = 30 * 60_000; // rol interno: 30 min de inactividad
 const IDLE_LIMIT_CLIENTE_MS = 2 * 60 * 60_000; // comprador web: 2 horas
 
@@ -8038,61 +8355,77 @@ async function fetchTrackedAppSession(
   };
 }
 
-/** Crea o actualiza la fila de seguimiento y detecta la revocacion remota. */
+/** Crea o actualiza la fila de seguimiento y detecta la revocacion remota (deduplicada en vuelo). */
 async function syncTrackedAppSession(
   accessToken: string,
   tokenHash: string,
   userId: string,
   role: string,
-  deviceLabel: string
+  deviceLabel: string,
+  options: { forceCheck?: boolean; updateActivity?: boolean } = {}
 ): Promise<{ revoked: boolean }> {
   if (appSessionsTableReady === false) return { revoked: false };
 
-  try {
-    const nowMs = Date.now();
-    const tracked = await fetchTrackedAppSession(tokenHash, accessToken);
-    if (tracked === 'unknown') return { revoked: false };
-    if (tracked?.revokedAt > 0) return { revoked: true };
+  const inflightKey = `${tokenHash}:${options.forceCheck ? '1' : '0'}:${options.updateActivity === false ? '0' : '1'}`;
+  const existing = sessionSyncInflight.get(inflightKey);
+  if (existing) return existing;
 
-    if (nowMs - (lastSessionsSyncAt.get(tokenHash) || 0) < APP_SESSIONS_SYNC_MIN_MS) {
-      return { revoked: false };
-    }
-    lastSessionsSyncAt.set(tokenHash, nowMs);
+  const task = (async (): Promise<{ revoked: boolean }> => {
+    try {
+      const nowMs = Date.now();
+      const tracked = await fetchTrackedAppSession(tokenHash, accessToken);
+      if (tracked === 'unknown') return { revoked: false };
+      if (tracked?.revokedAt > 0) return { revoked: true };
 
-    let write = { status: 200, data: null as any, error: undefined as string | undefined };
-    if (tracked) {
-      write = await supabaseRestRequest(
-        `app_sessions?token_hash=eq.${tokenHash}`,
-        { method: 'PATCH', body: { last_seen: new Date(nowMs).toISOString() } },
-        accessToken
-      );
-    } else {
-      write = await supabaseRestRequest(
-        'app_sessions?on_conflict=token_hash',
-        {
-          method: 'POST',
-          body: {
-            user_id: userId,
-            token_hash: tokenHash,
-            device_label: deviceLabel,
-            last_seen: new Date(nowMs).toISOString()
+      if (options.updateActivity === false) {
+        return { revoked: false };
+      }
+
+      if (!options.forceCheck && nowMs - (lastSessionsSyncAt.get(tokenHash) || 0) < APP_SESSIONS_SYNC_MIN_MS) {
+        return { revoked: false };
+      }
+      lastSessionsSyncAt.set(tokenHash, nowMs);
+
+      let write = { status: 200, data: null as any, error: undefined as string | undefined };
+      if (tracked) {
+        write = await supabaseRestRequest(
+          `app_sessions?token_hash=eq.${tokenHash}`,
+          { method: 'PATCH', body: { last_seen: new Date(nowMs).toISOString() } },
+          accessToken
+        );
+      } else {
+        write = await supabaseRestRequest(
+          'app_sessions?on_conflict=token_hash',
+          {
+            method: 'POST',
+            body: {
+              user_id: userId,
+              token_hash: tokenHash,
+              device_label: deviceLabel,
+              last_seen: new Date(nowMs).toISOString()
+            },
+            headers: { Prefer: 'resolution=merge-duplicates' }
           },
-          headers: { Prefer: 'resolution=merge-duplicates' }
-        },
-        accessToken
-      );
+          accessToken
+        );
+      }
+      if (write.error || write.status === 404) {
+        appSessionsTableReady = false;
+        appSessionsTableReadyAt = Date.now();
+      }
+    } catch (err) {
+      if (!warnedAppSessionsUnavailable) {
+        warnedAppSessionsUnavailable = true;
+        console.warn('Aviso: el seguimiento de sesiones no esta disponible (migracion 0029 pendiente):', err);
+      }
     }
-    if (write.error || write.status === 404) {
-      appSessionsTableReady = false;
-      appSessionsTableReadyAt = Date.now();
-    }
-  } catch (err) {
-    if (!warnedAppSessionsUnavailable) {
-      warnedAppSessionsUnavailable = true;
-      console.warn('Aviso: el seguimiento de sesiones no esta disponible (migracion 0029 pendiente):', err);
-    }
-  }
-  return { revoked: false };
+    return { revoked: false };
+  })().finally(() => {
+    sessionSyncInflight.delete(inflightKey);
+  });
+
+  sessionSyncInflight.set(inflightKey, task);
+  return task;
 }
 
 /** Marca un token como revocado en la tabla de seguimiento (best effort). */
@@ -8112,10 +8445,113 @@ async function revokeTrackedAppSession(tokenHash: string, accessToken: string): 
 /** Purga la memoria local de todas las sesiones de un usuario. */
 function purgeSessionMemoryByUser(userId: string): void {
   for (const [tokenHash, entry] of sessionActivity.entries()) {
-    if (entry.userId === userId) sessionActivity.delete(tokenHash);
+    if (entry.userId === userId) {
+      sessionActivity.delete(tokenHash);
+      lastSessionsSyncAt.delete(tokenHash);
+    }
   }
   for (const [token, entry] of sessionCache.entries()) {
-    if (entry.userId === userId) sessionCache.delete(token);
+    if (entry.userId === userId) {
+      sessionCache.delete(token);
+      sessionInflight.delete(token);
+      lastSessionsSyncAt.delete(hashSessionToken(token));
+    }
+  }
+  purgeOpaqueSessionsByUser(userId);
+}
+
+/**
+ * Politica de sesion unica por usuario: al iniciar sesion con credencial valida,
+ * cierra automaticamente cualquier sesion previa en este navegador (si era otra
+ * cuenta) y revoca todas las demas sesiones abiertas del mismo usuario en otros
+ * dispositivos o computadores.
+ */
+async function enforceSingleSessionOnLogin(
+  req: Request,
+  accessToken: string,
+  userId: string,
+  role: string,
+  organizationId: string,
+  email: string
+): Promise<void> {
+  const prevToken = readSessionToken(req);
+  if (prevToken && prevToken !== accessToken) {
+    purgeSessionMemoryByToken(prevToken);
+    if (!verifyLocalSessionToken(prevToken) && isSupabaseConfigured) {
+      await revokeTrackedAppSession(hashSessionToken(prevToken), prevToken);
+      try {
+        await supabaseAuthRequest('logout', {}, 'POST', prevToken);
+      } catch {
+        // Best effort al reemplazar una sesion previa en el mismo navegador.
+      }
+    }
+  }
+
+  if (userId) {
+    purgeSessionMemoryByUser(userId);
+  }
+
+  // 1) Revocar todas las DEMAS sesiones del usuario en Supabase Auth.
+  if (isSupabaseConfigured) {
+    try {
+      await supabaseAuthRequest('logout?scope=others', {}, 'POST', accessToken);
+    } catch {
+      // Best effort: la tabla app_sessions y memoria local tambien invalidan.
+    }
+  }
+
+  const nowMs = Date.now();
+  const nowIso = new Date(nowMs).toISOString();
+  const newTokenHash = hashSessionToken(accessToken);
+
+  // 2) Revocar en app_sessions todas las filas previas activas del usuario
+  // y registrar la sesion recien abierta (requiere migracion 0029 + 0030).
+  if (userId && appSessionsTableReady !== false) {
+    try {
+      await supabaseRestRequest(
+        `app_sessions?user_id=eq.${encodeURIComponent(userId)}&revoked_at=is.null&token_hash=neq.${newTokenHash}`,
+        { method: 'PATCH', body: { revoked_at: nowIso } },
+        accessToken
+      );
+      const write = await supabaseRestRequest(
+        'app_sessions?on_conflict=token_hash',
+        {
+          method: 'POST',
+          body: {
+            user_id: userId,
+            token_hash: newTokenHash,
+            device_label: deviceLabelOf(req),
+            last_seen: nowIso,
+            revoked_at: null
+          },
+          headers: { Prefer: 'resolution=merge-duplicates' }
+        },
+        accessToken
+      );
+      if (write.status === 404) {
+        appSessionsTableReady = false;
+        appSessionsTableReadyAt = nowMs;
+      } else if (!write.error) {
+        appSessionsTableReady = true;
+      }
+    } catch {
+      // Degrada sin bloquear el inicio de sesion.
+    }
+  }
+
+  const tokenExpiry = readTokenExpiry(accessToken);
+  if (userId) {
+    sessionActivity.set(newTokenHash, { lastSeen: nowMs, role, userId });
+    lastSessionsSyncAt.set(newTokenHash, nowMs);
+    sessionCache.set(accessToken, {
+      role,
+      organizationId,
+      email,
+      userId,
+      name: '',
+      permissions: resolveEffectivePermissions(role, []),
+      expiresAt: Math.min(tokenExpiry || nowMs + 5 * 60_000, nowMs + 5 * 60_000)
+    });
   }
 }
 
@@ -8147,8 +8583,9 @@ function readTokenExpiry(token: string): number {
  */
 async function resolveRequestSession(
   req: Request,
-  res: AuthenticatedResponse
-): Promise<{ token: string; local: LocalSessionPayload | null; remote: { user: any; role: string; organizationId: string } | null } | null> {
+  res: AuthenticatedResponse,
+  options: { forceSessionCheck?: boolean; updateActivity?: boolean } = {}
+): Promise<{ token: string; local: LocalSessionPayload | null; remote: ResolvedRemoteSession | null } | null> {
   const token = readSessionToken(req);
   if (!token) return null;
 
@@ -8160,6 +8597,7 @@ async function resolveRequestSession(
   if (!isSupabaseConfigured) return null;
 
   const tokenHash = hashSessionToken(token);
+  const updateActivity = options.updateActivity !== false;
 
   // Expiracion por inactividad supervisada en ESTA instancia (instantanea).
   const activity = sessionActivity.get(tokenHash);
@@ -8169,37 +8607,56 @@ async function resolveRequestSession(
       sessionActivity.delete(tokenHash);
       sessionCache.delete(token);
       sessionInflight.delete(token);
+      lastSessionsSyncAt.delete(tokenHash);
       void revokeTrackedAppSession(tokenHash, token);
       logAuthEvent('SESION_INACTIVA', getClientIp(req), `usuario=${activity.userId} inactividadMin=${Math.round(idleMs / 60_000)}`);
       return null;
     }
-    activity.lastSeen = Date.now();
+    if (updateActivity) {
+      activity.lastSeen = Date.now();
+    }
   }
 
   const cached = sessionCache.get(token);
   if (cached && cached.expiresAt > Date.now()) {
-    // Verificacion periodica del registro (revocacion remota + ultima actividad).
-    if (appSessionsTableReady !== false && Date.now() - (lastSessionsSyncAt.get(tokenHash) || 0) >= APP_SESSIONS_SYNC_MIN_MS) {
-      const tracked = await syncTrackedAppSession(
-        token,
-        tokenHash,
-        cached.userId,
-        cached.role,
-        deviceLabelOf(req)
-      );
-      if (tracked.revoked) {
-        purgeSessionMemoryByToken(token);
-        logAuthEvent('SESION_REVOCADA', getClientIp(req), `usuario=${cached.userId}`);
-        return null;
+    const shouldCheckRemote =
+      options.forceSessionCheck === true ||
+      (appSessionsTableReady !== false && Date.now() - (lastSessionsSyncAt.get(tokenHash) || 0) >= APP_SESSIONS_SYNC_MIN_MS);
+
+    if (shouldCheckRemote) {
+      if (appSessionsTableReady !== false) {
+        const tracked = await syncTrackedAppSession(
+          token,
+          tokenHash,
+          cached.userId,
+          cached.role,
+          deviceLabelOf(req),
+          { forceCheck: options.forceSessionCheck, updateActivity }
+        );
+        if (tracked.revoked) {
+          purgeSessionMemoryByToken(token);
+          logAuthEvent('SESION_REVOCADA', getClientIp(req), `usuario=${cached.userId}`);
+          return null;
+        }
+      }
+      if (options.forceSessionCheck && appSessionsTableReady === false) {
+        const liveUser = await resolveRemoteSession(token);
+        if (!liveUser) {
+          purgeSessionMemoryByToken(token);
+          logAuthEvent('SESION_REVOCADA', getClientIp(req), `usuario=${cached.userId}`);
+          return null;
+        }
       }
     }
     return {
       token,
       local: null,
       remote: {
-        user: { email: cached.email, id: cached.userId },
+        user: { email: cached.email, id: cached.userId, name: cached.name || '' },
         role: cached.role,
-        organizationId: cached.organizationId
+        organizationId: cached.organizationId,
+        name: cached.name || '',
+        permissions: cached.permissions
       }
     };
   }
@@ -8212,35 +8669,48 @@ async function resolveRequestSession(
       organizationId: resolved.organizationId,
       email: resolved.user.email || '',
       userId: resolved.user.id || '',
+      name: resolved.name || '',
+      permissions: resolved.permissions,
       expiresAt: Math.min(tokenExpiry || Date.now() + 5 * 60_000, Date.now() + 5 * 60_000)
     });
 
-    // Registrar la sesion en el seguimiento (crea/actualiza la fila).
     const tracked = await syncTrackedAppSession(
       token,
       tokenHash,
       resolved.user.id || '',
       resolved.role,
-      deviceLabelOf(req)
+      deviceLabelOf(req),
+      { forceCheck: options.forceSessionCheck, updateActivity }
     );
     if (tracked.revoked) {
       purgeSessionMemoryByToken(token);
       logAuthEvent('SESION_REVOCADA', getClientIp(req), `usuario=${resolved.user.id || ''}`);
       return null;
     }
-    sessionActivity.set(tokenHash, { lastSeen: Date.now(), role: resolved.role, userId: resolved.user.id || '' });
+    if (!sessionActivity.has(tokenHash) || updateActivity) {
+      sessionActivity.set(tokenHash, { lastSeen: Date.now(), role: resolved.role, userId: resolved.user.id || '' });
+    }
     return { token, local: null, remote: resolved };
   }
 
-  // Token caducado: se intenta renovar con la cookie de refresco.
-  const refreshToken = readCookie(req, REFRESH_COOKIE);
+  // Token caducado: se intenta renovar con la cookie de refresco o sesion opaca.
+  const sid = readOpaqueSessionHeader(req);
+  const opaqueEntry = sid ? opaqueSessions.get(sid) : undefined;
+  const refreshToken = readCookie(req, REFRESH_COOKIE) || opaqueEntry?.refreshToken || '';
   if (refreshToken) {
     const refreshed = await supabaseAuthRequest('token?grant_type=refresh_token', { refresh_token: refreshToken });
     if (refreshed.data?.access_token) {
       const newToken: string = refreshed.data.access_token;
-      setSessionCookie(res, SESSION_COOKIE, newToken);
+      setSessionCookie(res, SESSION_COOKIE, newToken, req);
       if (refreshed.data.refresh_token) {
-        setSessionCookie(res, REFRESH_COOKIE, refreshed.data.refresh_token);
+        setSessionCookie(res, REFRESH_COOKIE, refreshed.data.refresh_token, req);
+      }
+      if (opaqueEntry) {
+        opaqueEntry.token = newToken;
+        if (refreshed.data.refresh_token) {
+          opaqueEntry.refreshToken = refreshed.data.refresh_token;
+        }
+        opaqueEntry.expiresAt = Date.now() + SESSION_MAX_AGE_MS;
       }
       const resolvedAfter = await resolveRemoteSession(newToken);
       if (resolvedAfter) {
@@ -8250,7 +8720,8 @@ async function resolveRequestSession(
           newTokenHash,
           resolvedAfter.user.id || '',
           resolvedAfter.role,
-          deviceLabelOf(req)
+          deviceLabelOf(req),
+          { forceCheck: options.forceSessionCheck, updateActivity }
         );
         sessionActivity.set(newTokenHash, { lastSeen: Date.now(), role: resolvedAfter.role, userId: resolvedAfter.user.id || '' });
         return { token: newToken, local: null, remote: resolvedAfter };
@@ -8258,6 +8729,7 @@ async function resolveRequestSession(
     }
   }
 
+  if (sid) opaqueSessions.delete(sid);
   return null;
 }
 
@@ -8286,8 +8758,15 @@ function applySessionContext(
   };
 }
 
+const AUTH_MODE_CACHE_TTL_MS = 30_000;
+let authModeCache: { data: any; cachedAt: number } | null = null;
+
 /** Estado del sistema de autenticacion. Nunca devuelve claves. */
 app.get('/api/auth/mode', async (_req, res) => {
+  if (authModeCache && (Date.now() - authModeCache.cachedAt < AUTH_MODE_CACHE_TTL_MS)) {
+    return res.json({ success: true, data: authModeCache.data });
+  }
+
   let connected = false;
   let missingTables: string[] = [];
   if (isSupabaseConfigured) {
@@ -8296,16 +8775,22 @@ app.get('/api/auth/mode', async (_req, res) => {
     if (test.error) missingTables.push('organizations');
   }
 
+  const payload = {
+    supabaseConfigured: isSupabaseConfigured,
+    supabaseConnected: connected,
+    missingTables,
+    supabaseUrl: isSupabaseConfigured ? SUPABASE_URL : '',
+    localAccessEnabled: Boolean(ACCESS_KEY),
+    credentialsSource: SUPABASE_CREDENTIALS_SOURCE
+  };
+
+  if (connected) {
+    authModeCache = { data: payload, cachedAt: Date.now() };
+  }
+
   res.json({
     success: true,
-    data: {
-      supabaseConfigured: isSupabaseConfigured,
-      supabaseConnected: connected,
-      missingTables,
-      supabaseUrl: isSupabaseConfigured ? SUPABASE_URL : '',
-      localAccessEnabled: Boolean(ACCESS_KEY),
-      credentialsSource: SUPABASE_CREDENTIALS_SOURCE
-    }
+    data: payload
   });
 });
 
@@ -8351,23 +8836,53 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(401).json({ success: false, error: 'Correo o contraseÃ±a incorrectos.' });
   }
 
-  // Credencial valida: el contador por correo de este usuario se reinicia.
+  // Credencial valida: el contador por correo y por IP se reinician.
   resetRateLimit(`login-email:${cleanEmail}`);
-
-  setSessionCookie(res, SESSION_COOKIE, result.data.access_token);
-  if (result.data.refresh_token) {
-    setSessionCookie(res, REFRESH_COOKIE, result.data.refresh_token);
-  }
+  resetRateLimit(`login:${ip}`);
 
   const resolved = await resolveSessionUser(result.data.access_token);
-  logAuthEvent('LOGIN_OK', ip, `email=${cleanEmail} rol=${resolved?.role || 'desconocido'}`);
+  const resolvedRole = resolved?.role || 'admin';
+  const resolvedOrgId = resolved?.organizationId || '00000000-0000-0000-0000-000000000001';
+  const resolvedUserId = resolved?.user?.id || '';
+
+  // Cierra cualquier sesion abierta en otro dispositivo/navegador y abre solo esta.
+  await enforceSingleSessionOnLogin(
+    req,
+    result.data.access_token,
+    resolvedUserId,
+    resolvedRole,
+    resolvedOrgId,
+    cleanEmail
+  );
+
+  setSessionCookie(res, SESSION_COOKIE, result.data.access_token, req);
+  if (result.data.refresh_token) {
+    setSessionCookie(res, REFRESH_COOKIE, result.data.refresh_token, req);
+  }
+  const sessionId = issueOpaqueSession(
+    result.data.access_token,
+    resolvedUserId,
+    result.data.refresh_token,
+    false
+  );
+
+  logAuthEvent('LOGIN_OK', ip, `email=${cleanEmail} rol=${resolvedRole}`);
+
+  // Enriquecer sessionCache con el nombre y permisos resueltos para evitar pedir /api/users al arrancar.
+  if (resolved && sessionCache.has(result.data.access_token)) {
+    const entry = sessionCache.get(result.data.access_token)!;
+    entry.name = resolved.name || '';
+    entry.permissions = resolved.permissions || resolveEffectivePermissions(resolvedRole, []);
+  }
 
   res.json({
     success: true,
     data: {
-      user: { email: cleanEmail, id: resolved?.user?.id || '' },
-      role: resolved?.role || 'admin',
-      organizationId: resolved?.organizationId || '00000000-0000-0000-0000-000000000001'
+      user: { email: cleanEmail, id: resolvedUserId, name: resolved?.name || '' },
+      role: resolvedRole,
+      organizationId: resolvedOrgId,
+      permissions: resolved?.permissions || resolveEffectivePermissions(resolvedRole, []),
+      sessionId
     }
   });
 });
@@ -8431,11 +8946,21 @@ app.post('/api/auth/register', async (req, res) => {
     }
   }
 
+  let sessionId: string | undefined;
   if (token) {
-    setSessionCookie(res, SESSION_COOKIE, token);
+    await enforceSingleSessionOnLogin(
+      req,
+      token,
+      result.data?.user?.id || '',
+      targetRole,
+      '00000000-0000-0000-0000-000000000001',
+      cleanEmail
+    );
+    setSessionCookie(res, SESSION_COOKIE, token, req);
     if (refreshToken) {
-      setSessionCookie(res, REFRESH_COOKIE, refreshToken);
+      setSessionCookie(res, REFRESH_COOKIE, refreshToken, req);
     }
+    sessionId = issueOpaqueSession(token, result.data?.user?.id || '', refreshToken, false);
   }
 
   // Asegurar persistencia local y rol si es administrativo
@@ -8461,17 +8986,40 @@ app.post('/api/auth/register', async (req, res) => {
     data: {
       user: { email: cleanEmail, id: result.data?.user?.id || '' },
       role: targetRole,
-      organizationId: '00000000-0000-0000-0000-000000000001'
+      organizationId: '00000000-0000-0000-0000-000000000001',
+      ...(sessionId ? { sessionId } : {})
     }
   });
 });
 
 /** Sesion actual. */
 app.get('/api/auth/session', async (req, res) => {
-  const session = await resolveRequestSession(req, res as AuthenticatedResponse);
+  const isHeartbeat = req.query.heartbeat === '1' || req.header('x-session-check') === 'heartbeat';
+  const session = await resolveRequestSession(req, res as AuthenticatedResponse, {
+    forceSessionCheck: true,
+    updateActivity: !isHeartbeat
+  });
   if (!session) {
+    clearSessionCookie(res, SESSION_COOKIE, req);
+    clearSessionCookie(res, REFRESH_COOKIE, req);
+    const sid = readOpaqueSessionHeader(req);
+    if (sid) opaqueSessions.delete(sid);
     return res.status(401).json({ success: false, error: 'Sin sesiÃ³n activa.' });
   }
+
+  const refreshCookie = readCookie(req, REFRESH_COOKIE);
+  const existingSid = readOpaqueSessionHeader(req);
+  const sessionId =
+    existingSid && opaqueSessions.has(existingSid)
+      ? existingSid
+      : !isHeartbeat
+        ? findOrIssueOpaqueSession(
+            session.token,
+            session.local ? session.local.sub : (session.remote!.user?.id || ''),
+            refreshCookie || undefined,
+            Boolean(session.local)
+          )
+        : undefined;
 
   if (session.local) {
     return res.json({
@@ -8480,7 +9028,9 @@ app.get('/api/auth/session', async (req, res) => {
         mode: 'local',
         user: { email: session.local.email, id: session.local.sub },
         role: session.local.role,
-        organizationId: session.local.organizationId
+        organizationId: session.local.organizationId,
+        permissions: defaultPermissionsForRole(session.local.role),
+        ...(sessionId ? { sessionId } : {})
       }
     });
   }
@@ -8492,19 +9042,29 @@ app.get('/api/auth/session', async (req, res) => {
       user: {
         email: session.remote!.user?.email || '',
         id: session.remote!.user?.id || '',
-        name: session.remote!.user?.user_metadata?.full_name || session.remote!.user?.user_metadata?.name || ''
+        name:
+          session.remote!.name ||
+          session.remote!.user?.name ||
+          session.remote!.user?.user_metadata?.full_name ||
+          session.remote!.user?.user_metadata?.name ||
+          ''
       },
       role: session.remote!.role,
-      organizationId: session.remote!.organizationId
+      organizationId: session.remote!.organizationId,
+      permissions: session.remote!.permissions || defaultPermissionsForRole(session.remote!.role),
+      ...(sessionId ? { sessionId } : {})
     }
   });
 });
 
 /** Invalida todo rastro en memoria de un token de sesion. */
 function purgeSessionMemoryByToken(token: string): void {
+  const tokenHash = hashSessionToken(token);
   sessionCache.delete(token);
   sessionInflight.delete(token);
-  sessionActivity.delete(hashSessionToken(token));
+  sessionActivity.delete(tokenHash);
+  lastSessionsSyncAt.delete(tokenHash);
+  purgeOpaqueSessionsByToken(token);
 }
 
 /** Cierre de sesion. */
@@ -8512,18 +9072,26 @@ app.post('/api/auth/logout', async (req, res) => {
   const ip = getClientIp(req);
   const token = readSessionToken(req);
 
-  if (token && !verifyLocalSessionToken(token) && isSupabaseConfigured) {
-    // Revocar la sesion ACTIVA en Supabase: el JWT y su refresh quedan anulos.
-    try {
-      await supabaseAuthRequest('logout', {}, 'POST', token);
-    } catch (err) {
-      logAuthEvent('LOGOUT_AVISO', ip, `revocacion supabase=${err instanceof Error ? err.message : 'error'}`);
+  if (token) {
+    const localPayload = verifyLocalSessionToken(token);
+    if (localPayload?.jti && activeLocalSessionBySub.get(localPayload.sub) === localPayload.jti) {
+      activeLocalSessionBySub.delete(localPayload.sub);
+    } else if (!localPayload && isSupabaseConfigured) {
+      await revokeTrackedAppSession(hashSessionToken(token), token);
+      // Revocar la sesion ACTIVA en Supabase: el JWT y su refresh quedan anulos.
+      try {
+        await supabaseAuthRequest('logout', {}, 'POST', token);
+      } catch (err) {
+        logAuthEvent('LOGOUT_AVISO', ip, `revocacion supabase=${err instanceof Error ? err.message : 'error'}`);
+      }
     }
+    purgeSessionMemoryByToken(token);
   }
 
-  if (token) purgeSessionMemoryByToken(token);
-  clearSessionCookie(res, SESSION_COOKIE);
-  clearSessionCookie(res, REFRESH_COOKIE);
+  const sid = readOpaqueSessionHeader(req);
+  if (sid) opaqueSessions.delete(sid);
+  clearSessionCookie(res, SESSION_COOKIE, req);
+  clearSessionCookie(res, REFRESH_COOKIE, req);
   logAuthEvent('LOGOUT', ip, 'sesion cerrada y token revocado');
   res.json({ success: true });
 });
@@ -8537,9 +9105,10 @@ app.post('/api/auth/logout-all', async (req, res) => {
   }
 
   if (session.local) {
+    activeLocalSessionBySub.delete(session.local.sub);
     // El modo local no registra sesiones en servidor: solo limpia este equipo.
-    clearSessionCookie(res, SESSION_COOKIE);
-    clearSessionCookie(res, REFRESH_COOKIE);
+    clearSessionCookie(res, SESSION_COOKIE, req);
+    clearSessionCookie(res, REFRESH_COOKIE, req);
     logAuthEvent('LOGOUT_ALL', ip, `modo=local email=${session.local.email}`);
     return res.json({ success: true, data: { mode: 'local', scope: 'este dispositivo (el modo local no registra sesiones en servidor)' } });
   }
@@ -8549,17 +9118,17 @@ app.post('/api/auth/logout-all', async (req, res) => {
     return res.status(401).json({ success: false, error: 'SesiÃ³n requerida. Inicia sesiÃ³n para acceder a esta informaciÃ³n.' });
   }
 
-  // 1) Revocar la sesion activa de ESTE dispositivo en Supabase.
+  // 1) Revocar todas las sesiones del usuario en Supabase.
   if (isSupabaseConfigured) {
     try {
-      await supabaseAuthRequest('logout', {}, 'POST', session.token);
+      await supabaseAuthRequest('logout?scope=global', {}, 'POST', session.token);
     } catch (err) {
       logAuthEvent('LOGOUT_AVISO', ip, `revocacion supabase=${err instanceof Error ? err.message : 'error'}`);
     }
   }
 
   // 2) Revocar el registro de TODAS las sesiones del usuario (best effort;
-  // requiere la migracion 0029). Las demas instancias detectan la marca en <=60 s.
+  // requiere la migracion 0029). Las demas instancias detectan la marca en <=10 s.
   if (appSessionsTableReady !== false) {
     try {
       await supabaseRestRequest(
@@ -8574,8 +9143,8 @@ app.post('/api/auth/logout-all', async (req, res) => {
 
   // 3) Purgar la memoria de esta instancia y limpiar cookies de este equipo.
   purgeSessionMemoryByUser(userId);
-  clearSessionCookie(res, SESSION_COOKIE);
-  clearSessionCookie(res, REFRESH_COOKIE);
+  clearSessionCookie(res, SESSION_COOKIE, req);
+  clearSessionCookie(res, REFRESH_COOKIE, req);
   logAuthEvent('LOGOUT_ALL', ip, `usuario=${userId}`);
   res.json({ success: true, data: { mode: 'supabase', scope: 'todas las sesiones del usuario' } });
 });
@@ -8614,20 +9183,34 @@ app.post('/api/auth/local-login', async (req, res) => {
   }
 
   const cleanEmail = typeof email === 'string' && email.trim() ? email.trim().toLowerCase() : 'operador@frenyer.local';
+  const jti = crypto.randomUUID();
   const payload: LocalSessionPayload = {
     sub: `local-${crypto.createHash('sha256').update(cleanEmail).digest('hex').slice(0, 16)}`,
     email: cleanEmail,
     role: 'admin',
     organizationId: '00000000-0000-0000-0000-000000000001',
-    exp: Date.now() + SESSION_MAX_AGE_MS
+    exp: Date.now() + SESSION_MAX_AGE_MS,
+    jti
   };
 
-  setSessionCookie(res, SESSION_COOKIE, signLocalSession(payload));
+  resetRateLimit(`local-login:${ip}`);
+  purgeOpaqueSessionsByUser(payload.sub);
+  activeLocalSessionBySub.set(payload.sub, jti);
+  const localToken = signLocalSession(payload);
+  setSessionCookie(res, SESSION_COOKIE, localToken, req);
+  const sessionId = issueOpaqueSession(localToken, payload.sub, undefined, true);
   logAuthEvent('ACCESO_LOCAL_OK', ip, `email=${cleanEmail}`);
 
   res.json({
     success: true,
-    data: { mode: 'local', user: { email: cleanEmail, id: payload.sub }, role: payload.role, organizationId: payload.organizationId }
+    data: {
+      mode: 'local',
+      user: { email: cleanEmail, id: payload.sub },
+      role: payload.role,
+      organizationId: payload.organizationId,
+      permissions: defaultPermissionsForRole(payload.role),
+      sessionId
+    }
   });
 });
 
@@ -8642,11 +9225,8 @@ app.get('/api/auth/google', (req, res) => {
   const redirectTo = `${getRequestOrigin(req)}/api/auth/google/callback`;
 
   res.cookie('frenyer_pkce', codeVerifier, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 10 * 60 * 1000,
-    path: '/'
+    ...getSessionCookieOptions(req),
+    maxAge: 10 * 60 * 1000
   });
 
   const authorizeUrl = new URL(`${SUPABASE_URL}/auth/v1/authorize`);
@@ -8672,7 +9252,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
   }
 
   const codeVerifier = readCookie(req, 'frenyer_pkce');
-  clearSessionCookie(res, 'frenyer_pkce');
+  clearSessionCookie(res, 'frenyer_pkce', req);
 
   if (!code || !codeVerifier) {
     logAuthEvent('GOOGLE_FALLIDO', ip, 'codigo o verificador ausente');
@@ -8691,12 +9271,21 @@ app.get('/api/auth/google/callback', async (req, res) => {
     return res.redirect(`/login?error=${encodeURIComponent('No se pudo completar el inicio de sesiÃ³n con Google.')}`);
   }
 
-  setSessionCookie(res, SESSION_COOKIE, result.data.access_token);
+  const resolved = await resolveSessionUser(result.data.access_token);
+  await enforceSingleSessionOnLogin(
+    req,
+    result.data.access_token,
+    resolved?.user?.id || '',
+    resolved?.role || 'cliente',
+    resolved?.organizationId || '00000000-0000-0000-0000-000000000001',
+    resolved?.user?.email || ''
+  );
+
+  setSessionCookie(res, SESSION_COOKIE, result.data.access_token, req);
   if (result.data.refresh_token) {
-    setSessionCookie(res, REFRESH_COOKIE, result.data.refresh_token);
+    setSessionCookie(res, REFRESH_COOKIE, result.data.refresh_token, req);
   }
 
-  const resolved = await resolveSessionUser(result.data.access_token);
   logAuthEvent('GOOGLE_OK', ip, `email=${resolved?.user?.email || 'desconocido'}`);
 
   res.redirect('/dashboard');

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { X, CheckCircle, ShieldAlert } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { setActiveExchangeRate } from '../../lib/currency';
-import { authenticatedFetch } from '../../lib/supabase/api';
+import { authenticatedFetch, withSessionInit } from '../../lib/supabase/api';
 import { getActiveOrgId } from '../../lib/supabase/db';
 
 interface ManualBcvRateModalProps {
@@ -35,8 +35,8 @@ export function ManualBcvRateModal({
     setIsCheckingRole(true);
     void (async () => {
       try {
-        // El rol lo resuelve el servidor a partir de la cookie de sesion.
-        const sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
+        // El rol lo resuelve el servidor a partir de la cookie de sesion o respaldo opaco.
+        const sessionRes = await fetch('/api/auth/session', withSessionInit());
         if (!sessionRes.ok) throw new Error('Sesion requerida.');
         const sessionJson = await sessionRes.json();
         const role = sessionJson?.data?.role || '';

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { setInactivityLocked } from '../../lib/supabase/api';
 
 const IDLE_LOCK_MS = 60_000;
 const IDLE_LOGOUT_MS = 15 * 60_000;
@@ -62,30 +63,78 @@ export function InactivityLock() {
   }, [user, handleActivity, scheduleTimers, clearTimers]);
 
   useEffect(() => {
-    if (!fetchOriginalRef.current) fetchOriginalRef.current = window.fetch.bind(window);
-    const original = fetchOriginalRef.current!;
-    if (locked) {
-      const guardedFetch: typeof window.fetch = (input: any, init?: any) => {
-        const url = typeof input === 'string' ? input : (input?.url || '');
-        if (url.includes('/api/auth/')) return original(input, init);
-        return Promise.resolve(new Response(JSON.stringify({ success: false, error: 'Sesion bloqueada por inactividad.' }), { status: 423, headers: { 'Content-Type': 'application/json' } }));
-      };
-      window.fetch = guardedFetch as typeof window.fetch;
-      document.body.style.overflow = 'hidden';
-    } else {
-      window.fetch = original;
-      document.body.style.overflow = '';
+    if (!fetchOriginalRef.current && typeof window !== 'undefined' && typeof window.fetch === 'function') {
+      fetchOriginalRef.current = window.fetch.bind(window);
     }
-    return () => { window.fetch = original; document.body.style.overflow = ''; };
+
+    setInactivityLocked(locked);
+
+    if (!locked) {
+      document.body.style.overflow = '';
+      return () => {
+        setInactivityLocked(false);
+        document.body.style.overflow = '';
+      };
+    }
+
+    document.body.style.overflow = 'hidden';
+
+    const original = fetchOriginalRef.current ?? window.fetch.bind(window);
+    const descriptor = Object.getOwnPropertyDescriptor(window, 'fetch');
+    let patchedWindowFetch = false;
+
+    const guardedFetch: typeof window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : (input instanceof URL ? input.toString() : input?.url || '');
+      if (url.includes('/api/auth/')) return original(input, init);
+      return Promise.resolve(new Response(
+        JSON.stringify({ success: false, error: 'Sesión bloqueada por inactividad.' }),
+        { status: 423, headers: { 'Content-Type': 'application/json' } }
+      ));
+    };
+
+    try {
+      const canAssign = !descriptor || descriptor.writable === true || typeof descriptor.set === 'function';
+      if (canAssign) {
+        window.fetch = guardedFetch;
+        patchedWindowFetch = true;
+      } else if (descriptor.configurable) {
+        Object.defineProperty(window, 'fetch', {
+          value: guardedFetch,
+          configurable: true,
+          writable: true,
+        });
+        patchedWindowFetch = true;
+      }
+    } catch {
+      // Entornos donde window.fetch es de solo lectura (getter-only); authenticatedFetch cubre el bloqueo.
+      patchedWindowFetch = false;
+    }
+
+    return () => {
+      setInactivityLocked(false);
+      document.body.style.overflow = '';
+      if (patchedWindowFetch) {
+        try {
+          if (descriptor) {
+            Object.defineProperty(window, 'fetch', descriptor);
+          } else {
+            window.fetch = original;
+          }
+        } catch {
+          // Ignorar si no se puede restaurar en este entorno.
+        }
+      }
+    };
   }, [locked]);
 
   useEffect(() => {
     if (!locked && user) { lastActivityRef.current = Date.now(); scheduleTimers(); }
   }, [locked, user, scheduleTimers]);
+
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
     if (verifying) return;
-    if (!password.trim()) { setError('Ingresa tu contrasena.'); return; }
+    if (!password.trim()) { setError('Ingresa tu contraseña.'); return; }
     const email = user?.email || '';
     const isLocal = session?.mode === 'local';
     setVerifying(true);
@@ -102,7 +151,7 @@ export function InactivityLock() {
       setPassword('');
       lastActivityRef.current = Date.now();
     } catch (err: any) {
-      setError(err?.message || 'No se pudo verificar la contrasena.');
+      setError(err?.message || 'No se pudo verificar la contraseña.');
     } finally {
       setVerifying(false);
     }
@@ -111,27 +160,27 @@ export function InactivityLock() {
   if (!user || !locked) return null;
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="inactivity-lock-title" style={{ position: 'fixed', inset: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(17,24,39,0.55)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
-      <div style={{ width: '100%', maxWidth: 400, background: '#fff', borderRadius: 'var(--radius-lg,16px)', border: '1px solid var(--border,#e2e8f0)', boxShadow: '0 20px 60px rgba(0,0,0,0.25)', padding: 28 }}>
+    <div role="dialog" aria-modal="true" aria-labelledby="inactivity-lock-title" style={{ position: 'fixed', inset: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: 'rgba(17,24,39,0.55)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
+      <div style={{ width: '100%', maxWidth: 400, boxSizing: 'border-box', background: '#fff', borderRadius: 'var(--radius-lg,16px)', border: '1px solid var(--border,#e2e8f0)', boxShadow: '0 20px 60px rgba(0,0,0,0.25)', padding: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--brand-500,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+          <div style={{ width: 40, height: 40, flexShrink: 0, borderRadius: '50%', background: 'var(--brand-500,#2D2E32)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
             <Lock size={20} />
           </div>
           <div>
-            <h2 id="inactivity-lock-title" style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>Sesion bloqueada por inactividad</h2>
-            <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>Ingresa tu contrasena para continuar.</p>
+            <h2 id="inactivity-lock-title" style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>Sesión bloqueada por inactividad</h2>
+            <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>Ingresa tu contraseña para continuar.</p>
           </div>
         </div>
         <form onSubmit={handleUnlock}>
-          {user?.email && <div style={{ marginBottom: 10, fontSize: 12, color: '#6b7280' }}>Usuario: <strong style={{ color: '#111827' }}>{user.email}</strong></div>}
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" autoFocus placeholder="Contrasena" disabled={verifying} style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border,#e2e8f0)', fontSize: 14, outline: 'none', marginBottom: 10 }} />
+          {user?.email && <div style={{ marginBottom: 10, fontSize: 12, color: '#6b7280', wordBreak: 'break-word' }}>Usuario: <strong style={{ color: '#111827' }}>{user.email}</strong></div>}
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" autoFocus placeholder="Contraseña" disabled={verifying} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border,#e2e8f0)', fontSize: 14, outline: 'none', marginBottom: 10 }} />
           {error && <div style={{ marginBottom: 10, fontSize: 12, color: '#b91c1c', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 6, padding: '6px 10px' }}>{error}</div>}
-          <button type="submit" disabled={verifying} style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'var(--brand-500,#7c3aed)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: verifying ? 'not-allowed' : 'pointer', opacity: verifying ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <button type="submit" disabled={verifying} style={{ width: '100%', minHeight: 40, padding: '10px 12px', borderRadius: 8, border: 'none', background: 'var(--brand-500,#2D2E32)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: verifying ? 'not-allowed' : 'pointer', opacity: verifying ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             {verifying && <Loader2 size={16} className="animate-spin" />}
             Desbloquear
           </button>
         </form>
-        <p style={{ marginTop: 12, fontSize: 11, color: '#9ca3af', textAlign: 'center' }}>La sesion se cerrara automaticamente tras 15 minutos de inactividad.</p>
+        <p style={{ marginTop: 12, fontSize: 11, color: '#9ca3af', textAlign: 'center' }}>La sesión se cerrará automáticamente tras 15 minutos de inactividad.</p>
       </div>
     </div>
   );

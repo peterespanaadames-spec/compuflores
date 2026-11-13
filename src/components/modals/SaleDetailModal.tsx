@@ -19,6 +19,7 @@ import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { getBusinessProfile } from '../../lib/businessProfile';
+import { authenticatedFetch } from '../../lib/supabase/api';
 
 interface SaleItemDetail {
   id: string;
@@ -168,7 +169,7 @@ export function SaleDetailModal({ isOpen, onClose, saleId }: { isOpen: boolean; 
          }
 
         // 2. Si no es de 'sales', buscar en /api/orders o datos locales de pedidos web
-        const ordersRes = await fetch('/api/orders');
+        const ordersRes = await authenticatedFetch('/api/orders');
         if (ordersRes.ok) {
           const json = await ordersRes.json();
           if (json.success && Array.isArray(json.data)) {

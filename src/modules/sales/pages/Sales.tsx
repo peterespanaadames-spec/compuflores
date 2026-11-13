@@ -1156,7 +1156,7 @@ export function Sales() {
     return matchesSearch && matchesCategory;
   });
 
-  // Vista compacta móvil: catálogo destacado = top 10 por rotación real de ventas
+  // Vista compacta móvil: catálogo destacado = top 7 por rotación real de ventas (4 filas de 2 con Venta Libre)
   const [isCompactViewport, setIsCompactViewport] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches
   );
@@ -1170,7 +1170,7 @@ export function Sales() {
     (a, b) => (productRotation[b.sku] || 0) - (productRotation[a.sku] || 0)
   );
   const visibleCatalog =
-    isCompactViewport && searchTerm.trim() === '' ? sortedByRotation.slice(0, 8) : filteredProducts;
+    isCompactViewport && searchTerm.trim() === '' ? sortedByRotation.slice(0, 7) : filteredProducts;
 
   return (
     <div className="content pos-root" style={{ paddingBottom: 40 }}>
@@ -1286,10 +1286,10 @@ export function Sales() {
           </div>
 
           {/* Main Layout Grid: Products on Left, Cart on Right */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 16, alignItems: 'start' }}>
+          <div className="pos-main-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 16, alignItems: 'start' }}>
             
             {/* LEFT COLUMN: Search, Categories & Product Cards */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className="pos-catalog-col" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               
               {/* Search Bar */}
               <div className="card pos-search-card" style={{ padding: 12 }}>
@@ -1301,7 +1301,7 @@ export function Sales() {
               </div>
 
               {/* Category Pills */}
-              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+              <div className="pos-cats-scroll" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
                 {categories.map(cat => (
                   <button
                     key={cat}
@@ -1327,11 +1327,12 @@ export function Sales() {
 
               {/* Aviso de catálogo compacto (solo se ve en móvil por CSS) */}
               <p className="muted small pos-catalog-hint" style={{ margin: 0, fontSize: 11 }}>
-                Los 8 más vendidos según tus facturas. Usa el buscador o el escáner para el resto del catálogo.
+                Los 7 más vendidos según tus facturas. Usa el buscador o el escáner para el resto del catálogo.
               </p>
 
               {/* Product Grid */}
               <div
+                className="pos-products-grid"
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
@@ -1340,6 +1341,7 @@ export function Sales() {
               >
                 {/* Venta Libre Quick Card */}
                 <div
+                  className="pos-free-card"
                   onClick={() => setIsFreeItemOpen(true)}
                   style={{
                     border: '1px dashed var(--brand-500)',
@@ -1357,12 +1359,12 @@ export function Sales() {
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  <span style={{ background: 'var(--brand-50)', color: 'var(--brand-700)', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6 }}>
+                  <span className="pos-free-badge" style={{ background: 'var(--brand-50)', color: 'var(--brand-700)', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6 }}>
                     LIBRE
                   </span>
                   <Tag size={24} style={{ color: 'var(--brand-500)' }} />
-                  <b style={{ fontSize: 12, color: 'var(--text)' }}>Venta Libre / Ítem Abierto</b>
-                  <span className="muted small" style={{ fontSize: 11 }}>Precio al momento</span>
+                  <b className="pos-free-title" style={{ fontSize: 12, color: 'var(--text)' }}>Venta Libre / Ítem Abierto</b>
+                  <span className="muted small pos-free-sub" style={{ fontSize: 11 }}>Precio al momento</span>
                 </div>
 
                 {visibleCatalog.map(product => {
@@ -1370,6 +1372,7 @@ export function Sales() {
                   return (
                     <div
                       key={product.sku}
+                      className="pos-product-card"
                       onClick={() => addToCart(product)}
                       style={{
                         border: '1px solid var(--border)',
@@ -1395,12 +1398,13 @@ export function Sales() {
                       }}
                     >
                       <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 4, marginBottom: 6 }}>
-                          <span className="muted small" style={{ fontSize: 10, fontWeight: 700 }}>
+                        <div className="pos-product-top" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 4, marginBottom: 6 }}>
+                          <span className="muted small pos-product-sku" style={{ fontSize: 10, fontWeight: 700 }}>
                             {product.sku}
                           </span>
                           {isCompactViewport && (productRotation[product.sku] || 0) > 0 && (
                             <span
+                              className="pos-product-rot"
                               style={{
                                 fontSize: 9,
                                 fontWeight: 800,
@@ -1417,6 +1421,7 @@ export function Sales() {
                             </span>
                           )}
                           <span
+                            className="pos-product-stock"
                             style={{
                               fontSize: 10,
                               fontWeight: 700,
@@ -1430,16 +1435,16 @@ export function Sales() {
                           </span>
                         </div>
 
-                        <div style={{ fontSize: 12, fontWeight: 700, color: '#1e293b', lineHeight: 1.3, marginBottom: 8 }}>
+                        <div className="pos-product-title" style={{ fontSize: 12, fontWeight: 700, color: '#1e293b', lineHeight: 1.3, marginBottom: 8 }}>
                           {product.name}
                         </div>
                       </div>
 
-                      <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                        <b style={{ fontSize: 14, color: '#0f172a' }}>
+                      <div className="pos-product-price-row" style={{ borderTop: '1px solid #f1f5f9', paddingTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <b className="pos-product-price-bs" style={{ fontSize: 14, color: '#0f172a' }}>
                           Bs. {priceVES.toLocaleString('es-VE', { minimumFractionDigits: 2 })}
                         </b>
-                        <span className="muted small" style={{ fontSize: 11 }}>
+                        <span className="muted small pos-product-price-usd" style={{ fontSize: 11 }}>
                           ${product.priceUSD.toFixed(2)}
                         </span>
                       </div>
@@ -1452,7 +1457,7 @@ export function Sales() {
             {/* RIGHT COLUMN: Cart Panel */}
             <div
               id="pos-cart-panel"
-              className="card"
+              className="card pos-cart-panel"
               style={{
                 padding: 16,
                 display: 'flex',
@@ -1462,12 +1467,13 @@ export function Sales() {
                 top: 16
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
+              <div className="pos-cart-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
                 <b style={{ fontSize: 13, textTransform: 'uppercase', color: '#1e293b', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <ShoppingCart size={15} /> Productos en la venta ({cart.length})
                 </b>
                 {cart.length > 0 && (
                   <button
+                    className="pos-cart-clear-btn"
                     onClick={clearCart}
                     style={{ background: 'transparent', border: 'none', color: '#DC2626', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
                   >
@@ -1477,8 +1483,8 @@ export function Sales() {
               </div>
 
               {/* Client Bar in Cart */}
-              <div style={{ padding: '8px 12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
+              <div className="pos-cart-client" style={{ padding: '8px 12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="pos-cart-client-info" style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
                   <User size={15} style={{ color: 'var(--brand-600)', flexShrink: 0 }} />
                   <div style={{ minWidth: 0 }}>
                     <b style={{ fontSize: 12, color: '#1e293b', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
@@ -1489,6 +1495,7 @@ export function Sales() {
                 </div>
                 <button
                   type="button"
+                  className="pos-cart-new-client-btn"
                   onClick={handleOpenNewCustomerModal}
                   title="Registrar o asignar nuevo cliente"
                   style={{ background: 'transparent', border: 'none', color: 'var(--brand-600)', cursor: 'pointer', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}
@@ -1498,9 +1505,9 @@ export function Sales() {
               </div>
 
               {/* Items List */}
-              <div style={{ minHeight: 220, maxHeight: 360, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="pos-cart-items" style={{ minHeight: 220, maxHeight: 360, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {cart.length === 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 200, color: '#94a3b8', textAlign: 'center', gap: 8 }}>
+                  <div className="pos-cart-empty" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 200, color: '#94a3b8', textAlign: 'center', gap: 8 }}>
                     <ShoppingCart size={32} strokeWidth={1.5} />
                     <span style={{ fontSize: 12 }}>La venta está vacía.<br />Haz clic en los productos para agregarlos.</span>
                   </div>
@@ -1511,6 +1518,7 @@ export function Sales() {
                     return (
                       <div
                         key={item.sku}
+                        className="pos-cart-item"
                         style={{
                           border: '1px solid #f1f5f9',
                           borderRadius: 8,
@@ -1521,20 +1529,21 @@ export function Sales() {
                           background: '#fafbfc'
                         }}
                       >
-                        <div style={{ flex: 1, paddingRight: 8 }}>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: '#1e293b' }}>
+                        <div className="pos-cart-item-info" style={{ flex: 1, paddingRight: 8 }}>
+                          <div className="pos-cart-item-name" style={{ fontSize: 12, fontWeight: 700, color: '#1e293b' }}>
                             {item.name}
                           </div>
-                          <span className="muted small" style={{ fontSize: 10 }}>
+                          <span className="muted small pos-cart-item-unit" style={{ fontSize: 10 }}>
                             ${item.priceUSD.toFixed(2)} c/u
                           </span>
                         </div>
 
                         {/* Stepper & Price */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 6, background: '#fff', overflow: 'hidden' }}>
+                        <div className="pos-cart-item-controls" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div className="pos-stepper-ctrl" style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 6, background: '#fff', overflow: 'hidden' }}>
                             <button
                               type="button"
+                              className="pos-stepper-btn"
                               title="Disminuir cantidad (-1)"
                               onClick={() => updateQuantity(item.sku, -1)}
                               style={{ width: 24, height: 26, background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -1543,6 +1552,7 @@ export function Sales() {
                             </button>
                             <input
                               type="number"
+                              className="pos-stepper-input"
                               min={isDecimalUnit(item.unit) ? '0.01' : '1'}
                               step={isDecimalUnit(item.unit) ? '0.01' : '1'}
                               max={item.stock}
@@ -1573,6 +1583,7 @@ export function Sales() {
                             />
                             <button
                               type="button"
+                              className="pos-stepper-btn"
                               title="Aumentar cantidad (+1)"
                               onClick={() => updateQuantity(item.sku, 1)}
                               style={{ width: 24, height: 26, background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -1581,16 +1592,19 @@ export function Sales() {
                             </button>
                           </div>
 
-                          <div style={{ textAlign: 'right', minWidth: 65 }}>
-                            <b style={{ fontSize: 12, color: '#0f172a', display: 'block' }}>
+                          <div className="pos-cart-item-total" style={{ textAlign: 'right', minWidth: 65 }}>
+                            <b className="pos-cart-item-bs" style={{ fontSize: 12, color: '#0f172a', display: 'block' }}>
                               Bs. {itemTotalVES.toLocaleString('es-VE', { minimumFractionDigits: 2 })}
                             </b>
-                            <span className="muted small" style={{ fontSize: 10 }}>
+                            <span className="muted small pos-cart-item-usd" style={{ fontSize: 10 }}>
                               ${(item.priceUSD * itemQty).toFixed(2)}
                             </span>
                           </div>
 
                           <button
+                            type="button"
+                            className="pos-cart-remove"
+                            title="Eliminar producto"
                             onClick={() => removeFromCart(item.sku)}
                             style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 2 }}
                           >
@@ -1605,14 +1619,14 @@ export function Sales() {
 
               {/* Cart Footer Summary */}
               {cart.length > 0 && (
-                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                    <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>MONTO PARCIAL:</span>
-                    <div style={{ textAlign: 'right' }}>
-                      <b style={{ fontSize: 18, color: 'var(--brand-700)', display: 'block' }}>
+                <div className="pos-cart-footer" style={{ borderTop: '1px solid var(--border)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div className="pos-cart-subtotal-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                    <span className="pos-cart-subtotal-label" style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>MONTO PARCIAL:</span>
+                    <div className="pos-cart-subtotal-values" style={{ textAlign: 'right' }}>
+                      <b className="pos-cart-subtotal-bs" style={{ fontSize: 18, color: 'var(--brand-700)', display: 'block' }}>
                         Bs. {grandTotalVES.toLocaleString('es-VE', { minimumFractionDigits: 2 })}
                       </b>
-                      <span className="muted small" style={{ fontSize: 12, fontWeight: 700 }}>
+                      <span className="muted small pos-cart-subtotal-usd" style={{ fontSize: 12, fontWeight: 700 }}>
                         {formatUSD(grandTotalUSD)}
                       </span>
                     </div>
@@ -1620,6 +1634,7 @@ export function Sales() {
 
                   <Button
                     variant="primary"
+                    className="pos-cobrar-btn"
                     onClick={startCheckout}
                     style={{ width: '100%', height: 42, fontSize: 14, fontWeight: 700, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}
                   >

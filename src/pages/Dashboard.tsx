@@ -3,7 +3,6 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { formatUSD, getActiveExchangeRate } from '../lib/currency';
-import { refreshSupabaseStatus } from '../lib/supabase/client';
 import { authenticatedFetch } from '../lib/supabase/api';
 
 interface Product {
@@ -62,191 +61,27 @@ export function Dashboard() {
       setLoadError('');
 
       try {
-        refreshSupabaseStatus().catch(() => {});
         const activeRate = getActiveExchangeRate();
-
-        const fetchTable = async (url: string): Promise<Array<Record<string, any>>> => {
-          try {
-            const res = await authenticatedFetch(url);
-            if (res.status === 401 || res.status === 403) {
-              // Sesión expirada/inexistente: aviso visible en vez de ceros silenciosos.
-              setLoadError('Tu sesión expiró o no es válida. Cierra sesión y vuelve a iniciar sesión para ver tus datos.');
-              return [];
-            }
-            if (!res.ok) return [];
-            const json = await res.json();
-            return Array.isArray(json?.data) ? json.data : [];
-          } catch {
-            return [];
-          }
-        };
-
-        const [products, allSales, saleItems, expenses, cxcRows, cxpRows] = await Promise.all([
-          fetchTable('/api/products'),
-          fetchTable('/api/sales'),
-          fetchTable('/api/sale-items'),
-          fetchTable('/api/expenses'),
-          fetchTable('/api/accounts-receivable'),
-          fetchTable('/api/accounts-payable')
-        ]);
-
-        const sales = allSales.filter((s: any) => !s.status || s.status === 'COMPLETADA');
-
-        const productCostMap = new Map<string, number>();
-        const productMap = new Map<string, Product>();
-        const productList = products as unknown as Product[];
-        productList.forEach((p) => {
-          if (p.sku) productCostMap.set(p.sku, Number(p.cost_usd) || 0);
-          if (p.id) productMap.set(p.id, p);
-        });
-
-        const costBySale = new Map<string, number>();
-        saleItems.forEach((it: any) => {
-          if (!it.sale_id) return;
-          const unitCost = (it.sku ? productCostMap.get(it.sku) : 0) || 0;
-          const itemTotalCost = unitCost * (Number(it.quantity) || 1);
-          costBySale.set(it.sale_id, (costBySale.get(it.sale_id) || 0) + itemTotalCost);
-        });
-
-        let totalSalesUsd = 0;
-        let totalCostUsd = 0;
-        sales.forEach((s: any) => {
-          const amount = Number(s.total_usd) || 0;
-          const saleCost = costBySale.get(s.id) || (amount * 0.45);
-          totalSalesUsd += amount;
-          totalCostUsd += saleCost;
-        });
-
-        let totalExpensesUsd = 0;
-        expenses.forEach((e: any) => {
-          const amt = Number(e.amount) || 0;
-          const rate = Number(e.exchange_rate) || activeRate || 1;
-          const expenseUsd = e.currency === 'VES' && rate > 0 ? amt / rate : amt;
-          totalExpensesUsd += expenseUsd;
-        });
-
-        const utilidadBruta = totalSalesUsd - totalCostUsd;
-        const utilidadNeta = Math.round((utilidadBruta - totalExpensesUsd) * 100) / 100;
-
-        const productSales = new Map<string, number>();
-        saleItems.forEach((it: any) => {
-          const qty = Number(it.quantity) || 0;
-          if (qty <= 0) return;
-          const prodName = it.name || (it.sku ? productMap.get(it.sku)?.name : null) || it.sku || 'Producto';
-          productSales.set(prodName, (productSales.get(prodName) || 0) + qty);
-        });
-
-        const topProducts: TopProduct[] = Array.from(productSales.entries())
-          .map(([name, totalQuantity]) => ({ name, totalQuantity }))
-          .sort((a, b) => b.totalQuantity - a.totalQuantity)
-          .slice(0, 5);
-
-        const lowStockProductsList = productList
-          .filter((p) => Number(p.stock) <= Number(p.min_stock))
-          .sort((a, b) => Number(a.stock) - Number(b.stock))
-          .slice(0, 5);
-
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const limit21Days = new Date(today.getTime() + 21 * 86400000);
-        limit21Days.setHours(23, 59, 59, 999);
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth();
-
-        const isDueSoonOrThisMonth = (item: any): boolean => {
-          const st = String(item.status || '').toUpperCase();
-          if (st === 'PAGADO' || st === 'PAGADA') return false;
-
-          // Un compromiso PENDIENTE cuenta aunque su monto sea 0 (visibilidad:
-          // una cuenta registrada sin costo no debe desaparecer del resumen).
-          // El filtro de fecha sí se respeta.
-
-          const rawDate = item.due_date || item.dueDate;
-          if (!rawDate) {
-            const created = item.created_at ? new Date(item.created_at) : null;
-            if (created && !isNaN(created.getTime())) {
-              return created.getFullYear() === currentYear && created.getMonth() === currentMonth;
-            }
-            return true;
-          }
-
-          const dueDate = new Date(rawDate);
-          if (isNaN(dueDate.getTime())) return true;
-
-          const isUpcoming21Days = dueDate >= today && dueDate <= limit21Days;
-          const isThisMonth = dueDate.getFullYear() === currentYear && dueDate.getMonth() === currentMonth;
-
-          return isUpcoming21Days || isThisMonth;
-        };
-
-        let receivableDue = 0;
-        let receivableDueCount = 0;
-        let allReceivables: any[] = [];
-
-        try {
-          const cxcApiRes = await authenticatedFetch('/api/accounts-receivable');
-          if (cxcApiRes.ok) {
-            const json = await cxcApiRes.json();
-            if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-              allReceivables = json.data;
-            }
-          }
-        } catch (e) {
-          console.warn('Aviso consultando /api/accounts-receivable:', e);
-        }
-
-        if (allReceivables.length === 0 && cxcRows.length > 0) {
-          allReceivables = cxcRows;
-        }
-
-        const filteredReceivables = allReceivables.filter(isDueSoonOrThisMonth);
-        receivableDue = filteredReceivables.reduce(
-          (acc: number, c: any) => acc + Math.max(0, Number(c.balance_usd ?? c.remaining_amount ?? 0)),
-          0
+        const res = await authenticatedFetch(
+          `/api/dashboard/summary?rate=${encodeURIComponent(String(activeRate || 1))}`
         );
-        receivableDueCount = filteredReceivables.length;
 
-        let payableDue = 0;
-        let payableDueCount = 0;
-        let allPayables: any[] = [];
-
-        try {
-          const cxpApiRes = await authenticatedFetch('/api/accounts-payable');
-          if (cxpApiRes.ok) {
-            const json = await cxpApiRes.json();
-            if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-              allPayables = json.data;
-            }
-          }
-        } catch (e) {
-          console.warn('Aviso consultando /api/accounts-payable:', e);
+        if (res.status === 401 || res.status === 403) {
+          setLoadError('Tu sesión expiró o no es válida. Cierra sesión y vuelve a iniciar sesión para ver tus datos.');
+          setSummary(EMPTY_SUMMARY);
+          return;
         }
 
-        if (allPayables.length === 0 && cxpRows.length > 0) {
-          allPayables = cxpRows;
+        if (!res.ok) {
+          throw new Error('No se pudieron cargar los indicadores.');
         }
 
-        const filteredPayables = allPayables.filter(isDueSoonOrThisMonth);
-        payableDue = filteredPayables.reduce(
-          (acc: number, p: any) => acc + Math.max(0, Number(p.balance_usd ?? p.remaining_amount ?? 0)),
-          0
-        );
-        payableDueCount = filteredPayables.length;
-
-        setSummary({
-          salesUsd: totalSalesUsd,
-          monthlyProfit: utilidadNeta,
-          receivableDueUsd: Math.round(receivableDue * 100) / 100,
-          receivableDueCount,
-          receivables: filteredReceivables.slice(0, 10),
-          payableDueUsd: Math.round(payableDue * 100) / 100,
-          payableDueCount,
-          payables: filteredPayables.slice(0, 10),
-          stockUnits: productList.reduce((acc, p) => acc + Number(p.stock || 0), 0),
-          lowStockProductsCount: productList.filter((p) => Number(p.stock) <= Number(p.min_stock)).length,
-          topProducts,
-          lowStockProductsList
-        });
+        const json = await res.json();
+        if (json?.success && json?.data) {
+          setSummary({ ...EMPTY_SUMMARY, ...json.data });
+        } else {
+          setSummary(EMPTY_SUMMARY);
+        }
       } catch (error) {
         setSummary(EMPTY_SUMMARY);
         setLoadError(error instanceof Error ? error.message : 'No se pudieron cargar los indicadores.');

@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { refreshSupabaseStatus } from '../lib/supabase/client';
 import { defaultPermissionsForRole } from '../lib/auth/roles';
+import { setSessionHandle, withSessionInit } from '../lib/supabase/api';
 
 export interface UserProfile {
   id?: string;
@@ -62,6 +63,7 @@ function clearLocalIdentity(): void {
   localStorage.removeItem('frenyer_active_user');
   localStorage.removeItem('frenyer_user_role');
   localStorage.removeItem('frenyer_user_permissions');
+  localStorage.removeItem('frenyer_org_id');
   window.dispatchEvent(new CustomEvent('frenyer:active-user-changed', { detail: null }));
 }
 
@@ -70,46 +72,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const authEpochRef = useRef(0);
 
   const apiPost = async (endpoint: string, body: object, errorMessage: string) => {
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(body)
-    });
+    const res = await fetch(
+      endpoint,
+      withSessionInit({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+    );
     const json = await res.json().catch(() => null);
     if (!res.ok || !json?.success) throw new Error(json?.error || errorMessage);
     return json;
   };
 
-  const resolveProfile = useCallback(async (currentUser: AuthUser | null, sessionRole?: string): Promise<UserProfile | null> => {
+  const resolveProfile = useCallback(async (
+    currentUser: AuthUser | null,
+    sessionRole?: string,
+    serverProfile?: { name?: string; permissions?: string[] }
+  ): Promise<UserProfile | null> => {
     if (!currentUser) return null;
 
     const email = currentUser.email || '';
-    let resolvedName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || email.split('@')[0] || 'Usuario';
+    let resolvedName =
+      serverProfile?.name ||
+      currentUser.name ||
+      currentUser.user_metadata?.full_name ||
+      currentUser.user_metadata?.name ||
+      email.split('@')[0] ||
+      'Usuario';
     let resolvedRole = currentUser.user_metadata?.role || sessionRole || 'cliente';
-    let resolvedPermissions: string[] = [];
+    let resolvedPermissions: string[] = Array.isArray(serverProfile?.permissions) && serverProfile.permissions.length > 0
+      ? serverProfile.permissions
+      : [];
 
-    try {
-      const res = await fetch('/api/users', { credentials: 'include' });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && Array.isArray(json.data)) {
-          const matched = json.data.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
-          if (matched) {
-            resolvedName = matched.name || resolvedName;
-            resolvedRole = matched.role || resolvedRole;
-            // Sin permisos guardados el servidor ahora los deriva del rol;
-            // este respaldo cubre respuestas antiguas en caché.
-            resolvedPermissions = Array.isArray(matched.permissions) && matched.permissions.length > 0
-              ? matched.permissions
-              : defaultPermissionsForRole(resolvedRole);
+    // Solo consultar /api/users si el servidor no envió permisos en la respuesta de sesión.
+    if (resolvedPermissions.length === 0) {
+      try {
+        const res = await fetch('/api/users', withSessionInit());
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data)) {
+            const matched = json.data.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+            if (matched) {
+              resolvedName = matched.name || resolvedName;
+              resolvedRole = matched.role || resolvedRole;
+              resolvedPermissions = Array.isArray(matched.permissions) && matched.permissions.length > 0
+                ? matched.permissions
+                : defaultPermissionsForRole(resolvedRole);
+            }
           }
         }
+      } catch {
+        // Sin datos del ERP se conserva el rol de la sesion.
       }
-    } catch {
-      // Sin datos del ERP se conserva el rol de la sesion.
     }
 
     const newProfile: UserProfile = {
@@ -138,49 +156,77 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const applySession = useCallback(async (data: any) => {
+    authEpochRef.current += 1;
+    const serverName = data?.user?.name || undefined;
     const currentUser: AuthUser = {
       id: data?.user?.id || data?.user?.email || 'usuario',
       email: data?.user?.email || '',
-      name: data?.user?.name || undefined,
+      name: serverName,
       user_metadata: {
-        full_name: data?.user?.name || undefined,
+        full_name: serverName,
         role: data?.role || undefined
       }
     };
 
+    if (typeof window !== 'undefined' && data?.organizationId) {
+      localStorage.setItem('frenyer_org_id', String(data.organizationId));
+    }
+
     setUser(currentUser);
     setSession({ user: currentUser, mode: data?.mode });
-    const p = await resolveProfile(currentUser, data?.role);
+    const p = await resolveProfile(currentUser, data?.role, {
+      name: serverName,
+      permissions: Array.isArray(data?.permissions) ? data.permissions : undefined
+    });
     setProfile(p);
   }, [resolveProfile]);
+
+  const clearClientSession = useCallback(() => {
+    authEpochRef.current += 1;
+    setSessionHandle(null);
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    if (typeof window !== 'undefined' && localStorage.getItem('frenyer_active_user')) {
+      clearLocalIdentity();
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
 
     const bootstrapSession = async () => {
+      const epoch = ++authEpochRef.current;
       void refreshSupabaseStatus();
       try {
-        const res = await fetch('/api/auth/session', { credentials: 'include' });
+        const res = await fetch('/api/auth/session', withSessionInit());
+        if (!isMounted || epoch !== authEpochRef.current) return;
         if (res.ok) {
           const json = await res.json();
-          if (isMounted && json?.data) {
+          if (isMounted && epoch === authEpochRef.current && json?.data) {
+            if (json.data.sessionId) {
+              setSessionHandle(json.data.sessionId);
+            }
             await applySession(json.data);
             if (isMounted) setIsLoading(false);
             return;
           }
+        } else if (res.status === 401) {
+          setSessionHandle(null);
         }
       } catch {
         // Sin sesion: se continua en modo publico.
       }
 
-      // Sin sesion en servidor (p. ej. cookies de sesion borradas al cerrar el
-      // navegador): la identidad local residual debe desaparecer para exigir
-      // un nuevo inicio de sesion.
+      if (!isMounted || epoch !== authEpochRef.current) return;
+
+      // Sin sesion en servidor (p. ej. cookies de sesion borradas o sesion
+      // reemplazada desde otro dispositivo): la identidad local residual debe
+      // desaparecer para exigir un nuevo inicio de sesion.
       if (typeof window !== 'undefined' && localStorage.getItem('frenyer_active_user')) {
         clearLocalIdentity();
       }
 
-      if (!isMounted) return;
       setUser(null);
       setSession(null);
       setProfile(null);
@@ -189,22 +235,75 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     void bootstrapSession();
 
-    const handleAuthChanged = () => {
+    const handleAuthChanged = (event: Event) => {
+      const custom = event as CustomEvent<{ skipBootstrap?: boolean } | undefined>;
+      if (custom?.detail?.skipBootstrap) return;
       void bootstrapSession();
     };
+    const handleSessionInvalidated = () => {
+      clearClientSession();
+    };
+
     window.addEventListener('frenyer:auth-changed', handleAuthChanged);
+    window.addEventListener('frenyer:session-invalidated', handleSessionInvalidated);
 
     return () => {
       isMounted = false;
       window.removeEventListener('frenyer:auth-changed', handleAuthChanged);
+      window.removeEventListener('frenyer:session-invalidated', handleSessionInvalidated);
     };
-  }, [applySession]);
+  }, [applySession, clearClientSession]);
+
+  // Verifica periodicamente y al recuperar foco si esta sesion fue cerrada
+  // por un nuevo inicio de sesion en otro dispositivo o computador.
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    const epochAtStart = authEpochRef.current;
+
+    const verifyActiveSession = async () => {
+      if (!active || (typeof document !== 'undefined' && document.visibilityState === 'hidden')) return;
+      try {
+        const res = await fetch(
+          '/api/auth/session?heartbeat=1',
+          withSessionInit({ headers: { 'X-Session-Check': 'heartbeat' } })
+        );
+        if (!active || epochAtStart !== authEpochRef.current) return;
+        if (res.status === 401) {
+          clearClientSession();
+        }
+      } catch {
+        // Ignorar fallos transitorios de red.
+      }
+    };
+
+    const intervalId = window.setInterval(() => {
+      void verifyActiveSession();
+    }, 20_000);
+
+    const handleVisibilityOrFocus = () => {
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+        void verifyActiveSession();
+      }
+    };
+
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+    };
+  }, [user, clearClientSession]);
 
   const signInWithEmail = async (email: string, password: string) => {
     try {
       const json = await apiPost('/api/auth/login', { email, password }, 'No se pudo iniciar sesión.');
+      setSessionHandle(json.data?.sessionId || null);
       await applySession(json.data);
-      window.dispatchEvent(new CustomEvent('frenyer:auth-changed'));
+      window.dispatchEvent(new CustomEvent('frenyer:auth-changed', { detail: { skipBootstrap: true } }));
       return { error: null };
     } catch (err: any) {
       return { error: { message: err.message } };
@@ -216,12 +315,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const json = await apiPost('/api/auth/register', { email, password, fullName, role }, 'No se pudo completar el registro.');
       if (json.requiresEmailConfirmation) return { error: null };
 
+      setSessionHandle(json.data?.sessionId || null);
       await applySession({
         user: { email, name: fullName, id: json.data?.user?.id },
         role: json.data?.role || role || 'cliente',
         organizationId: json.data?.organizationId
       });
-      window.dispatchEvent(new CustomEvent('frenyer:auth-changed'));
+      window.dispatchEvent(new CustomEvent('frenyer:auth-changed', { detail: { skipBootstrap: true } }));
       return { error: null };
     } catch (err: any) {
       return { error: { message: err.message } };
@@ -231,8 +331,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithAccessKey = async (accessKey: string, email?: string) => {
     try {
       const json = await apiPost('/api/auth/local-login', { accessKey, email }, 'Clave de acceso incorrecta.');
+      setSessionHandle(json.data?.sessionId || null);
       await applySession(json.data);
-      window.dispatchEvent(new CustomEvent('frenyer:auth-changed'));
+      window.dispatchEvent(new CustomEvent('frenyer:auth-changed', { detail: { skipBootstrap: true } }));
       return { error: null };
     } catch (err: any) {
       return { error: { message: err.message } };
@@ -240,21 +341,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
+    setSessionHandle(null);
     window.location.href = '/api/auth/google';
     return { error: null };
   };
 
   const signOut = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      await fetch('/api/auth/logout', withSessionInit({ method: 'POST' }));
     } catch {
       // Ignorar si el servidor no responde
     } finally {
-      setUser(null);
-      setSession(null);
-      setProfile(null);
-      clearLocalIdentity();
-      window.dispatchEvent(new CustomEvent('frenyer:auth-changed'));
+      clearClientSession();
+      window.dispatchEvent(new CustomEvent('frenyer:auth-changed', { detail: { skipBootstrap: true } }));
     }
   };
 

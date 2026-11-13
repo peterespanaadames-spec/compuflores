@@ -777,7 +777,7 @@ button:active:not(:disabled) {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .shell {
     display: block;
   }
@@ -882,7 +882,7 @@ button:active:not(:disabled) {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   /* Formularios/paneles con dos columnas fijas inline se apilan en móvil */
   [style*="grid-template-columns: 1fr 1fr"] {
     grid-template-columns: 1fr !important;
@@ -2585,7 +2585,7 @@ button:active:not(:disabled) {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   /* KPI: los importes Bs + USD en paralelo no caben; 1 tarjeta por fila */
   .fin-kpi-grid {
     grid-template-columns: 1fr !important;
@@ -2745,7 +2745,7 @@ button:active:not(:disabled) {
   display: none;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .inv-only-desktop { display: none !important; }
   .inv-only-mobile { display: inline; }
   .inv-head-sub { display: none !important; }
@@ -2870,7 +2870,7 @@ button:active:not(:disabled) {
   /* Historial de movimientos: tabla en escritorio, una línea por movimiento en móvil */
   .inv-history-mobile { display: none; }
 
-  @media (max-width: 640px) {
+  @media (max-width: 767px) {
     .inv-history-desktop { display: none !important; }
     .inv-history-mobile { display: block; }
 .inv-hist-header {
@@ -2939,7 +2939,7 @@ button:active:not(:disabled) {
   vertical-align: 1px;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   /* --- KPI: 2 tarjetas por fila, compactas --- */
   .rep-sales-root .grid-4 {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -3083,7 +3083,7 @@ button:active:not(:disabled) {
    con lo esencial: fecha · documento · tipo · monto [ojo] / producto ·
    cantidad. Almacén, costo unitario y responsable quedan en escritorio.
    ===================================================================== */
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   /* Espaciados generales compactos */
   .rep-inv-root .content { padding: 12px !important; }
   .rep-inv-root .mb-4, .rep-inv-root .mb-6 { margin-bottom: 10px !important; }
@@ -3204,7 +3204,7 @@ button:active:not(:disabled) {
    fecha · comprobante · monto [ojo] / cliente. Tipo, método, banco y
    monto en VES quedan en escritorio (ya los oculta .rep-col-oculta).
    ===================================================================== */
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   /* Espaciados generales compactos */
   .rep-acc-root { padding: 12px !important; }
   .rep-acc-root .mb-6 { margin-bottom: 10px !important; }
@@ -3379,7 +3379,7 @@ button:active:not(:disabled) {
    (usar spans .rep-long / .rep-short reutilizando el patrón
    existente), tarjetas y espaciado equilibrados.
    ===================================================================== */
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   /* --- Página: respiro y tipografía --- */
   .m-root { padding: 12px !important; }
   .m-root .page-head {
@@ -3467,7 +3467,7 @@ button:active:not(:disabled) {
    container se presenta como hoja inferior a ancho completo.
    El escritorio (>640px) no ve ningún cambio.
    ===================================================================== */
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .modal-overlay {
     padding: 0 !important;
     place-items: end stretch;
@@ -3489,7 +3489,7 @@ button:active:not(:disabled) {
    categoría · fecha de pago · días restantes.
    Descripción y última fecha quedan para escritorio.
    ===================================================================== */
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   /* Cabecera: icono y título compactos (el título usa estilos inline) */
   .fin-exp-root [style*="width: 44"],
   .fin-exp-root [style*="width:44"] {
@@ -3558,7 +3558,7 @@ button:active:not(:disabled) {
    cliente · pendiente [acción] / vencimiento · estado.
    Estructura de lista de CxP (tarjetas) se apila a una columna.
    ===================================================================== */
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   /* --- CxC: KPI 2 por fila --- */
   .fin-cxc-root [style*="minmax(220px, 1fr)"] {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -3627,7 +3627,7 @@ button:active:not(:disabled) {
    concepto y fechas quedan en escritorio.
    Detalle: comprobante compacto sin scroll lateral brusco.
    ===================================================================== */
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   /* --- Pedidos --- */
   .ped-root .page-head .actions button { height: 32px !important; padding: 0 10px !important; font-size: 11px !important; }
   .ped-root .grid-4 .muted { display: none !important; }
@@ -3709,7 +3709,7 @@ button:active:not(:disabled) {
    Proveedores: código · balance [acciones] / contacto · rubro · estado.
    Teléfonos, correos, tipos y fechas antiguas quedan en escritorio.
    ===================================================================== */
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   /* --- Clientes --- */
   .crm-root .grid.grid-3 {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -3773,7 +3773,7 @@ button:active:not(:disabled) {
    concepto · USD / lectura comercial · Bs. Salario: categoría · USD · %.
    Salud: fichas de indicadores 2 por fila.
    ===================================================================== */
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   /* --- Ganancias y Pérdidas --- */
   .pnl-root .grid.grid-3 {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -3820,7 +3820,7 @@ button:active:not(:disabled) {
    Compras: factura · total [acciones] / proveedor · fecha · estado.
    Cantidad, stock, usuario, ítems y totales en Bs quedan en escritorio.
    ===================================================================== */
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   /* --- Kárdex de movimientos: controles móviles --- */
   .mov-root .mov-mobile-controls {
     display: flex;
@@ -3892,53 +3892,6 @@ button:active:not(:disabled) {
    y fichas una medida menor).
    ===================================================================== */
 @media (max-width: 360px) {
-  /* --- POS: catálogo --- */
-  .pos-root [style*="minmax(180px, 1fr)"] {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 6px !important;
-  }
-  .pos-root [style*="min-height: 140px"] { padding: 5px !important; }
-  .pos-root [style*="min-height: 140px"] b { font-size: 11px !important; }
-  .pos-root [style*="min-height: 140px"] .muted { font-size: 8.5px !important; }
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14"] { font-size: 11px !important; }
-  .pos-root .pos-search-card { padding: 5px 6px !important; }
-  .pos-root .pos-search-card .input { font-size: 11.5px !important; height: 30px !important; }
-  .pos-root .pos-cat-pill { padding: 2px 6px !important; font-size: 9.5px !important; }
-  .pos-root .pos-toolbar-actions > button { font-size: 10px !important; padding-left: 6px !important; padding-right: 6px !important; }
-
-  /* --- POS: carrito --- */
-  .pos-root #pos-cart-panel { padding: 10px !important; gap: 8px !important; }
-  .pos-root #pos-cart-panel > div:first-child b { font-size: 11px !important; }
-  /* Área de ítems: menor alto reservado y separación menor */
-  .pos-root #pos-cart-panel [style*="min-height: 220px"] {
-    min-height: 0 !important;
-    max-height: 240px !important;
-    gap: 5px !important;
-  }
-  /* Control de cantidad: stepper más estrecho */
-  .pos-root #pos-cart-panel [style*="width: 48px"] {
-    width: 36px !important;
-    height: 21px !important;
-    font-size: 10px !important;
-  }
-  .pos-root #pos-cart-panel [style*="width: 24px"] { width: 19px !important; height: 21px !important; }
-  /* Importes del ítem */
-  .pos-root #pos-cart-panel [style*="font-size: 12px"] { font-size: 10px !important; }
-  /* Client bar y avisos */
-  .pos-root #pos-cart-panel [style*="padding: 8px 12px"] { padding: 6px 8px !important; }
-
-  /* --- POS: barra fija inferior --- */
-  .pos-root .pos-mobile-cartbar {
-    left: 8px;
-    right: 8px;
-    bottom: 10px;
-    padding: 7px 9px 7px 11px;
-    gap: 8px;
-  }
-  .pos-root .pos-mobile-cartbar-count { font-size: 8.5px; }
-  .pos-root .pos-mobile-cartbar-total { font-size: 13px !important; }
-  .pos-root .pos-mobile-cartbar-cta { padding: 7px 10px !important; font-size: 10.5px !important; }
-
   /* --- Resto de pantallas de ventas en el mismo tamaño --- */
   .ped-root .page-head .actions button,
   .cot-root .page-head .actions .btn {
@@ -4105,83 +4058,7 @@ button:active:not(:disabled) {
   .mobile-more-sheet__item { font-size: 9.5px; padding: 8px 2px; }
 }
 
-/* =====================================================================
-   POS PORTRAIT 9:16 (≤640px) — seguridad de ajuste en pantallas altas
-   y estrechas (celulares 9:16). Evita desbordes horizontales, el
-   stepper del cobro no desborda y el carrito no tapa el contenido.
-   Escritorio intacto.
-   ===================================================================== */
-@media (max-width: 640px) {
-  .pos-root { overflow-x: hidden !important; padding-bottom: 78px !important; }
-  .pos-root .page-head { flex-wrap: wrap; }
-  .pos-root .page-head > div:first-child { flex: 1 1 100%; min-width: 0; }
-  .pos-root .pos-stepper { gap: 14px !important; }
-  .pos-root .pos-stepper-connector { width: 24px !important; }
-  .pos-root [style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
-  .pos-root [style*="width: 600px"] { width: 100% !important; max-width: 100% !important; }
-  .pos-root .pos-mobile-cartbar { left: 6px; right: 6px; bottom: 8px; }
-  .pos-root [style*="min-width: 280px"] { min-width: 0 !important; }
-  .pos-root [style*="min-width: 260px"] { min-width: 0 !important; }
-}
-
-/* =====================================================================
-   POS AJUSTE MÓVIL (≤640px) — catálogo de producto con EXACTAMENTE
-   3 fichas por fila y encaje perfecto (sin desbordes), carrito de
-   compra más pequeño y botones reducidos. Escritorio intacto.
-   ===================================================================== */
-@media (max-width: 640px) {
-  /* --- Catálogo: 3 por fila, encaje perfecto --- */
-  .pos-root [style*="minmax(180px, 1fr)"] {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 6px !important;
-  }
-  .pos-root [style*="min-height: 140px"] { padding: 6px 5px !important; overflow: hidden; }
-  .pos-root [style*="min-height: 140px"] b {
-    font-size: 11.5px !important;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    display: block;
-  }
-  .pos-root [style*="min-height: 140px"] .muted { font-size: 9px !important; }
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14"] { font-size: 12px !important; }
-
-  /* --- Carrito de compra: más pequeño --- */
-  .pos-root #pos-cart-panel { padding: 10px 9px !important; gap: 7px !important; }
-  .pos-root #pos-cart-panel > div:first-child b { font-size: 11px !important; }
-  .pos-root #pos-cart-panel [style*="padding: 8px 12px"] { padding: 6px 8px !important; }
-  .pos-root #pos-cart-panel [style*="min-height: 220px"] {
-    min-height: 120px !important;
-    max-height: 260px !important;
-    gap: 5px !important;
-  }
-  /* Stepper de cantidad más estrecho */
-  .pos-root #pos-cart-panel [style*="width: 48px"] {
-    width: 36px !important;
-    height: 20px !important;
-    font-size: 9.5px !important;
-  }
-  .pos-root #pos-cart-panel [style*="width: 24px"] { width: 18px !important; height: 20px !important; }
-  .pos-root #pos-cart-panel [style*="font-size: 12px"] { font-size: 10px !important; }
-  .pos-root #pos-cart-panel [style*="min-width: 65px"] { min-width: 54px !important; }
-
-  /* --- Botones del POS: una medida menor --- */
-  .pos-root .pos-toolbar-actions > button { height: 28px !important; font-size: 10px !important; padding-left: 6px !important; padding-right: 6px !important; }
-  .pos-root .pos-paymode-btn { padding: 5px 3px !important; font-size: 10px !important; }
-  .pos-root .pos-doctype-btn b { font-size: 9.5px !important; }
-  .pos-root .pos-paymode-btn svg { width: 12px !important; height: 12px !important; }
-  .pos-root .pos-doctype-btn svg { width: 12px !important; height: 12px !important; }
-
-  /* --- Barra fija del carrito: más discreta --- */
-  .pos-root .pos-mobile-cartbar {
-    left: 7px;
-    right: 7px;
-    bottom: 9px;
-    padding: 6px 8px 6px 10px;
-    gap: 8px;
-  }
-  .pos-root .pos-mobile-cartbar-cta { padding: 6px 9px !important; font-size: 10px !important; }
-}
+/* Reglas POS móviles consolidadas al final del archivo (@media max-width: 767px / 360px) */
 
 /* =====================================================================
    COMPONENTES MÓVILES COMPARTIDOS (base global, compactos)
@@ -4195,7 +4072,7 @@ button:active:not(:disabled) {
 .product-form-sections .mobile-form-section { background: transparent; border: none; border-radius: 0; padding: 0; margin: 0; }
 .product-form-sections .mobile-form-section__title { display: none; }
 .product-form-sections .mobile-form-section__body { gap: 14px; }
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .product-form-sections .mobile-form-section { background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 8px; }
   .product-form-sections .mobile-form-section__title {
     display: block;
@@ -4203,11 +4080,11 @@ button:active:not(:disabled) {
     text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;
   }
   .product-form-sections .mobile-form-section__body { gap: 10px; }
+}
 /* Formulario de proveedor: una sola columna en teléfono; escritorio conserva 2 columnas. */
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .supplier-form-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
   .supplier-form-grid textarea.input { min-height: 60px; }
-}
 }
 .mobile-searchbar input { flex: 1; border: none; background: transparent; outline: none; font-size: 12px; color: #111827; }
 .mobile-searchbar button { border: none; background: transparent; color: #6B7280; display: grid; place-items: center; cursor: pointer; }
@@ -4266,221 +4143,67 @@ button:active:not(:disabled) {
 .mobile-fab { position: fixed; right: 16px; bottom: calc(72px + env(safe-area-inset-bottom)); width: 48px; height: 48px; border-radius: 9999px; border: none; background: #2D2E32; color: #FFFFFF; display: grid; place-items: center; box-shadow: 0 6px 16px rgba(45,46,50,0.35); cursor: pointer; z-index: 45; }
 .mobile-page { padding: 12px; }
 /* =====================================================================
-   POS MOVIL ULTRA-COMPACTO — bloque final (último en cascada, es el que
-   manda sobre los bloques anteriores del mismo peso). Fichas de catálogo
-   del tamaño de las de Cuentas por Cobrar (2-3 líneas) y carrito pequeño.
+   POS MÓVIL REPARADO (≤767px y ≤360px) — bloque final en cascada.
+   Cubre todo el tramo móvil del AppShell (≤767px) con clases semánticas
+   propias (.pos-main-grid, .pos-products-grid, .pos-cart-item, .pos-cobrar-btn)
+   sin alterar el diseño de escritorio (>767px / >900px).
    ===================================================================== */
-@media (max-width: 640px) {
-  /* --- Catálogo: los 8 más vendidos en 2 columnas --- */
-  .pos-root [style*="minmax(180px, 1fr)"] {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 6px !important;
+@media (max-width: 767px) {
+  /* --- Contenedor y cabecera POS --- */
+  .pos-root {
+    padding: 10px 10px calc(124px + env(safe-area-inset-bottom)) !important;
+    max-width: 100% !important;
+    min-width: 0;
+    overflow-x: hidden !important;
+    box-sizing: border-box;
   }
-  .pos-root [style*="min-height: 140px"] {
-    min-height: 0 !important;
-    padding: 6px 6px 5px !important;
-    border-radius: 10px !important;
-    overflow: hidden;
-    gap: 3px !important;
+  .pos-root .page-head {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    margin-bottom: 10px !important;
   }
-  /* Fila superior (SKU + badges) */
-  .pos-root [style*="min-height: 140px"] .muted { font-size: 8px !important; }
-  .pos-root [style*="min-height: 140px"] span[style*="font-size: 10px"] { font-size: 8px !important; padding: 1px 4px !important; }
-  .pos-root [style*="min-height: 140px"] span[style*="font-size: 9px"] { font-size: 8px !important; padding: 1px 4px !important; }
-  .pos-root [style*="min-height: 140px"] div[style*="font-size: 12px"] {
-    font-size: 10.5px !important;
-    margin-bottom: 2px !important;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 12px"] { font-size: 10.5px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .pos-root [style*="min-height: 140px"] div[style*="padding-top: 8px"] { padding-top: 4px !important; }
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14px"] { font-size: 11.5px !important; }
-  .pos-root [style*="min-height: 140px"] span[style*="font-size: 11px"] { font-size: 8.5px !important; }
-
-  /* --- Carrito de compra: compacto --- */
-  .pos-root #pos-cart-panel { padding: 8px 7px !important; gap: 6px !important; }
-  .pos-root #pos-cart-panel > div:first-child b { font-size: 10.5px !important; }
-  /* Barra del cliente */
-  .pos-root #pos-cart-panel [style*="padding: 8px 12px"] { padding: 5px 6px !important; }
-  /* Filas de ítems (antes padding 10px 12px) */
-  .pos-root #pos-cart-panel [style*="padding: 10px 12px"] { padding: 5px 6px !important; border-radius: 7px !important; }
-  /* Lista de ítems: menos alto reservado */
-  .pos-root #pos-cart-panel [style*="min-height: 220px"] { min-height: 90px !important; max-height: 220px !important; gap: 4px !important; }
-  .pos-root #pos-cart-panel [style*="min-height: 200px"] { min-height: 110px !important; }
-  /* Stepper de cantidad */
-  .pos-root #pos-cart-panel [style*="width: 48px"] { width: 32px !important; height: 18px !important; font-size: 9px !important; }
-  .pos-root #pos-cart-panel [style*="width: 24px"] { width: 16px !important; height: 18px !important; }
-  /* Importes y textos */
-  .pos-root #pos-cart-panel [style*="font-size: 12px"] { font-size: 9.5px !important; }
-  .pos-root #pos-cart-panel [style*="min-width: 65px"] { min-width: 48px !important; }
-  /* Resumen y botón COBRAR */
-  .pos-root #pos-cart-panel b[style*="font-size: 18px"] { font-size: 14px !important; }
-  .pos-root #pos-cart-panel [style*="height: 42px"] { height: 34px !important; font-size: 11.5px !important; }
-  .pos-root #pos-cart-panel [style*="height: 42px"] svg { width: 13px !important; height: 13px !important; }
-  .pos-root #pos-cart-panel [style*="padding-top: 12px"] { padding-top: 8px !important; }
-
-  /* --- Barra fija del carrito --- */
-  .pos-root .pos-mobile-cartbar { left: 6px; right: 6px; bottom: 7px; padding: 5px 7px 5px 9px; gap: 6px; }
-  .pos-root .pos-mobile-cartbar-cta { padding: 5px 7px !important; font-size: 9.5px !important; }
-}
-
-/* --- POS: tramo extra compacto (≤360px, celulares < ~6,2") ---
-   Debe ir DESPUÉS del tramo ≤640px para que sus medidas menores ganen. */
-@media (max-width: 360px) {
-  .pos-root [style*="minmax(180px, 1fr)"] {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 5px !important;
-  }
-  .pos-root [style*="min-height: 140px"] { padding: 5px 5px 4px !important; }
-  .pos-root [style*="min-height: 140px"] div[style*="font-size: 12px"] { font-size: 9.5px !important; }
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 12px"] { font-size: 9.5px !important; }
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14px"] { font-size: 10.5px !important; }
-  .pos-root #pos-cart-panel { padding: 6px 6px !important; gap: 5px !important; }
-  .pos-root #pos-cart-panel [style*="min-height: 220px"] { min-height: 80px !important; max-height: 200px !important; }
-  .pos-root #pos-cart-panel [style*="width: 48px"] { width: 28px !important; height: 16px !important; font-size: 8.5px !important; }
-  .pos-root #pos-cart-panel [style*="width: 24px"] { width: 14px !important; height: 16px !important; }
-  .pos-root #pos-cart-panel [style*="font-size: 12px"] { font-size: 9px !important; }
-  .pos-root #pos-cart-panel b[style*="font-size: 18px"] { font-size: 13px !important; }
-  .pos-root #pos-cart-panel [style*="height: 42px"] { height: 30px !important; font-size: 10.5px !important; }
-  .pos-root .pos-mobile-cartbar { left: 5px; right: 5px; bottom: 6px; padding: 4px 6px 4px 8px; gap: 5px; }
-  .pos-root .pos-mobile-cartbar-cta { padding: 4px 6px !important; font-size: 9px !important; }
-}
-
-/* =====================================================================
-   POS MEDIDAS ESTANDAR DE REPORTE DE VENTAS (<=640px)
-   Igualar botones, cards, cabecera tipo KPI y formulario de cobro a
-   las medidas ya probadas del Reporte de Ventas:
-   botones 30px · 10px, cards radio 10px, inputs/selects 32px · 11px.
-   Ultimo en cascada: prevalece sobre los bloques POS anteriores.
-   ===================================================================== */
-@media (max-width: 640px) {
-  /* --- Botones de cabecera/toolbar: 30px · 10px --- */
-  .pos-root .pos-toolbar-actions > button { height: 30px !important; padding: 0 8px !important; font-size: 10px !important; }
-  .pos-root .pos-toolbar-actions button svg { width: 12px !important; height: 12px !important; }
-  .pos-root .pos-toolbar-actions button span[style*="font-size: 10px"] { font-size: 9px !important; padding: 1px 5px !important; }
-  /* Pills de categoria */
-  .pos-root .pos-cat-pill { padding: 4px 10px !important; font-size: 10px !important; }
-
-  /* --- Cabecera tipo KPI: logo 34px, titulo 15px, badge compacto --- */
-  .pos-root .page-head { margin-bottom: 10px !important; }
+  .pos-root .page-head > div:first-child { min-width: 0; gap: 8px !important; }
   .pos-root .page-head h1 { font-size: 15px !important; line-height: 1.2 !important; }
-  .pos-root .page-head div[style*="width: 44px"] { width: 34px !important; height: 34px !important; border-radius: 10px !important; }
+  .pos-root .page-head div[style*="width: 44px"] {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 10px !important;
+    flex-shrink: 0;
+  }
   .pos-root .page-head div[style*="width: 44px"] svg { width: 18px !important; height: 18px !important; }
   .pos-root .page-head span[style*="font-size: 11px"] { font-size: 9.5px !important; padding: 1px 6px !important; }
-  .pos-root .page-head .muted.small { font-size: 10px !important; }
+  .pos-root .page-head .muted.small { font-size: 10.5px !important; }
+  .pos-root .pos-toolbar-actions { width: 100%; gap: 6px !important; }
+  .pos-root .pos-toolbar-actions > button {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 10px !important;
+    font-size: 11px !important;
+    justify-content: center;
+  }
+  .pos-root .pos-toolbar-actions button svg { width: 13px !important; height: 13px !important; flex-shrink: 0; }
+  .pos-root .pos-toolbar-actions button span[style*="font-size: 10px"] { font-size: 9.5px !important; padding: 1px 5px !important; }
 
-  /* --- Cards: radio compacto (igual que rep-sales) --- */
+  /* --- Grid principal y prevención de desborde horizontal (min-width: 0) --- */
+  .pos-root .pos-main-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+    padding-bottom: 0 !important;
+    width: 100%;
+    max-width: 100%;
+  }
+  .pos-root .pos-catalog-col {
+    min-width: 0 !important;
+    width: 100%;
+    max-width: 100%;
+    gap: 8px !important;
+  }
+
+  /* --- Buscador y categorías --- */
   .pos-root .card { border-radius: 10px !important; }
-  .pos-root .pos-search-card { padding: 6px 7px !important; }
-  .pos-root .pos-search-card .mobile-searchbar input { font-size: 11px !important; }
-
-  /* --- Formulario de cobro (checkout): inputs/selects 32px · 11px --- */
-  .pos-root [style*="width: 600px"] .input { height: 32px !important; font-size: 11px !important; }
-  .pos-root [style*="width: 600px"] .form-grid { gap: 8px !important; }
-  .pos-root [style*="width: 600px"] .form-grid .btn,
-  .pos-root [style*="width: 600px"] button.btn { height: 30px !important; font-size: 10.5px !important; }
-}
-
-/* --- POS medidas estandar: tramo <=360px (despues del <=640px) --- */
-@media (max-width: 360px) {
-  .pos-root .pos-toolbar-actions > button { height: 27px !important; padding: 0 6px !important; font-size: 9.5px !important; }
-  .pos-root .pos-toolbar-actions button svg { width: 11px !important; height: 11px !important; }
-  .pos-root .pos-cat-pill { padding: 3px 8px !important; font-size: 9.5px !important; }
-  .pos-root .page-head h1 { font-size: 13px !important; }
-  .pos-root .page-head div[style*="width: 44px"] { width: 28px !important; height: 28px !important; }
-  .pos-root .page-head div[style*="width: 44px"] svg { width: 15px !important; height: 15px !important; }
-  .pos-root .pos-search-card .mobile-searchbar input { font-size: 10.5px !important; }
-  .pos-root [style*="width: 600px"] .input { height: 30px !important; font-size: 10.5px !important; }
-  .pos-root [style*="width: 600px"] button.btn { height: 27px !important; font-size: 10px !important; }
-}
-
-/* =====================================================================
-   POS COMPACTO v2 (bloque final — prevalece sobre los anteriores)
-   Fichas con menos padding y letra menor (2 columnas), buscador bajo,
-   pills de categoria pequeñas con scroll sutil y botones superiores
-   que ocupan menos espacio vertical.
-   ===================================================================== */
-@media (max-width: 640px) {
-  /* --- Fichas de producto: menos padding, fuente menor --- */
-  .pos-root [style*="minmax(180px, 1fr)"] { gap: 5px !important; }
-  .pos-root [style*="min-height: 140px"] {
-    padding: 4px 5px !important;
-    gap: 2px !important;
-  }
-  .pos-root [style*="min-height: 140px"] .muted { font-size: 7.5px !important; }
-  .pos-root [style*="min-height: 140px"] span[style*="font-size: 10px"],
-  .pos-root [style*="min-height: 140px"] span[style*="font-size: 9px"],
-  .pos-root [style*="min-height: 140px"] span[style*="font-size: 11px"] {
-    font-size: 7.5px !important;
-    padding: 1px 3px !important;
-  }
-  .pos-root [style*="min-height: 140px"] div[style*="font-size: 12px"],
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 12px"] {
-    font-size: 9.5px !important;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  .pos-root [style*="min-height: 140px"] div[style*="padding-top: 8px"] { padding-top: 3px !important; }
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14px"] { font-size: 10.5px !important; }
-
-  /* --- Buscador: menos alto --- */
-  .pos-root .pos-search-card { padding: 4px 5px !important; }
-  .pos-root .pos-search-card .mobile-searchbar {
-    padding: 3px 8px !important;
-    border-radius: 8px !important;
-    gap: 6px !important;
-  }
-  .pos-root .pos-search-card .mobile-searchbar input { font-size: 10.5px !important; height: 22px !important; }
-  .pos-root .pos-search-card .mobile-searchbar button { width: 20px !important; height: 20px !important; }
-  .pos-root .pos-search-card .mobile-searchbar button svg { width: 12px !important; height: 12px !important; }
-
-  /* --- Pills de categoria: pequeñas y scroll-x sutil (sin barra visible) --- */
-  .pos-root .pos-cat-pill { padding: 2px 9px !important; font-size: 9.5px !important; border-radius: 999px !important; }
-  .pos-root [style*="overflow-x"] { scrollbar-width: none; -ms-overflow-style: none; padding-bottom: 2px !important; }
-  .pos-root [style*="overflow-x"]::-webkit-scrollbar { display: none; }
-
-  /* --- Botones superiores: menos espacio vertical --- */
-  .pos-root .pos-toolbar-actions { gap: 5px !important; }
-  .pos-root .pos-toolbar-actions > button { height: 27px !important; padding: 0 7px !important; font-size: 9.5px !important; }
-  .pos-root .pos-toolbar-actions button svg { width: 11px !important; height: 11px !important; }
-  .pos-root .pos-toolbar-actions button span[style*="font-size: 10px"] { font-size: 8.5px !important; padding: 1px 4px !important; }
-
-  /* --- Cabecera: un punto más baja --- */
-  .pos-root .page-head { margin-bottom: 8px !important; }
-  .pos-root .page-head h1 { font-size: 14px !important; }
-  .pos-root .page-head div[style*="width: 44px"] { width: 30px !important; height: 30px !important; }
-  .pos-root .page-head div[style*="width: 44px"] svg { width: 16px !important; height: 16px !important; }
-  .pos-root .page-head div[style*="gap: 12px"] { gap: 8px !important; }
-  .pos-root .page-head .muted.small { font-size: 9.5px !important; }
-}
-
-/* --- POS compacto v2: tramo extra <=360px (despues del <=640px) --- */
-@media (max-width: 360px) {
-  .pos-root [style*="minmax(180px, 1fr)"] { gap: 4px !important; }
-  .pos-root [style*="min-height: 140px"] { padding: 3px 4px !important; }
-  .pos-root [style*="min-height: 140px"] div[style*="font-size: 12px"],
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 12px"] { font-size: 9px !important; }
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14px"] { font-size: 10px !important; }
-  .pos-root .pos-search-card .mobile-searchbar { padding: 2px 7px !important; }
-  .pos-root .pos-search-card .mobile-searchbar input { font-size: 10px !important; height: 20px !important; }
-  .pos-root .pos-cat-pill { padding: 2px 7px !important; font-size: 9px !important; }
-  .pos-root .pos-toolbar-actions > button { height: 25px !important; padding: 0 6px !important; font-size: 9px !important; }
-  .pos-root .page-head h1 { font-size: 13px !important; }
-  .pos-root .page-head div[style*="width: 44px"] { width: 26px !important; height: 26px !important; }
-}
-
-/* =====================================================================
-   POS LIMPIO Y EQUILIBRADO v3 (bloque final — coordenadas exactas)
-   Medidas tipo Tailwind pedidas por el usuario:
-   py-1 · h-9 (36px) · text-xs (12px) / text-[10px] · px-3 py-1 ·
-   gap-1.5 (6px) · p-2 (8px) · h-14 (56px) · w-5 h-5 (20px).
-   ===================================================================== */
-@media (max-width: 640px) {
-  /* --- 1. Barra superior del app: py-1 --- */
-  .mobile-header { padding: 4px 12px !important; padding-top: calc(4px + env(safe-area-inset-top)) !important; }
-  .mobile-header__rate { padding: 2px 8px !important; font-size: 10px !important; }
-  .mobile-header__icon, .mobile-header__avatar { width: 28px !important; height: 28px !important; }
-
-  /* --- 2. Barra de búsqueda: h-9 (36px) · text-xs (12px) --- */
   .pos-root .pos-search-card { padding: 6px 8px !important; }
   .pos-root .pos-search-card .mobile-searchbar {
     height: 36px !important;
@@ -4488,50 +4211,277 @@ button:active:not(:disabled) {
     gap: 8px !important;
     border-radius: 9px !important;
   }
-  .pos-root .pos-search-card .mobile-searchbar input { font-size: 12px !important; height: 32px !important; }
-  .pos-root .pos-search-card .mobile-searchbar button { width: 22px !important; height: 22px !important; }
+  .pos-root .pos-search-card .mobile-searchbar input {
+    font-size: 12px !important;
+    height: 32px !important;
+    min-width: 0;
+  }
+  .pos-root .pos-search-card .mobile-searchbar button { width: 28px !important; height: 28px !important; }
 
-  /* --- 3. Píldoras de categorías: px-3 py-1 · text-xs · gap-1.5 --- */
-  .pos-root .pos-cat-pill { padding: 4px 12px !important; font-size: 12px !important; border-radius: 999px !important; }
-  .pos-root [style*="overflow-x"] { gap: 6px !important; scrollbar-width: none; -ms-overflow-style: none; }
-  .pos-root [style*="overflow-x"]::-webkit-scrollbar { display: none; }
+  .pos-root .pos-cats-scroll {
+    max-width: 100%;
+    overflow-x: auto !important;
+    gap: 6px !important;
+    padding-bottom: 2px !important;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .pos-root .pos-cats-scroll::-webkit-scrollbar { display: none; }
+  .pos-root .pos-cat-pill {
+    padding: 4px 12px !important;
+    font-size: 11.5px !important;
+    border-radius: 999px !important;
+    flex: 0 0 auto;
+  }
+  .pos-root .pos-catalog-hint {
+    display: block !important;
+    font-size: 10px !important;
+    line-height: 1.3;
+  }
 
-  /* --- 4. Botones de acción rápida: h-9 · text-xs · px-3 --- */
-  .pos-root .pos-toolbar-actions > button { height: 36px !important; padding: 0 12px !important; font-size: 12px !important; }
-  .pos-root .pos-toolbar-actions button svg { width: 14px !important; height: 14px !important; }
-  .pos-root .pos-toolbar-actions button span[style*="font-size: 10px"] { font-size: 10px !important; padding: 1px 5px !important; }
+  /* --- Catálogo: exactamente 2 columnas compactas --- */
+  .pos-root .pos-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    width: 100%;
+  }
+  .pos-root .pos-free-card {
+    min-height: 0 !important;
+    padding: 8px 6px !important;
+    border-radius: 10px !important;
+    gap: 3px !important;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .pos-root .pos-free-badge { font-size: 8.5px !important; padding: 1px 5px !important; }
+  .pos-root .pos-free-card svg { width: 16px !important; height: 16px !important; }
+  .pos-root .pos-free-title {
+    font-size: 11px !important;
+    line-height: 1.2;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pos-root .pos-free-sub { font-size: 9.5px !important; }
 
-  /* --- 5. Tarjetas de producto: p-2 · título text-xs · SKU text-[10px] --- */
-  .pos-root [style*="minmax(180px, 1fr)"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
-  .pos-root [style*="min-height: 140px"] {
+  .pos-root .pos-product-card {
     min-height: 0 !important;
     padding: 8px !important;
-    gap: 4px !important;
     border-radius: 10px !important;
+    gap: 5px !important;
+    min-width: 0;
+    overflow: hidden;
   }
-  .pos-root [style*="min-height: 140px"] .muted { font-size: 10px !important; }
-  .pos-root [style*="min-height: 140px"] span[style*="font-size: 10px"],
-  .pos-root [style*="min-height: 140px"] span[style*="font-size: 9px"] { font-size: 10px !important; padding: 1px 5px !important; }
-  .pos-root [style*="min-height: 140px"] span[style*="font-size: 11px"] { font-size: 10px !important; }
-  /* Título del producto: text-xs, una sola línea con elipsis */
-  .pos-root [style*="min-height: 140px"] div[style*="font-size: 12px"],
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 12px"] {
+  .pos-root .pos-product-top {
+    gap: 3px !important;
+    margin-bottom: 4px !important;
+    flex-wrap: wrap;
+    align-items: center !important;
+  }
+  .pos-root .pos-product-sku {
+    font-size: 9.5px !important;
+    margin-right: auto;
+    white-space: nowrap;
+  }
+  .pos-root .pos-product-rot,
+  .pos-root .pos-product-stock {
+    font-size: 8.5px !important;
+    padding: 1px 4px !important;
+    border-radius: 5px !important;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+  .pos-root .pos-product-title {
+    font-size: 11.5px !important;
+    line-height: 1.25 !important;
+    margin-bottom: 2px !important;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .pos-root .pos-product-price-row {
+    padding-top: 5px !important;
+    gap: 4px;
+    flex-wrap: nowrap;
+    align-items: baseline !important;
+  }
+  .pos-root .pos-product-price-bs {
     font-size: 12px !important;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .pos-root [style*="min-height: 140px"] div[style*="padding-top: 8px"] { padding-top: 4px !important; }
-  /* Precio: text-xs */
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14px"] { font-size: 12px !important; }
+  .pos-root .pos-product-price-usd {
+    font-size: 10px !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
 
-  /* --- Cabecera del POS: más respiro abajo para igualar el equilibrio --- */
-  .pos-root .page-head { margin-bottom: 10px !important; }
-  .pos-root .page-head h1 { font-size: 15px !important; }
-  .pos-root .page-head div[style*="width: 44px"] { width: 34px !important; height: 34px !important; }
-  .pos-root .page-head div[style*="width: 44px"] svg { width: 18px !important; height: 18px !important; }
+  /* --- Cesta / Carrito de venta: encaje total en 100% de pantalla --- */
+  .pos-root #pos-cart-panel {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 10px !important;
+    gap: 8px !important;
+    border-radius: 12px !important;
+    box-sizing: border-box;
+  }
+  .pos-root .pos-cart-header { padding-bottom: 7px !important; gap: 8px; }
+  .pos-root .pos-cart-header b { font-size: 11.5px !important; min-width: 0; }
+  .pos-root .pos-cart-clear-btn {
+    min-height: 28px;
+    padding: 0 6px;
+    font-size: 11px !important;
+    flex-shrink: 0;
+  }
+  .pos-root .pos-cart-client { padding: 6px 8px !important; gap: 8px; }
+  .pos-root .pos-cart-client-info { min-width: 0; flex: 1; }
+  .pos-root .pos-cart-new-client-btn {
+    min-height: 28px;
+    padding: 0 4px;
+    font-size: 11px !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .pos-root .pos-cart-items {
+    min-height: 84px !important;
+    max-height: 240px !important;
+    gap: 6px !important;
+  }
+  .pos-root .pos-cart-empty { min-height: 84px !important; gap: 4px !important; }
+  .pos-root .pos-cart-empty svg { width: 24px; height: 24px; }
+
+  .pos-root .pos-cart-item {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+    padding: 8px !important;
+    border-radius: 8px !important;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .pos-root .pos-cart-item-info {
+    padding-right: 0 !important;
+    display: flex !important;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+  }
+  .pos-root .pos-cart-item-name {
+    font-size: 11.5px !important;
+    line-height: 1.25;
+    min-width: 0;
+    flex: 1;
+    overflow-wrap: anywhere;
+  }
+  .pos-root .pos-cart-item-unit {
+    font-size: 10px !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .pos-root .pos-cart-item-controls {
+    width: 100%;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    min-width: 0;
+  }
+  .pos-root .pos-stepper-ctrl { flex-shrink: 0; }
+  .pos-root .pos-stepper-btn {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 13px !important;
+  }
+  .pos-root .pos-stepper-input {
+    width: 36px !important;
+    height: 28px !important;
+    font-size: 11.5px !important;
+  }
+  .pos-root .pos-cart-item-total {
+    flex: 1;
+    min-width: 0 !important;
+    text-align: right;
+  }
+  .pos-root .pos-cart-item-bs { font-size: 12px !important; white-space: nowrap; }
+  .pos-root .pos-cart-item-usd { font-size: 10px !important; }
+  .pos-root .pos-cart-remove {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px;
+    display: grid !important;
+    place-items: center;
+    border-radius: 6px;
+    background: #fef2f2 !important;
+    color: #ef4444 !important;
+    flex-shrink: 0;
+    padding: 0 !important;
+  }
+
+  /* --- Resumen y botón COBRAR proporcional --- */
+  .pos-root .pos-cart-footer { padding-top: 8px !important; gap: 8px !important; }
+  .pos-root .pos-cart-subtotal-row { align-items: center !important; gap: 8px; }
+  .pos-root .pos-cart-subtotal-label { font-size: 11px !important; white-space: nowrap; }
+  .pos-root .pos-cart-subtotal-bs { font-size: 15px !important; line-height: 1.15; }
+  .pos-root .pos-cart-subtotal-usd { font-size: 11px !important; }
+  .pos-root .pos-cobrar-btn {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 14px !important;
+    font-size: 12.5px !important;
+    border-radius: 10px !important;
+    box-sizing: border-box;
+  }
+  .pos-root .pos-cobrar-btn svg { width: 14px !important; height: 14px !important; }
+
+  /* --- Barra flotante del carrito sobre la navegación inferior (z-45 > bottom-nav height) --- */
+  .pos-root .pos-mobile-cartbar {
+    display: flex !important;
+    position: fixed !important;
+    left: 8px !important;
+    right: 8px !important;
+    bottom: calc(62px + env(safe-area-inset-bottom)) !important;
+    z-index: 45 !important;
+    padding: 6px 8px 6px 12px !important;
+    border-radius: 12px !important;
+    gap: 8px !important;
+    align-items: center;
+    box-sizing: border-box;
+  }
+  .pos-root .pos-mobile-cartbar-count { font-size: 9px !important; }
+  .pos-root .pos-mobile-cartbar-total { font-size: 12.5px !important; }
+  .pos-root .pos-mobile-cartbar-total span { font-size: 10.5px !important; }
+  .pos-root .pos-mobile-cartbar-cta {
+    height: 30px !important;
+    min-height: 30px;
+    padding: 0 10px !important;
+    font-size: 11px !important;
+    border-radius: 8px !important;
+  }
+
+  /* --- Seguridad en formulario de cobro (checkout) en ≤767px --- */
+  .pos-root .pos-stepper { gap: 14px !important; }
+  .pos-root .pos-stepper-connector { width: 22px !important; }
+  .pos-root .pos-paymode-btn { padding: 5px 4px !important; font-size: 10.5px !important; }
+  .pos-root .pos-doctype-btn b { font-size: 10px !important; }
+  .pos-root .pos-paymode-btn svg,
+  .pos-root .pos-doctype-btn svg { width: 13px !important; height: 13px !important; }
+  .pos-root [style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
+  .pos-root [style*="width: 600px"] { width: 100% !important; max-width: 100% !important; }
+  .pos-root [style*="min-width: 280px"] { min-width: 0 !important; }
+  .pos-root [style*="min-width: 260px"] { min-width: 0 !important; }
 }
 
-/* --- 6. Barra de navegación inferior: h-14 (56px) · íconos w-5 · etiquetas text-[10px] --- */
-@media (max-width: 640px) {
+@media (max-width: 767px) {
+  .mobile-header { padding: 4px 12px !important; padding-top: calc(4px + env(safe-area-inset-top)) !important; }
+  .mobile-header__rate { padding: 2px 8px !important; font-size: 10px !important; }
+  .mobile-header__icon, .mobile-header__avatar { width: 28px !important; height: 28px !important; }
   .mobile-bottom-nav {
     height: 56px !important;
     padding: 0 4px !important;
@@ -4539,18 +4489,934 @@ button:active:not(:disabled) {
   }
   .mobile-bottom-nav__item { gap: 2px !important; padding: 3px 2px !important; font-size: 10px !important; }
   .mobile-bottom-nav__item svg { width: 20px !important; height: 20px !important; }
+  .pos-root [style*="width: 600px"] .input { height: 32px !important; font-size: 11px !important; }
+  .pos-root [style*="width: 600px"] .form-grid { gap: 8px !important; }
+  .pos-root [style*="width: 600px"] .form-grid .btn,
+  .pos-root [style*="width: 600px"] button.btn { height: 30px !important; font-size: 10.5px !important; }
 }
 
-/* --- POS limpio v3: tramo <=360px (una medida menor por elemento, después del <=640px) --- */
+/* --- POS: tramo extra compacto (≤360px, pantallas pequeñas) --- */
 @media (max-width: 360px) {
+  .pos-root { padding: 8px 8px calc(120px + env(safe-area-inset-bottom)) !important; }
+  .pos-root .page-head h1 { font-size: 14px !important; }
+  .pos-root .page-head div[style*="width: 44px"] { width: 30px !important; height: 30px !important; }
+  .pos-root .pos-toolbar-actions > button { height: 32px !important; min-height: 32px !important; padding: 0 8px !important; font-size: 10.5px !important; }
   .pos-root .pos-search-card .mobile-searchbar { height: 32px !important; padding: 0 8px !important; }
   .pos-root .pos-search-card .mobile-searchbar input { font-size: 11px !important; height: 28px !important; }
   .pos-root .pos-cat-pill { padding: 3px 10px !important; font-size: 11px !important; }
-  .pos-root .pos-toolbar-actions > button { height: 32px !important; padding: 0 10px !important; font-size: 11px !important; }
-  .pos-root [style*="min-height: 140px"] { padding: 6px !important; }
-  .pos-root [style*="min-height: 140px"] div[style*="font-size: 12px"],
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 12px"] { font-size: 11px !important; }
-  .pos-root [style*="min-height: 140px"] b[style*="font-size: 14px"] { font-size: 11px !important; }
-  .pos-root .page-head h1 { font-size: 14px !important; }
-  .pos-root .page-head div[style*="width: 44px"] { width: 30px !important; height: 30px !important; }
+  .pos-root .pos-products-grid { gap: 5px !important; }
+  .pos-root .pos-free-card,
+  .pos-root .pos-product-card { padding: 6px !important; }
+  .pos-root .pos-product-title { font-size: 11px !important; }
+  .pos-root .pos-product-price-bs { font-size: 11px !important; }
+  .pos-root #pos-cart-panel { padding: 8px !important; gap: 6px !important; }
+  .pos-root .pos-cart-item { padding: 6px !important; }
+  .pos-root .pos-stepper-input { width: 32px !important; }
+  .pos-root .pos-cart-subtotal-bs { font-size: 14px !important; }
+  .pos-root .pos-cobrar-btn { height: 34px !important; min-height: 34px !important; font-size: 12px !important; }
 }
+
+/* ==========================================================================
+   COTIZACIONES — FORMULARIO DE NUEVA / EDITAR COTIZACIÓN EN MÓVIL
+   ========================================================================== */
+@media (max-width: 767px) {
+  .cot-create-dialog {
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .cot-create-header {
+    padding: 8px 12px !important;
+    padding-top: calc(8px + env(safe-area-inset-top)) !important;
+    gap: 8px;
+  }
+  .cot-create-header-main {
+    gap: 8px !important;
+    min-width: 0;
+    flex: 1;
+  }
+  .cot-create-back-btn,
+  .cot-create-close-btn {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px;
+    padding: 0 !important;
+    display: grid !important;
+    place-items: center;
+    flex-shrink: 0;
+    border-radius: 8px;
+  }
+  .cot-create-icon {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 8px !important;
+    flex-shrink: 0;
+  }
+  .cot-create-icon svg { width: 15px; height: 15px; }
+  .cot-create-title-wrap { min-width: 0; }
+  .cot-create-title {
+    font-size: 14.5px !important;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cot-create-subtitle {
+    font-size: 10.5px !important;
+    display: block;
+    line-height: 1.2;
+  }
+
+  .cot-create-body {
+    grid-template-columns: minmax(0, 1fr) !important;
+    padding: 10px 10px calc(20px + env(safe-area-inset-bottom)) !important;
+    gap: 10px !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cot-create-left,
+  .cot-create-right {
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    position: static !important;
+    gap: 10px !important;
+  }
+  .cot-create-card {
+    padding: 12px !important;
+    border-radius: 12px !important;
+    min-width: 0;
+  }
+  .cot-create-section-title {
+    margin-bottom: 8px !important;
+    font-size: 12.5px !important;
+    gap: 6px !important;
+  }
+
+  /* Selector de cliente y parámetros */
+  .cot-create-customer-row {
+    gap: 6px !important;
+    align-items: center;
+  }
+  .cot-create-customer-input-wrap {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+  }
+  .cot-create-customer-input {
+    height: 36px !important;
+    min-height: 36px !important;
+    font-size: 12px !important;
+    padding-left: 10px !important;
+  }
+  .cot-create-customer-input-wrap > button {
+    width: 28px;
+    height: 28px;
+    right: 4px !important;
+    display: grid;
+    place-items: center;
+  }
+  .cot-create-new-client-btn {
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 10px !important;
+    font-size: 11px !important;
+    border-radius: 9px !important;
+    gap: 4px !important;
+    flex-shrink: 0;
+  }
+  .cot-create-customer-dropdown {
+    top: 40px !important;
+    max-height: 200px !important;
+  }
+  .cot-create-customer-dropdown button {
+    padding: 9px 10px !important;
+    font-size: 12px !important;
+  }
+  .cot-create-selected-client {
+    margin-top: 8px !important;
+    padding: 6px 10px !important;
+    font-size: 11.5px !important;
+    gap: 8px;
+  }
+  .cot-create-selected-client > button {
+    min-width: 28px;
+    min-height: 28px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .cot-create-meta-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-top: 10px !important;
+  }
+  .cot-create-meta-grid label {
+    font-size: 11px !important;
+    margin-bottom: 4px !important;
+    display: flex !important;
+    align-items: center;
+  }
+  .cot-create-meta-input {
+    height: 34px !important;
+    min-height: 34px !important;
+    font-size: 12px !important;
+  }
+  .cot-create-notes-wrap { margin-top: 10px !important; }
+  .cot-create-notes-wrap label {
+    font-size: 11px !important;
+    margin-bottom: 4px !important;
+  }
+  .cot-create-notes-input {
+    font-size: 12px !important;
+    min-height: 54px;
+    padding: 8px 10px !important;
+  }
+  .cot-create-tax-checks {
+    flex-wrap: wrap;
+    gap: 6px 14px !important;
+    margin-top: 10px !important;
+    font-size: 11.5px !important;
+  }
+  .cot-create-tax-checks label {
+    min-height: 28px;
+    gap: 6px !important;
+  }
+  .cot-create-tax-checks input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--brand-500);
+  }
+
+  /* Tablero de productos */
+  .cot-create-search-row { margin-bottom: 8px !important; }
+  .cot-create-search-box {
+    padding: 0 10px !important;
+    border-radius: 9px !important;
+    min-width: 0;
+  }
+  .cot-create-search-input {
+    height: 34px !important;
+    font-size: 12px !important;
+  }
+  .cot-create-cats-scroll {
+    max-width: 100%;
+    gap: 6px !important;
+    padding-bottom: 4px !important;
+    margin-bottom: 8px !important;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .cot-create-cats-scroll::-webkit-scrollbar { display: none; }
+  .cot-create-cat-pill {
+    padding: 4px 11px !important;
+    min-height: 28px;
+    font-size: 11px !important;
+    border-radius: 999px !important;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .cot-create-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+  .cot-create-product-card {
+    padding: 8px !important;
+    gap: 4px !important;
+    border-radius: 10px !important;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .cot-create-product-top {
+    gap: 4px;
+    align-items: center !important;
+  }
+  .cot-create-product-sku {
+    font-size: 9.5px !important;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .cot-create-product-stock {
+    font-size: 8.5px !important;
+    padding: 1.5px 5px !important;
+    border-radius: 5px !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .cot-create-product-name {
+    font-size: 11.5px !important;
+    line-height: 1.25 !important;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+  }
+  .cot-create-product-price {
+    font-size: 12.5px !important;
+    margin-top: auto;
+  }
+
+  /* Detalle de la cotización */
+  .cot-create-detail-card { gap: 10px !important; }
+  .cot-create-detail-header { padding-bottom: 8px !important; }
+  .cot-create-detail-header b { font-size: 12.5px !important; }
+  .cot-create-clear-btn {
+    min-height: 28px;
+    padding: 0 6px !important;
+    display: inline-flex;
+    align-items: center;
+  }
+  .cot-create-detail-empty { padding: 18px 0 !important; }
+
+  .cot-create-items-list {
+    max-height: none !important;
+    overflow-y: visible !important;
+    gap: 6px !important;
+  }
+  .cot-create-item {
+    padding: 8px 10px !important;
+    gap: 6px !important;
+    border-radius: 9px !important;
+  }
+  .cot-create-item-head { gap: 6px !important; }
+  .cot-create-item-name {
+    font-size: 11.5px !important;
+    line-height: 1.25;
+    word-break: break-word;
+  }
+  .cot-create-item-sku { font-size: 9.5px !important; }
+  .cot-create-item-remove {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px;
+    padding: 0 !important;
+    border-radius: 6px;
+    background: #fef2f2 !important;
+    color: #ef4444 !important;
+    display: grid !important;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .cot-create-item-controls {
+    gap: 6px !important;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .cot-create-stepper { border-radius: 7px !important; flex-shrink: 0; }
+  .cot-create-stepper-btn {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px;
+    font-size: 13px;
+  }
+  .cot-create-stepper-input {
+    width: 36px !important;
+    height: 28px !important;
+    font-size: 11.5px !important;
+  }
+  .cot-create-price-wrap {
+    flex: 1 1 70px !important;
+    min-width: 68px;
+    gap: 3px !important;
+  }
+  .cot-create-price-input {
+    height: 28px !important;
+    font-size: 11.5px !important;
+    padding: 0 6px !important;
+    min-width: 0;
+  }
+  .cot-create-item-subtotal {
+    min-width: 56px !important;
+    margin-left: auto;
+  }
+  .cot-create-item-subtotal b {
+    font-size: 12px !important;
+    white-space: nowrap;
+  }
+
+  .cot-create-summary {
+    padding-top: 10px !important;
+    gap: 5px !important;
+    font-size: 11.5px !important;
+  }
+  .cot-create-total-row {
+    padding-top: 6px !important;
+    margin-top: 2px !important;
+  }
+  .cot-create-total-usd { font-size: 16px !important; }
+  .cot-create-total-ves { font-size: 10.5px !important; }
+  .cot-create-autogen-label {
+    font-size: 11px !important;
+    line-height: 1.3;
+    min-height: 28px;
+    margin: 4px 0 2px !important;
+  }
+  .cot-create-autogen-label input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    accent-color: var(--brand-500);
+  }
+  .cot-create-submit-btn {
+    width: 100% !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    font-size: 12.5px !important;
+    border-radius: 10px !important;
+    margin-top: 4px !important;
+  }
+  .cot-create-submit-btn svg { width: 14px !important; height: 14px !important; }
+
+  /* Sub-modal: Nuevo Cliente */
+  .cot-submodal-overlay { padding: 10px !important; }
+  .cot-submodal-card {
+    max-width: 100% !important;
+    max-height: 92dvh;
+    overflow-y: auto !important;
+    border-radius: 14px !important;
+  }
+  .cot-submodal-header { padding: 12px 14px !important; }
+  .cot-submodal-header h3 { font-size: 13.5px !important; }
+  .cot-submodal-header button {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+  }
+  .cot-submodal-form {
+    padding: 12px !important;
+    gap: 10px !important;
+  }
+  .cot-submodal-form .form-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+  }
+  .cot-submodal-form .field { min-width: 0; }
+  .cot-submodal-form .input {
+    height: 36px !important;
+    font-size: 12px !important;
+  }
+  .cot-submodal-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    padding-top: 10px !important;
+    margin-top: 2px !important;
+  }
+  .cot-submodal-actions button {
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 12px !important;
+    font-size: 12px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .cot-create-header { padding: 6px 8px !important; padding-top: calc(6px + env(safe-area-inset-top)) !important; }
+  .cot-create-back-btn,
+  .cot-create-close-btn { width: 30px !important; height: 30px !important; min-width: 30px; }
+  .cot-create-icon { width: 28px !important; height: 28px !important; }
+  .cot-create-title { font-size: 13.5px !important; }
+  .cot-create-subtitle { font-size: 10px !important; }
+
+  .cot-create-body { padding: 8px 8px calc(16px + env(safe-area-inset-bottom)) !important; gap: 8px !important; }
+  .cot-create-card { padding: 10px !important; }
+  .cot-create-customer-row { flex-wrap: wrap; }
+  .cot-create-customer-input-wrap { flex: 1 1 100% !important; }
+  .cot-create-customer-input { height: 34px !important; min-height: 34px !important; font-size: 11.5px !important; }
+  .cot-create-new-client-btn {
+    width: 100%;
+    height: 34px !important;
+    min-height: 34px !important;
+    justify-content: center;
+    font-size: 11px !important;
+  }
+  .cot-create-meta-grid { gap: 6px !important; }
+  .cot-create-meta-input { height: 32px !important; min-height: 32px !important; font-size: 11.5px !important; }
+
+  .cot-create-search-input { height: 32px !important; font-size: 11.5px !important; }
+  .cot-create-cat-pill { padding: 3px 9px !important; font-size: 10.5px !important; }
+  .cot-create-products-grid { gap: 5px !important; }
+  .cot-create-product-card { padding: 6px !important; gap: 3px !important; }
+  .cot-create-product-name { font-size: 11px !important; }
+  .cot-create-product-price { font-size: 11.5px !important; }
+
+  .cot-create-item { padding: 7px 8px !important; }
+  .cot-create-item-name { font-size: 11px !important; }
+  .cot-create-stepper-input { width: 32px !important; }
+  .cot-create-price-wrap { min-width: 60px; }
+  .cot-create-item-subtotal { min-width: 50px !important; }
+  .cot-create-total-usd { font-size: 15px !important; }
+  .cot-create-submit-btn {
+    height: 34px !important;
+    min-height: 34px !important;
+    font-size: 12px !important;
+  }
+
+  .cot-submodal-overlay { padding: 8px !important; }
+  .cot-submodal-form { padding: 10px !important; gap: 8px !important; }
+  .cot-submodal-form .input { height: 34px !important; font-size: 11.5px !important; }
+  .cot-submodal-actions button { height: 34px !important; min-height: 34px !important; font-size: 11.5px !important; }
+}
+
+/* ==========================================================================
+   PANEL ADMINISTRATIVO — AJUSTES INTEGRALES PARA MÓVIL (SOLO ≤767px y ≤360px)
+   Cubre todas las pantallas, formularios y modales del ERP sin alterar escritorio.
+   ========================================================================== */
+@media (max-width: 767px) {
+  /* 1. Contenedor principal y prevención de desborde horizontal */
+  .shell {
+    display: block !important;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  .main {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  .content,
+  .m-root,
+  .fin-cxp-root {
+    min-width: 0;
+    max-width: 100%;
+    padding: 12px !important;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+  .main .page-head {
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+  .main .page-head > div:first-child { min-width: 0; }
+  .main .page-head h1 {
+    font-size: 16px !important;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+  .main .page-head .actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 6px !important;
+  }
+  .main .page-head .actions .btn,
+  .main .page-head .actions button {
+    min-height: 32px !important;
+    font-size: 11.5px !important;
+    padding: 0 10px !important;
+  }
+
+  /* 2. Restaurar tablas estándar dentro de modales (evita que .m-root/.ped-root/.cot-root/.invcom-root oculten columnas) */
+  .main div[style*="position: fixed"] table,
+  .modal-container table,
+  .modal-backdrop table {
+    display: table !important;
+    width: 100% !important;
+    min-width: 460px;
+    font-size: 11px !important;
+    border-collapse: collapse;
+  }
+  .main div[style*="position: fixed"] table thead,
+  .modal-container table thead,
+  .modal-backdrop table thead {
+    display: table-header-group !important;
+  }
+  .main div[style*="position: fixed"] table tbody,
+  .modal-container table tbody,
+  .modal-backdrop table tbody {
+    display: table-row-group !important;
+  }
+  .main div[style*="position: fixed"] table tfoot,
+  .modal-container table tfoot,
+  .modal-backdrop table tfoot {
+    display: table-footer-group !important;
+  }
+  .main div[style*="position: fixed"] table tr,
+  .modal-container table tr,
+  .modal-backdrop table tr {
+    display: table-row !important;
+    padding: 0 !important;
+  }
+  .main div[style*="position: fixed"] table th,
+  .main div[style*="position: fixed"] table td,
+  .modal-container table th,
+  .modal-container table td,
+  .modal-backdrop table th,
+  .modal-backdrop table td {
+    display: table-cell !important;
+    order: 0 !important;
+    flex: none !important;
+    max-width: none !important;
+    white-space: normal !important;
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+    vertical-align: middle;
+  }
+  .main div[style*="position: fixed"] .table-wrap,
+  .modal-container .table-wrap,
+  .modal-backdrop .table-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+
+  /* 3. Normalización segura de modales, diálogos y formularios del panel administrativo */
+  .main div[style*="position: fixed"][style*="inset: 0"],
+  .main div[style*="position: fixed"][style*="top: 0"][style*="bottom: 0"],
+  .modal-backdrop {
+    padding: 10px !important;
+    box-sizing: border-box;
+  }
+  .main div[style*="position: fixed"][style*="inset: 0"] > div:not(.cot-create-dialog):not(.npm-dialog):not(.mobile-more-sheet):not(.mobile-filter-sheet):not(.mobile-bottom-sheet),
+  .main div[style*="position: fixed"][style*="top: 0"][style*="bottom: 0"] > div:not(.cot-create-dialog):not(.npm-dialog):not(.mobile-more-sheet):not(.mobile-filter-sheet):not(.mobile-bottom-sheet),
+  .modal-backdrop > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92dvh !important;
+    overflow-y: auto !important;
+    border-radius: 14px !important;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+  }
+  .main div[style*="position: fixed"] .card,
+  .modal-backdrop .card,
+  .modal-backdrop .modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
+  .main div[style*="position: fixed"] form,
+  .modal-container form,
+  .modal-backdrop form {
+    gap: 12px !important;
+  }
+  .main div[style*="position: fixed"] form .input,
+  .main div[style*="position: fixed"] form select,
+  .modal-container .input,
+  .modal-container select,
+  .modal-backdrop .input,
+  .modal-backdrop select {
+    min-height: 36px;
+    font-size: 12.5px !important;
+    box-sizing: border-box;
+  }
+  .main div[style*="position: fixed"] button,
+  .modal-container button,
+  .modal-backdrop button {
+    min-height: 30px;
+  }
+
+  /* 4. Grillas multi-columna y anchos fijos inline dentro del panel */
+  .main [style*="grid-template-columns: 1fr 1fr"]:not(.cot-create-meta-grid):not(.cot-submodal-actions):not(.pos-doc-fields),
+  .main [style*="grid-template-columns: 1fr 1fr 1fr"],
+  .main [style*="grid-template-columns: repeat(3, 1fr)"]:not(.pos-doctype-grid),
+  .main [style*="grid-template-columns: 1.4fr 1fr"],
+  .main [style*="grid-template-columns: 1.45fr 1fr"],
+  .main [style*="grid-template-columns: 1.15fr 1fr"],
+  .main [style*="grid-template-columns: 2fr 1fr"],
+  .main [style*="grid-template-columns: 1fr 1.5fr"],
+  .main [style*="minmax(260px, 1fr)"],
+  .main [style*="minmax(280px, 1fr)"],
+  .main [style*="minmax(300px, 1fr)"],
+  .main [style*="minmax(320px, 1fr)"],
+  .main [style*="minmax(360px, 1fr)"],
+  .main [style*="minmax(440px, 1fr)"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+  }
+  .main [style*="grid-template-columns"] > * {
+    min-width: 0;
+  }
+  .main [style*="min-width: 280"],
+  .main [style*="min-width: 260"],
+  .main [style*="min-width: 240"],
+  .main [style*="min-width: 220"] {
+    min-width: 0 !important;
+  }
+  .main [style*="width: 640px"],
+  .main [style*="width: 600px"],
+  .main [style*="width: 280px"],
+  .main [style*="width: 260px"],
+  .main [style*="width: 250px"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* 5. Clientes (CRM): barra superior, formulario y modal de detalle */
+  .crm-toolbar-head {
+    width: 100% !important;
+    padding: 12px !important;
+    gap: 8px !important;
+  }
+  .crm-form-header { padding: 12px 14px !important; }
+  .crm-form-header h3 { font-size: 14px !important; }
+  .crm-form-body { padding: 12px !important; gap: 12px !important; }
+  .crm-form-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 10px !important; }
+  .crm-form-body .input { height: 38px !important; font-size: 12.5px !important; }
+  .crm-form-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    padding-top: 10px !important;
+  }
+  .crm-cancel-btn { width: 100% !important; height: 38px !important; }
+  .crm-form-actions button[type="submit"] { width: 100% !important; height: 38px !important; }
+
+  .crm-detail-card {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 92dvh !important;
+    padding: 14px !important;
+    gap: 12px !important;
+  }
+  .crm-detail-header {
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 10px !important;
+  }
+  .crm-detail-header h2 { font-size: 15.5px !important; }
+  .crm-detail-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .crm-detail-contacts {
+    flex-direction: column;
+    gap: 6px !important;
+    padding: 10px !important;
+    font-size: 11.5px !important;
+  }
+  .crm-detail-kpis,
+  .crm-detail-subkpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  .crm-detail-kpis > :last-child { grid-column: 1 / -1; }
+  .crm-detail-orders {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  /* 6. Asistente de Compra Nueva (NewPurchaseModal) */
+  .npm-overlay { padding: 0 !important; }
+  .npm-dialog {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+  .npm-header {
+    padding: 10px 12px !important;
+    padding-top: calc(10px + env(safe-area-inset-top)) !important;
+    gap: 8px;
+  }
+  .npm-header h2 { font-size: 13.5px !important; }
+  .npm-header p { font-size: 10.5px !important; }
+  .npm-header > div:first-child { min-width: 0; gap: 8px !important; }
+  .npm-header > div:first-child > div:first-child {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 10px !important;
+    flex-shrink: 0;
+  }
+  .npm-header > button { width: 32px !important; height: 32px !important; flex-shrink: 0; }
+  .npm-stepper {
+    padding: 8px 10px !important;
+    gap: 6px !important;
+    scrollbar-width: none;
+  }
+  .npm-stepper::-webkit-scrollbar { display: none; }
+  .npm-stepper > div {
+    padding: 5px 10px !important;
+    font-size: 11px !important;
+    gap: 6px !important;
+    flex: 0 0 auto;
+  }
+  .npm-body {
+    height: auto !important;
+    padding: 10px !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .npm-body .card { padding: 12px !important; border-radius: 12px !important; }
+  .npm-step2-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+  .npm-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    max-height: 320px !important;
+  }
+  .npm-products-grid > div { padding: 8px !important; }
+  .npm-total-banner {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 8px;
+    padding: 14px !important;
+  }
+  .npm-total-banner > div:last-child { text-align: left !important; }
+  .npm-total-banner div[style*="font-size: 32"] { font-size: 22px !important; }
+  .npm-total-banner div[style*="font-size: 22"] { font-size: 16px !important; }
+  .npm-footer {
+    padding: 10px 12px !important;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+    gap: 8px !important;
+  }
+  .npm-footer button {
+    padding: 8px 12px !important;
+    font-size: 11.5px !important;
+    min-height: 36px !important;
+    border-radius: 9px !important;
+  }
+  .npm-footer button:last-child {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  /* 7. Configuración (Config.tsx): pestañas, buscadores, sedes y usuarios */
+  .cfg-root .config-tabs,
+  .cfg-root .tab-container {
+    display: flex !important;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-bottom: 12px !important;
+  }
+  .cfg-root .config-tabs::-webkit-scrollbar,
+  .cfg-root .tab-container::-webkit-scrollbar { display: none; }
+  .cfg-root .config-tab-btn,
+  .cfg-root .tab-btn {
+    padding: 7px 12px !important;
+    font-size: 11.5px !important;
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+  .cfg-branches-grid,
+  .cfg-users-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+  }
+  .cfg-toolbar,
+  .cfg-toolbar-actions,
+  .cfg-toolbar-meta {
+    width: 100%;
+    min-width: 0 !important;
+    flex-wrap: wrap;
+    gap: 8px !important;
+  }
+  .cfg-search,
+  .cfg-audit-search {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 1 100%;
+  }
+
+  /* 8. Pedidos, Detalle de Venta, CxC, CxP, Bancos y Salud */
+  .ped-root .card [style*="width: 240"],
+  .ped-root .card [style*="width: 170"],
+  .ped-root .card [style*="width: 160"],
+  .ped-root .card [style*="width: 145"],
+  .ped-root .card [style*="width: 140"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 1 100% !important;
+  }
+  .saldet-root [style*="1.45fr 1fr"],
+  .saldet-root [style*="1.15fr 1fr"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+  }
+  .fin-cxc-root .ar-main-grid > *,
+  .fin-cxp-root .pay-main-grid > * {
+    min-width: 0;
+  }
+  .fin-cxp-root .fin-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .ch-root [style*="minmax(320px, 1fr)"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .bank-head-actions,
+  .inv-head-actions {
+    width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .content,
+  .m-root,
+  .fin-cxp-root,
+  .rep-acc-root,
+  .rep-inv-root .content {
+    padding: 8px !important;
+  }
+  .main .page-head h1 { font-size: 14.5px !important; }
+  .main .page-head .actions .btn,
+  .main .page-head .actions button {
+    min-height: 30px !important;
+    font-size: 10.5px !important;
+    padding: 0 8px !important;
+  }
+  .m-root .card,
+  .content .card { padding: 10px !important; }
+
+  .main div[style*="position: fixed"][style*="inset: 0"],
+  .main div[style*="position: fixed"][style*="top: 0"][style*="bottom: 0"],
+  .modal-backdrop {
+    padding: 6px !important;
+  }
+  .main div[style*="position: fixed"] form .input,
+  .main div[style*="position: fixed"] form select,
+  .modal-container .input,
+  .modal-container select,
+  .modal-backdrop .input,
+  .modal-backdrop select {
+    min-height: 34px;
+    font-size: 12px !important;
+  }
+
+  .crm-detail-card { padding: 10px !important; gap: 10px !important; }
+  .crm-detail-kpis,
+  .crm-detail-subkpis,
+  .crm-detail-orders {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 6px !important;
+  }
+  .crm-form-header { padding: 10px 12px !important; }
+  .crm-form-body { padding: 10px !important; gap: 10px !important; }
+  .crm-form-body .input { height: 34px !important; font-size: 12px !important; }
+  .crm-cancel-btn,
+  .crm-form-actions button[type="submit"] { height: 34px !important; font-size: 12px !important; }
+
+  .npm-header { padding: 8px 10px !important; padding-top: calc(8px + env(safe-area-inset-top)) !important; }
+  .npm-body { padding: 8px !important; }
+  .npm-products-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .npm-footer { padding: 8px 10px !important; padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important; }
+  .npm-footer button { min-height: 34px !important; font-size: 11px !important; padding: 6px 10px !important; }
+
+  .inv-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+  .fin-cxc-root [style*="minmax(220px, 1fr)"],
+  .fin-cxp-root .fin-kpi-grid,
+  .fin-exp-root [style*="minmax(280px, 1fr)"] {
+    gap: 6px !important;
+  }
+}
+
+

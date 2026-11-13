@@ -38,6 +38,7 @@ import {
   Heart
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase/client';
+import { setSessionHandle, withSessionInit } from '../../../lib/supabase/api';
 import { isInternalRole } from '../../../lib/auth/roles';
 import {
   getActiveExchangeRate,
@@ -145,9 +146,12 @@ function CompuRepuestosLogo({ className = '', size = 44 }: { className?: string;
  */
 async function fetchServerSession(): Promise<any | null> {
   try {
-    const res = await fetch('/api/auth/session', { credentials: 'include' });
+    const res = await fetch('/api/auth/session', withSessionInit());
     if (!res.ok) return null;
     const json = await res.json();
+    if (json?.data?.sessionId) {
+      setSessionHandle(json.data.sessionId);
+    }
     if (!json?.data?.user) return null;
     return {
       ...json.data.user,
@@ -276,7 +280,7 @@ export function ShopPage() {
 
   const refreshWishlist = useCallback(async () => {
     try {
-      const res = await fetch('/api/customer/portal', { credentials: 'include' });
+      const res = await fetch('/api/customer/portal', withSessionInit());
       const json = await res.json().catch(() => null);
       if (res.ok && json?.success && Array.isArray(json.data?.wishlist)) {
         setWishlistSkus(json.data.wishlist.map((item: any) => item.sku).filter(Boolean));
@@ -297,18 +301,20 @@ export function ShopPage() {
   const toggleWishlistProduct = useCallback(
     async (product: Product) => {
       try {
-        const res = await fetch('/api/customer/wishlist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            product_id: product.id || product.sku,
-            sku: product.sku,
-            name: product.name,
-            price_usd: product.priceUsd,
-            image_url: product.image_url
+        const res = await fetch(
+          '/api/customer/wishlist',
+          withSessionInit({
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              product_id: product.id || product.sku,
+              sku: product.sku,
+              name: product.name,
+              price_usd: product.priceUsd,
+              image_url: product.image_url
+            })
           })
-        });
+        );
         const json = await res.json().catch(() => null);
         if (res.ok && json?.success && Array.isArray(json.data?.wishlist)) {
           setWishlistSkus(json.data.wishlist.map((item: any) => item.sku).filter(Boolean));
@@ -325,7 +331,7 @@ export function ShopPage() {
     if (!user || !user.email) return;
 
     try {
-      const res = await fetch('/api/users');
+      const res = await fetch('/api/users', withSessionInit());
       let associatedUsers: any[] = [];
       if (res.ok) {
         const json = await res.json();
@@ -348,7 +354,8 @@ export function ShopPage() {
       if (!isCustomer) {
         // --- ES USUARIO ASOCIADO / ADMINISTRATIVO DEL ERP ---
         if (matched && matched.active === false) {
-          await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+          await fetch('/api/auth/logout', withSessionInit({ method: 'POST' }));
+          setSessionHandle(null);
           localStorage.removeItem('frenyer_active_user');
           localStorage.removeItem('frenyer_user_role');
           localStorage.removeItem('frenyer_user_permissions');
@@ -425,9 +432,11 @@ export function ShopPage() {
 
   const handleSignOutUser = async (openLoginAfter = false) => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      await fetch('/api/auth/logout', withSessionInit({ method: 'POST' }));
     } catch (err) {
       console.warn('Error en signOut:', err);
+    } finally {
+      setSessionHandle(null);
     }
 
     try {
@@ -466,8 +475,9 @@ export function ShopPage() {
     const checkSession = async () => {
       try {
         // La sesion se consulta al servidor: la cookie httpOnly no es legible desde JS.
-        const res = await fetch('/api/auth/session', { credentials: 'include' });
+        const res = await fetch('/api/auth/session', withSessionInit());
         if (!res.ok) {
+          if (res.status === 401) setSessionHandle(null);
           setCurrentAuthUser(null);
           const storedRole = localStorage.getItem('frenyer_user_role');
           const storedUser = localStorage.getItem('frenyer_active_user');
@@ -479,6 +489,9 @@ export function ShopPage() {
         }
 
         const json = await res.json();
+        if (json?.data?.sessionId) {
+          setSessionHandle(json.data.sessionId);
+        }
         const sessionUser = json?.data?.user;
         if (!sessionUser) {
           setCurrentAuthUser(null);
@@ -4621,21 +4634,26 @@ export function ShopPage() {
                     }
 
                     // El registro lo resuelve el servidor: el navegador no maneja claves.
-                    const registerRes = await fetch('/api/auth/register', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      credentials: 'include',
-                      body: JSON.stringify({
-                        email: authEmail.trim(),
-                        password: authPassword,
-                        fullName: authFullName.trim(),
-                        companyName: authCompany.trim()
+                    const registerRes = await fetch(
+                      '/api/auth/register',
+                      withSessionInit({
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          email: authEmail.trim(),
+                          password: authPassword,
+                          fullName: authFullName.trim(),
+                          companyName: authCompany.trim()
+                        })
                       })
-                    });
+                    );
                     const registerJson = await registerRes.json().catch(() => null);
 
                     if (!registerRes.ok || !registerJson?.success) {
                       throw new Error(registerJson?.error || 'No se pudo crear la cuenta.');
+                    }
+                    if (registerJson?.data?.sessionId) {
+                      setSessionHandle(registerJson.data.sessionId);
                     }
 
                     setAuthFullName('');
@@ -4656,16 +4674,21 @@ export function ShopPage() {
                     if (!authEmail.trim() || !authPassword) {
                       throw new Error('Por favor ingresa tu correo y contraseña.');
                     }
-                    const loginRes = await fetch('/api/auth/login', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      credentials: 'include',
-                      body: JSON.stringify({ email: authEmail.trim(), password: authPassword })
-                    });
+                    const loginRes = await fetch(
+                      '/api/auth/login',
+                      withSessionInit({
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: authEmail.trim(), password: authPassword })
+                      })
+                    );
                     const loginJson = await loginRes.json().catch(() => null);
 
                     if (!loginRes.ok || !loginJson?.success) {
                       throw new Error(loginJson?.error || 'Credenciales inválidas');
+                    }
+                    if (loginJson?.data?.sessionId) {
+                      setSessionHandle(loginJson.data.sessionId);
                     }
 
                     const sessionUser = await fetchServerSession();

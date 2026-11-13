@@ -11,6 +11,7 @@ import { getBusinessProfile, BusinessProfile, refreshBusinessProfileFromServer }
 import { useAuth } from '../context/AuthContext';
 import { InactivityLock } from '../components/auth/InactivityLock';
 import { isInternalRole, defaultPermissionsForRole } from '../lib/auth/roles';
+import { withSessionInit } from '../lib/supabase/api';
 
 export function DashboardLayout() {
   const navigate = useNavigate();
@@ -53,14 +54,18 @@ export function DashboardLayout() {
       }
 
       // La sesión vive en el servidor: se consulta por HTTP con credenciales
-      let sessionUser: { email?: string; name?: string; user_metadata?: { role?: string } } | null = null;
+      let sessionUser: { email?: string; name?: string; id?: string; user_metadata?: { role?: string } } | null = null;
       let sessionRole = '';
+      let sessionPermissions: string[] | null = null;
       try {
-        const sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
+        const sessionRes = await fetch('/api/auth/session', withSessionInit());
         if (sessionRes.ok) {
           const sessionJson = await sessionRes.json();
           sessionUser = sessionJson?.data?.user || null;
           sessionRole = (sessionJson?.data?.role || '').toLowerCase();
+          if (Array.isArray(sessionJson?.data?.permissions) && sessionJson.data.permissions.length > 0) {
+            sessionPermissions = sessionJson.data.permissions;
+          }
         }
       } catch {
         return;
@@ -84,42 +89,24 @@ export function DashboardLayout() {
           }
         }
 
-        try {
-          const res = await fetch('/api/users', { credentials: 'include' });
-          if (res.ok) {
-            const json = await res.json();
-            if (json.success && Array.isArray(json.data)) {
-              const matched = json.data.find(
-                (u: any) => u.email && u.email.toLowerCase() === sessionUser?.email?.toLowerCase()
-              );
-              if (matched) {
-                if (matched.active === false) {
-                  await signOut();
-                  navigate('/', { replace: true });
-                  return;
-                }
-                const names = (matched.name || 'Usuario').trim().split(/\s+/);
-                const initials = names.length >= 2 ? `${names[0][0]}${names[1][0]}`.toUpperCase() : names[0].slice(0, 2).toUpperCase();
-                const config = {
-                  id: matched.id,
-                  name: matched.name,
-                  email: matched.email,
-                  role: matched.role || 'Admin',
-                  title: matched.title || 'Personal Asociado',
-                  active: true,
-                  initials,
-                  permissions:
-                    Array.isArray(matched.permissions) && matched.permissions.length > 0
-                      ? matched.permissions
-                      : defaultPermissionsForRole(matched.role || 'Admin')
-                };
-                localStorage.setItem('frenyer_active_user', JSON.stringify(config));
-                localStorage.setItem('frenyer_user_permissions', JSON.stringify(config.permissions));
-                localStorage.setItem('frenyer_user_role', config.role);
-              }
-            }
-          }
-        } catch {}
+        const effectiveName = sessionUser.name || sessionUser.email?.split('@')[0] || 'Usuario';
+        const effectiveRole = sessionRole || 'Admin';
+        const effectivePermissions = sessionPermissions || defaultPermissionsForRole(effectiveRole);
+        const names = effectiveName.trim().split(/\s+/);
+        const initials = names.length >= 2 ? `${names[0][0]}${names[1][0]}`.toUpperCase() : names[0].slice(0, 2).toUpperCase();
+        const config = {
+          id: sessionUser.id,
+          name: effectiveName,
+          email: sessionUser.email || '',
+          role: effectiveRole,
+          title: 'Personal Asociado',
+          active: true,
+          initials,
+          permissions: effectivePermissions
+        };
+        localStorage.setItem('frenyer_active_user', JSON.stringify(config));
+        localStorage.setItem('frenyer_user_permissions', JSON.stringify(config.permissions));
+        localStorage.setItem('frenyer_user_role', config.role);
       }
     };
     guardRole();

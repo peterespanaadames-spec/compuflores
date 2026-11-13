@@ -1,5 +1,5 @@
 import { supabase, hasBrowserSupabaseClient as isSupabaseConfigured } from './client';
-import { authenticatedFetch } from './api';
+import { authenticatedFetch, withSessionInit } from './api';
 
 export interface DbCustomer {
   id: string;
@@ -560,49 +560,59 @@ export async function updateSupplierInSupabase(id: string, updates: Partial<DbSu
 }
 
 
-export async function getActiveOrgId(): Promise<string | null> {
-  // 1. Organizacion de la sesion activa (la resuelve el servidor con las RLS)
-  try {
-    const res = await authenticatedFetch('/api/auth/session');
-    if (res.ok) {
-      const json = await res.json();
-      const orgId = json?.data?.organizationId;
-      if (orgId) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('frenyer_org_id', orgId);
-        }
-        return orgId;
-      }
-    }
-  } catch (err) {
-    console.warn('Aviso resolviendo la organizacion de la sesion:', err);
-  }
+let activeOrgIdInflight: Promise<string | null> | null = null;
 
-  // 2. Organizacion almacenada localmente
+export async function getActiveOrgId(): Promise<string | null> {
+  // 1. Organizacion ya sincronizada en memoria/almacenamiento por AuthContext
   if (typeof window !== 'undefined') {
     const storedOrg = localStorage.getItem('frenyer_org_id');
-    if (storedOrg) return storedOrg;
+    if (storedOrg && isValidUuid(storedOrg)) return storedOrg;
   }
 
-  // 3. Organizacion por defecto que expone el servidor para el canal publico
-  try {
-    const res = await fetch('/api/public/organization', { credentials: 'include' });
-    if (res.ok) {
-      const json = await res.json();
-      const orgId = json?.data?.organizationId;
-      if (orgId) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('frenyer_org_id', orgId);
+  if (activeOrgIdInflight) return activeOrgIdInflight;
+
+  activeOrgIdInflight = (async () => {
+    // 2. Organizacion de la sesion activa (la resuelve el servidor con las RLS)
+    try {
+      const res = await authenticatedFetch('/api/auth/session');
+      if (res.ok) {
+        const json = await res.json();
+        const orgId = json?.data?.organizationId;
+        if (orgId) {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('frenyer_org_id', orgId);
+          }
+          return orgId;
         }
-        return orgId;
       }
+    } catch (err) {
+      console.warn('Aviso resolviendo la organizacion de la sesion:', err);
     }
-  } catch {
-    // ignore
-  }
 
-  // 4. UUID por defecto para entornos demo/locales
-  return '00000000-0000-0000-0000-000000000001';
+    // 3. Organizacion por defecto que expone el servidor para el canal publico
+    try {
+      const res = await fetch('/api/public/organization', { credentials: 'include' });
+      if (res.ok) {
+        const json = await res.json();
+        const orgId = json?.data?.organizationId;
+        if (orgId) {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('frenyer_org_id', orgId);
+          }
+          return orgId;
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    // 4. UUID por defecto para entornos demo/locales
+    return '00000000-0000-0000-0000-000000000001';
+  })().finally(() => {
+    activeOrgIdInflight = null;
+  });
+
+  return activeOrgIdInflight;
 }
 
 // ---------------------------------------------------------------------------
@@ -3495,7 +3505,7 @@ export async function recordInventoryAdjustmentInSupabase(adjustment: {
 
 export async function fetchOrdersFromApi(): Promise<any[]> {
   try {
-    const res = await fetch('/api/orders');
+    const res = await authenticatedFetch('/api/orders');
     if (res.ok) {
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
@@ -3521,11 +3531,14 @@ export async function fetchOrdersFromApi(): Promise<any[]> {
 
 export async function createOrderInApi(payload: any): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const res = await fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    const res = await fetch(
+      '/api/orders',
+      withSessionInit({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+    );
     const json = await res.json();
     if (res.ok && json.success) {
       if (typeof window !== 'undefined') {
@@ -3548,7 +3561,7 @@ export async function updateOrderDeliveryStatusInApi(
   notes?: string
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const res = await fetch(`/api/orders/${encodeURIComponent(id)}/delivery-status`, {
+    const res = await authenticatedFetch(`/api/orders/${encodeURIComponent(id)}/delivery-status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status, user, notes })
@@ -3570,7 +3583,7 @@ export async function updateOrderPaymentStatusInApi(
   reference?: string
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const res = await fetch(`/api/orders/${encodeURIComponent(id)}/payment-status`, {
+    const res = await authenticatedFetch(`/api/orders/${encodeURIComponent(id)}/payment-status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status, user, reference })

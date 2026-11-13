@@ -50,6 +50,7 @@ import {
   DbBranch,
   DbProduct
 } from '../../../lib/supabase/db';
+import { authenticatedFetch } from '../../../lib/supabase/api';
 
 interface Product {
   sku: string;
@@ -303,7 +304,7 @@ export function Inventory() {
 
   /** En pantallas angostas la fila abre el menú rápido; en escritorio no hace nada. */
   const openMobileProductSheet = (product: Product) => {
-    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches) {
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) {
       setMobileSheetProduct(product);
     }
   };
@@ -694,7 +695,7 @@ export function Inventory() {
     setHistoryModalProduct(p);
     setIsLoadingMovements(true);
     try {
-      const res = await fetch('/api/inventory/movements');
+      const res = await authenticatedFetch('/api/inventory/movements');
       if (res.ok) {
         const json = await res.json();
         const allMovs = json.data || [];

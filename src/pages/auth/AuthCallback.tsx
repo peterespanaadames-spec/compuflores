@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, AlertCircle } from 'lucide-react';
+import { setSessionHandle, withSessionInit } from '../../lib/supabase/api';
 
 export function AuthCallback() {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ export function AuthCallback() {
       try {
         // El intercambio con Google lo resuelve el servidor: aqui solo se
         // consulta la sesion ya establecida en la cookie httpOnly.
-        const res = await fetch('/api/auth/session', { credentials: 'include' });
+        const res = await fetch('/api/auth/session', withSessionInit());
 
         if (!res.ok) {
           if (isMounted) setErrorMsg('No se pudo completar el inicio de sesión.');
@@ -21,6 +22,9 @@ export function AuthCallback() {
         }
 
         const json = await res.json();
+        if (json?.data?.sessionId) {
+          setSessionHandle(json.data.sessionId);
+        }
         const role = (json?.data?.role || '').toLowerCase();
 
         if (isMounted) {

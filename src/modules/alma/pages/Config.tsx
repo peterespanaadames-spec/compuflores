@@ -140,7 +140,7 @@ export function ConfigPage() {
     setIsClosingAllSessions(true);
     setLogoutAllMessage(null);
     try {
-      const res = await fetch('/api/auth/logout-all', { method: 'POST', credentials: 'include' });
+      const res = await authenticatedFetch('/api/auth/logout-all', { method: 'POST' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.success) {
         setLogoutAllMessage({ tone: 'error', text: data?.error || 'No se pudo completar el cierre de sesiones.' });
@@ -910,7 +910,7 @@ export function ConfigPage() {
   const fetchUsers = async () => {
     setIsLoadingUsers(true);
     try {
-      const res = await fetch('/api/users');
+      const res = await authenticatedFetch('/api/users');
       if (res.ok) {
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {
@@ -953,7 +953,7 @@ export function ConfigPage() {
 
   const toggleUserStatus = async (id: string | number) => {
     try {
-      const res = await fetch(`/api/users/${id}/toggle-status`, { method: 'POST' });
+      const res = await authenticatedFetch(`/api/users/${id}/toggle-status`, { method: 'POST' });
       if (res.ok) {
         const json = await res.json();
         if (json.success) {
@@ -971,7 +971,7 @@ export function ConfigPage() {
   const handleDeleteUser = async (id: string | number) => {
     if (!window.confirm('¿Está seguro de que desea eliminar este usuario asociado?')) return;
     try {
-      const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+      const res = await authenticatedFetch(`/api/users/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setUsers(prev => prev.filter(u => String(u.id) !== String(id)));
         showNotification('Usuario eliminado exitosamente.');
@@ -1033,10 +1033,9 @@ export function ConfigPage() {
 
       if (editingUserId) {
         // Actualizar usuario existente
-        const res = await fetch(`/api/users/${editingUserId}`, {
+        const res = await authenticatedFetch(`/api/users/${editingUserId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
           body: JSON.stringify(payload)
         });
         const json = await res.json().catch(() => null);
@@ -1054,10 +1053,9 @@ export function ConfigPage() {
         }
       } else {
         // Crear nuevo usuario asociado
-        const res = await fetch('/api/users', {
+        const res = await authenticatedFetch('/api/users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
           body: JSON.stringify({ ...payload, password: newUserPassword.trim() })
         });
         const json = await res.json().catch(() => null);
@@ -1081,7 +1079,7 @@ export function ConfigPage() {
   );
 
   return (
-    <div className="content m-root">
+    <div className="content m-root cfg-root">
       {/* Toast Notification */}
       {notification && (
         <div
@@ -1758,6 +1756,7 @@ export function ConfigPage() {
             </Card>
           ) : (
             <div
+              className="cfg-branches-grid"
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(440px, 1fr))',
@@ -2506,8 +2505,8 @@ GRANT ALL ON TABLE public.branches TO anon;`}</pre>
           
           {/* Action Toolbar */}
           <Card>
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', gap: 8, flex: 1, minWidth: 280 }}>
+            <div className="cfg-toolbar" style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+              <div className="cfg-toolbar-actions" style={{ display: 'flex', gap: 8, flex: 1, minWidth: 280 }}>
                 <Button
                   variant="primary"
                   style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: 11, letterSpacing: '0.04em', background: 'var(--brand-accent)', color: '#111827', borderColor: '#FDF06F' }}
@@ -2527,8 +2526,8 @@ GRANT ALL ON TABLE public.branches TO anon;`}</pre>
                 </Button>
               </div>
 
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-                <div className="search" style={{ width: 260, marginBottom: 0 }}>
+              <div className="cfg-toolbar-meta" style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div className="search cfg-search" style={{ width: 260, marginBottom: 0 }}>
                   <Search size={14} />
                   <input
                     className="input"
@@ -2552,7 +2551,7 @@ GRANT ALL ON TABLE public.branches TO anon;`}</pre>
               {isLoadingUsers ? 'Cargando usuarios asociados...' : 'No se encontraron usuarios asociados registrados con esos criterios.'}
             </Card>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 16 }}>
+            <div className="cfg-users-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 16 }}>
               {filteredUsers
                 .filter(u => u.role.toLowerCase() !== 'cliente')
                 .map((item) => {
@@ -3124,7 +3123,7 @@ GRANT ALL ON TABLE public.branches TO anon;`}</pre>
 
             {/* Search toolbar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border)', width: 280 }}>
+              <div className="cfg-audit-search" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border)', width: 280 }}>
                 <Search size={14} style={{ color: '#94a3b8' }} />
                 <input
                   placeholder={`Buscar en ${auditFolder === 'activas' ? 'activas' : 'inactivas'}...`}
