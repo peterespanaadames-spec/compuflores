@@ -181,6 +181,9 @@ export function ProfitLossPage() {
 
   const grossMarginPercent = data.totalSales > 0 ? (data.grossProfit / data.totalSales) * 100 : 0;
   const netMarginPercent = data.totalSales > 0 ? (data.netProfit / data.totalSales) * 100 : 0;
+  // Porción del margen bruto que se comen los gastos operativos (para el consejo dinámico)
+  const expenseShareOfGross = data.grossProfit > 0 ? (data.operatingExpenses / data.grossProfit) * 100 : 0;
+  const periodLabel = period === 'month' ? 'este mes' : period === 'quarter' ? 'este trimestre' : period === 'year' ? 'este año' : 'todo el histórico';
 
   const business = getBusinessProfile();
 
@@ -324,7 +327,7 @@ export function ProfitLossPage() {
           <MobileEmptyState title="No hay gastos registrados en este periodo." />
         ) : (
           <div className="table-wrap">
-            <table className="table">
+            <table className="table pnl-exp-table">
               <thead>
                 <tr>
                   <th>Categoría de Gasto</th>
@@ -349,15 +352,33 @@ export function ProfitLossPage() {
         )}
       </Card>
 
-      {/* Consejo Comercial */}
+      {/* Consejo Comercial (dinámico: se recalcula con los valores del periodo en pantalla) */}
       <Card className="card bg-white">
         <div className="flex items-start gap-3">
           <Info className="w-5 h-5 text-brand-500 shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <h4 className="font-bold text-sm">Consejo Gerencial para Comerciantes:</h4>
-            <p className="small muted">
-              Tu Margen Comercial Bruto es de <strong>{grossMarginPercent.toFixed(1)}%</strong>. Por cada $100 que vendes, te quedan ${grossMarginPercent.toFixed(1)} para absorber los gastos fijos del local y dejar beneficio neto. Mantén vigilados tus gastos operativos para asegurar que la ganancia final se mantenga en verde.
-            </p>
+            <h4 className="font-bold text-sm">Consejo Gerencial para Comerciantes ({periodLabel}):</h4>
+            {isLoading ? (
+              <p className="small muted">Calculando tu escenario con los datos del momento…</p>
+            ) : data.totalSales > 0 ? (
+              <p className="small muted">
+                En {periodLabel} vendiste <strong>{formatUSD(data.totalSales)}</strong> con un margen comercial bruto
+                del <strong>{grossMarginPercent.toFixed(1)}%</strong>: por cada $100 vendidos te quedan
+                ${grossMarginPercent.toFixed(1)} para absorber los gastos fijos. Tus gastos operativos
+                (<strong>{formatUSD(data.operatingExpenses)}</strong>) consumen
+                el <strong>{expenseShareOfGross.toFixed(0)}%</strong> de esa ganancia bruta, dejando un beneficio neto
+                en bolsillo de <strong>{formatUSD(data.netProfit)}</strong>
+                {' '}({netMarginPercent.toFixed(1)}% de las ventas).{' '}
+                {data.netProfit >= 0
+                  ? 'La operación cierra en verde: mantén vigilados los gastos para que la ganancia final se mantenga así.'
+                  : 'La operación cierra en pérdidas: revisa costos de mercancía y gastos operativos antes de seguir vendiendo.'}
+              </p>
+            ) : (
+              <p className="small muted">
+                En {periodLabel} no hay ventas registradas, así que no hay margen ni ganancia que analizar. Registra
+                ventas en el POS y vuelve a «Actualizar» para ver tu consejo con los números reales.
+              </p>
+            )}
           </div>
         </div>
       </Card>

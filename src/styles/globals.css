@@ -5623,4 +5623,79 @@ button:active:not(:disabled) {
   .cot-root table td:nth-child(7) button { width: 25px !important; height: 25px !important; }
 }
 
+/* =====================================================================
+   GANANCIAS Y PÉRDIDAS (pnl-root) — COMPACTACIÓN EXTRA MÓVIL
+   Solo ≤640px, escritorio intacto. Membrete, cabecera, botones de
+   periodo, KPI y fichas ceñidos; consejo gerencial compacto.
+   Tramo ≤360px con un punto menos en botones y letras.
+   ===================================================================== */
+@media (max-width: 640px) {
+  /* --- Membrete del negocio --- */
+  .pnl-root [style*="padding: 16px 20px"] { padding: 8px 10px !important; margin-bottom: 12px !important; }
+  .pnl-root [style*="padding: 16px 20px"] [style*="font-size: 18"] { font-size: 13px !important; }
+  .pnl-root [style*="padding: 16px 20px"] p { font-size: 9px !important; }
+
+  /* --- Cabecera y botones --- */
+  .pnl-root .page-head { margin-bottom: 8px !important; }
+  .pnl-root .page-head h1 { font-size: 13.5px !important; line-height: 1.2 !important; }
+  .pnl-root .page-head .actions { gap: 5px !important; }
+  .pnl-root .page-head .actions .btn { height: 28px !important; padding: 0 9px !important; font-size: 10.5px !important; }
+  .pnl-root .page-head .actions .btn svg { width: 12px; height: 12px; }
+
+  /* --- Selector de periodo: 4 botones en cuadrícula 2x2 ceñida --- */
+  .pnl-root .toolbar { padding: 6px 8px !important; margin-bottom: 10px !important; gap: 4px !important; border-radius: 10px; }
+  .pnl-root .toolbar > span { display: none !important; }
+  .pnl-root .toolbar .btn { flex: 1 1 46%; height: 28px !important; padding: 0 6px !important; font-size: 10.5px !important; }
+
+  /* --- KPI: 2 por fila, tercero a ancho completo, tarjetas ceñidas --- */
+  .pnl-root .grid.grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; margin-bottom: 10px !important; }
+  .pnl-root .grid.grid-3 > :nth-child(3) { grid-column: span 2; }
+  .pnl-root .grid.grid-3 .card { padding: 8px 7px !important; border-radius: 10px; }
+  .pnl-root .grid.grid-3 .kpi-label { font-size: 8.5px !important; }
+  .pnl-root .grid.grid-3 .kpi-value { font-size: 14px !important; }
+  .pnl-root .grid.grid-3 .muted.small { display: none !important; }
+
+  /* --- Tarjetas de tablas y consejo --- */
+  .pnl-root .grid.grid-3 ~ .card { padding: 10px 8px !important; margin-bottom: 10px !important; border-radius: 12px; }
+  .pnl-root .section-head h3 { font-size: 12px !important; }
+  .pnl-root .section-head .badge { font-size: 8.5px !important; padding: 2px 6px !important; }
+
+  /* --- Fichas bimonetarias más ceñidas --- */
+  .pnl-root table tr { padding: 4px 6px !important; gap: 3px !important; }
+  .pnl-root table td { padding: 1px 0 !important; }
+  .pnl-root table td:nth-child(1) { font-size: 10px !important; }
+  .pnl-root table td:nth-child(3) { font-size: 10.5px !important; }
+  .pnl-root table td:nth-child(2) { font-size: 9px !important; max-width: 52%; }
+  .pnl-root table td:nth-child(2) .badge { font-size: 8.5px !important; padding: 1px 5px !important; }
+  .pnl-root table td:nth-child(4) { font-size: 9.5px !important; }
+  .pnl-root table:nth-of-type(2) td:nth-child(2),
+  .pnl-root table:nth-of-type(2) td:nth-child(3) { font-size: 10px !important; }
+
+  /* --- Tabla de gastos (3 columnas): categoría · USD · % --- */
+  .pnl-root .pnl-exp-table td:nth-child(2) { margin-left: auto; max-width: none !important; font-weight: 700 !important; font-size: 10.5px !important; color: #334155 !important; }
+  .pnl-root .pnl-exp-table td:nth-child(3) { order: 3; margin-left: 0; font-weight: 600 !important; font-size: 9.5px !important; color: var(--muted); }
+
+  /* --- Consejo gerencial compacto --- */
+  .pnl-root .card.bg-white { padding: 10px 8px !important; margin-bottom: 0 !important; }
+  .pnl-root .card.bg-white svg { width: 14px; height: 14px; }
+  .pnl-root .card.bg-white h4 { font-size: 11px !important; }
+  .pnl-root .card.bg-white p { font-size: 10px !important; line-height: 1.45; }
+}
+
+/* --- Ganancias y Pérdidas: tramo extra <=360px (un punto menos) --- */
+@media (max-width: 360px) {
+  .pnl-root { padding: 10px !important; }
+  .pnl-root .page-head h1 { font-size: 12.5px !important; }
+  .pnl-root .page-head .actions .btn { height: 26px !important; padding: 0 7px !important; font-size: 9.5px !important; }
+  .pnl-root .toolbar { padding: 5px 6px !important; gap: 3px !important; }
+  .pnl-root .toolbar .btn { height: 26px !important; padding: 0 5px !important; font-size: 9.5px !important; }
+  .pnl-root .grid.grid-3 { gap: 5px !important; }
+  .pnl-root .grid.grid-3 .card { padding: 7px 6px !important; }
+  .pnl-root .grid.grid-3 .kpi-value { font-size: 12.5px !important; }
+  .pnl-root .grid.grid-3 ~ .card { padding: 8px 7px !important; }
+  .pnl-root table tr { padding: 3px 5px !important; }
+  .pnl-root .card.bg-white h4 { font-size: 10.5px !important; }
+  .pnl-root .card.bg-white p { font-size: 9.5px !important; }
+}
+
 
