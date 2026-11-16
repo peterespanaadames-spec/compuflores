@@ -1,16 +1,15 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Fragment, useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import { 
-  DollarSign, 
-  Search, 
-  Calendar, 
-  CreditCard, 
-  RefreshCcw, 
-  FileDown, 
-  Eye, 
-  Printer, 
-  Building 
+import {
+  Search,
+  CreditCard,
+  RefreshCcw,
+  FileDown,
+  Eye,
+  Printer,
+  Landmark,
+  ShoppingCart,
+  ChevronUp
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
@@ -19,104 +18,141 @@ import { authenticatedFetch } from '../../../lib/supabase/api';
 import { formatUSD, formatVES, getActiveExchangeRate } from '../../../lib/currency';
 import { createWorksheetWithBusinessHeader } from '../../../lib/reportUtils';
 
-interface PaymentReportRow {
+// ---------------------------------------------------------------------------
+// Reporte de Cuentas: tres pestañas internas (Cuentas Bancarias, Cuentas por
+// Cobrar y Cuentas por Pagar). Cada pestaña trae sus tarjetas de resumen y su
+// detalle consolidado; «Ver estado» despliega la cuenta individual debajo.
+// ---------------------------------------------------------------------------
+
+type ReportTab = 'bancos' | 'cxc' | 'cxp';
+
+interface BankAccountLite {
   id: string;
-  created_at: string;
-  sale_id: string;
-  doc_number: string;
-  doc_type: string;
-  customer_name: string;
-  method: string;
   bank_name: string;
-  amount_usd: number;
-  amount_ves: number;
+  account_number: string;
+  account_type: string;
+  currency: string;
+  balance: number;
+  status: string;
+  created_at?: string;
 }
 
+interface BankMovementLite {
+  id: string;
+  bank_account_id: string;
+  type: 'ENTRADA' | 'SALIDA';
+  concept: string;
+  reference: string;
+  user_name: string;
+  rate: number;
+  commission: number;
+  amount: number;
+  created_at: string;
+}
+
+interface ReceivableRow {
+  id: string;
+  customer_name: string;
+  customer_doc?: string;
+  customer_phone?: string;
+  doc_number: string;
+  total_usd: number;
+  balance_usd: number;
+  status: string;
+  due_date?: string;
+  created_at: string;
+}
+
+interface PayableRow {
+  id: string;
+  supplier_name: string;
+  supplier_doc?: string;
+  doc_number: string;
+  total_usd: number;
+  balance_usd: number;
+  status: string;
+  due_date?: string;
+  created_at: string;
+}
+
+// Ficha de cronología bancaria con saldo corrido (débito/crédito)
+interface BankLedgerRow extends BankMovementLite {
+  runningBalance: number;
+  amountUSD: number;
+  amountVES: number;
+}
+
+interface ClientConsolidated {
+  key: string;
+  name: string;
+  doc: string;
+  phone: string;
+  invoices: ReceivableRow[];
+  totalFacturado: number;
+  saldoPendiente: number;
+  isOverdue: boolean;
+}
+
+interface SupplierConsolidated {
+  key: string;
+  name: string;
+  doc: string;
+  invoices: PayableRow[];
+  totalCompras: number;
+  saldoPendiente: number;
+  isOverdue: boolean;
+}
+
+const round2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
+
 export function AccountsReportPage() {
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-  const [payments, setPayments] = useState<PaymentReportRow[]>([]);
+  const [activeTab, setActiveTab] = useState<ReportTab>('bancos');
   const [searchQuery, setSearchQuery] = useState('');
-  const [bankFilter, setBankFilter] = useState('TODOS');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+
+  // Pestaña 1: Cuentas Bancarias
+  const [accounts, setAccounts] = useState<BankAccountLite[]>([]);
+  const [movements, setMovements] = useState<BankMovementLite[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState('');
+
+  // Pestañas 2 y 3
+  const [receivables, setReceivables] = useState<ReceivableRow[]>([]);
+  const [payables, setPayables] = useState<PayableRow[]>([]);
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
+
   const [exchangeRate, setExchangeRate] = useState(getActiveExchangeRate());
 
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // El agregado del servidor trae tasa, ventas, clientes, bancos y pagos
-      // (con sesión del usuario; el navegador nunca consulta Supabase directo).
-      const reportRes = await authenticatedFetch('/api/sales/report');
-      if (!reportRes.ok) throw new Error('El servidor no pudo generar el reporte.');
-      const report = await reportRes.json();
+      const [accRes, movRes, cxcRes, cxpRes, rateRes] = await Promise.all([
+        authenticatedFetch('/api/bank-accounts'),
+        authenticatedFetch('/api/bank-movements'),
+        authenticatedFetch('/api/accounts-receivable'),
+        authenticatedFetch('/api/accounts-payable'),
+        fetch('/api/bcv/rates').then(r => r.json()).catch(() => null)
+      ]);
 
-      if (report?.rate && Number(report.rate) > 0) setExchangeRate(Number(report.rate));
-      const activeRate = report?.rate && Number(report.rate) > 0 ? Number(report.rate) : getActiveExchangeRate();
-
-      // 1. Cuentas bancarias
-      const bankAccounts: any[] = report?.bankAccounts || [];
-      const bankMap = new Map(bankAccounts.map((b: any) => [b.id, b]));
-
-      // 2. Clientes
-      const customers: any[] = report?.customers || [];
-      const customerMap = new Map(customers.map((c: any) => [c.id, c]));
-
-      // 3. Ventas
-      const sales: any[] = report?.sales || [];
-      const salesMap = new Map(sales.map((s: any) => [s.id, s]));
-
-      // 4. Pagos de la tabla 'payments' (si existe en el esquema)
-      const paymentsData: any[] = report?.payments || [];
-
-      const rows: PaymentReportRow[] = [];
-
-      paymentsData.forEach((p: any) => {
-        const sale = p.sale_id ? salesMap.get(p.sale_id) : null;
-        const bank = p.bank_account_id ? bankMap.get(p.bank_account_id) : null;
-        const cust = sale?.customer_id ? customerMap.get(sale.customer_id) : null;
-
-        const customerName = cust?.name || sale?.customer_name || 'Consumidor Final';
-        const docNumber = sale?.doc_number || (sale?.id ? String(sale.id).slice(0, 8) : String(p.id || '').slice(0, 8));
-        const docType = sale?.doc_type || 'FACTURA';
-        const bankName = bank?.bank_name || (p.method?.includes('Banesco') ? 'Banesco' : p.method?.includes('Venezuela') ? 'Banco de Venezuela' : 'Caja Principal');
-
-        rows.push({
-          id: p.id,
-          created_at: p.created_at || new Date().toISOString(),
-          sale_id: p.sale_id || p.id,
-          doc_number: docNumber,
-          doc_type: docType,
-          customer_name: customerName,
-          method: p.method || 'Efectivo',
-          bank_name: bankName,
-          amount_usd: Number(p.amount_usd) || 0,
-          amount_ves: Number(p.amount_ves) || (Number(p.amount_usd || 0) * activeRate)
-        });
-      });
-
-      // Si la tabla payments no rinde datos, respaldar con las ventas registradas
-      if (rows.length === 0 && sales.length > 0) {
-        sales.forEach((s: any) => {
-          const cust = s.customer_id ? customerMap.get(s.customer_id) : null;
-          rows.push({
-            id: s.id,
-            created_at: s.created_at || new Date().toISOString(),
-            sale_id: s.id,
-            doc_number: s.doc_number || String(s.id).slice(0, 8),
-            doc_type: s.doc_type || 'FACTURA',
-            customer_name: cust?.name || s.customer_name || 'Consumidor Final',
-            method: s.payment_type || 'Contado',
-            bank_name: 'Caja General',
-            amount_usd: Number(s.total_usd) || 0,
-            amount_ves: Number(s.total_ves) || (Number(s.total_usd || 0) * activeRate)
-          });
-        });
+      const accJson = await accRes.json().catch(() => null);
+      const accList: BankAccountLite[] = Array.isArray(accJson?.data) ? accJson.data : [];
+      setAccounts(accList);
+      if (accList.length > 0) {
+        setSelectedAccountId(prev => (prev && accList.some(a => a.id === prev) ? prev : accList[0].id));
       }
 
-      setPayments(rows);
+      const movJson = await movRes.json().catch(() => null);
+      setMovements(Array.isArray(movJson?.data) ? movJson.data : []);
+
+      const cxcJson = await cxcRes.json().catch(() => null);
+      setReceivables(Array.isArray(cxcJson?.data) ? cxcJson.data : []);
+
+      const cxpJson = await cxpRes.json().catch(() => null);
+      setPayables(Array.isArray(cxpJson?.data) ? cxpJson.data : []);
+
+      const rateVal = Number(rateRes?.appliedRate) || Number(rateRes?.usdRate) || Number(rateRes?.currentRate);
+      if (rateVal && rateVal > 0) setExchangeRate(rateVal);
     } catch (err) {
-      console.error('Error cargando reporte de cuentas y pagos:', err);
+      console.error('Error cargando reporte de cuentas:', err);
     } finally {
       setIsLoading(false);
     }
@@ -126,59 +162,240 @@ export function AccountsReportPage() {
     loadData();
   }, []);
 
-  // Filtros
-  const filteredPayments = payments.filter((p) => {
-    const matchesSearch = 
-      p.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.doc_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.method.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.bank_name.toLowerCase().includes(searchQuery.toLowerCase());
+  // Al cambiar de pestaña se cierra el detalle desplegado
+  const switchTab = (tab: ReportTab) => {
+    setActiveTab(tab);
+    setExpandedKey(null);
+  };
 
-    const matchesBank = bankFilter === 'TODOS' || p.bank_name.toLowerCase().includes(bankFilter.toLowerCase());
+  // ===================== Pestaña 1: Cuentas Bancarias =====================
+  const selectedAccount = accounts.find(a => a.id === selectedAccountId) || null;
 
-    let matchesDate = true;
-    const paymentDate = p.created_at ? p.created_at.split('T')[0] : '';
-    if (startDate && paymentDate < startDate) matchesDate = false;
-    if (endDate && paymentDate > endDate) matchesDate = false;
+  const accountLedger: BankLedgerRow[] = (() => {
+    if (!selectedAccount) return [];
+    const rows = movements
+      .filter(m => m.bank_account_id === selectedAccount.id)
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
-    return matchesSearch && matchesBank && matchesDate;
+    const totalIn = round2(rows.filter(m => m.type === 'ENTRADA').reduce((s, m) => s + (Number(m.amount) || 0), 0));
+    const totalOut = round2(rows.filter(m => m.type === 'SALIDA').reduce((s, m) => s + (Number(m.amount) || 0), 0));
+    // Saldo inicial reconstruido: saldo actual menos el efecto neto de los movimientos
+    let running = round2((Number(selectedAccount.balance) || 0) - (totalIn - totalOut));
+
+    return rows.map(m => {
+      const amountUSD = round2(Number(m.amount) || 0);
+      const rate = Number(m.rate) > 0 ? Number(m.rate) : exchangeRate;
+      const amountVES = round2(amountUSD * rate);
+      running = round2(running + (m.type === 'ENTRADA' ? amountUSD : -amountUSD));
+      return { ...m, runningBalance: running, amountUSD, amountVES };
+    }).reverse(); // Cronológico reciente primero
+  })();
+
+  const bankTotals = (() => {
+    const rows = accountLedger;
+    const ingresos = round2(rows.filter(m => m.type === 'ENTRADA').reduce((s, m) => s + m.amountUSD, 0));
+    const egresos = round2(rows.filter(m => m.type === 'SALIDA').reduce((s, m) => s + m.amountUSD, 0));
+    const saldoCorte = round2(Number(selectedAccount?.balance) || 0);
+    const saldoInicial = round2(saldoCorte - (ingresos - egresos));
+    return { ingresos, egresos, saldoCorte, saldoInicial };
+  })();
+
+  const filteredLedger = accountLedger.filter(m => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (m.concept || '').toLowerCase().includes(q) ||
+      (m.reference || '').toLowerCase().includes(q) ||
+      (m.user_name || '').toLowerCase().includes(q);
   });
 
-  // KPIs
-  const totalUSD = filteredPayments.reduce((acc, p) => acc + p.amount_usd, 0);
-  const totalVES = filteredPayments.reduce((acc, p) => acc + p.amount_ves, 0);
-  const totalDivisasCount = filteredPayments.filter(p => p.amount_usd > 0).length;
-  const uniqueBanks = new Set(filteredPayments.map(p => p.bank_name)).size;
+  // ===================== Pestaña 2: Cuentas por Cobrar =====================
+  const activeReceivables = receivables.filter(r => r.status !== 'Pagada');
+  const cxcTotals = (() => {
+    const porCobrar = round2(activeReceivables.reduce((s, r) => s + (Number(r.balance_usd) || 0), 0));
+    const facturado = round2(activeReceivables.reduce((s, r) => s + (Number(r.total_usd) || 0), 0));
+    const cobrado = round2(receivables.reduce((s, r) => s + Math.max(0, (Number(r.total_usd) || 0) - (Number(r.balance_usd) || 0)), 0));
+    const now = new Date();
+    const vencida = round2(activeReceivables
+      .filter(r => r.due_date && new Date(r.due_date) < now)
+      .reduce((s, r) => s + (Number(r.balance_usd) || 0), 0));
+    return { porCobrar, facturado, cobrado, vencida };
+  })();
 
+  const clientGroups: ClientConsolidated[] = (() => {
+    const map = new Map<string, ClientConsolidated>();
+    const now = new Date();
+    activeReceivables.forEach(r => {
+      const name = (r.customer_name || 'Cliente sin nombre').trim();
+      const key = name.toLowerCase();
+      let group = map.get(key);
+      if (!group) {
+        group = {
+          key,
+          name,
+          doc: r.customer_doc || '',
+          phone: r.customer_phone || '',
+          invoices: [],
+          totalFacturado: 0,
+          saldoPendiente: 0,
+          isOverdue: false
+        };
+        map.set(key, group);
+      }
+      group.invoices.push(r);
+      group.totalFacturado = round2(group.totalFacturado + (Number(r.total_usd) || 0));
+      group.saldoPendiente = round2(group.saldoPendiente + (Number(r.balance_usd) || 0));
+      if (r.customer_doc && !group.doc) group.doc = r.customer_doc;
+      if (r.customer_phone && !group.phone) group.phone = r.customer_phone;
+      if (r.due_date && new Date(r.due_date) < now) group.isOverdue = true;
+    });
+    return Array.from(map.values()).sort((a, b) => b.saldoPendiente - a.saldoPendiente);
+  })();
+
+  const filteredClientGroups = clientGroups.filter(g => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return g.name.toLowerCase().includes(q) ||
+      g.doc.toLowerCase().includes(q) ||
+      g.phone.toLowerCase().includes(q) ||
+      g.invoices.some(i => (i.doc_number || '').toLowerCase().includes(q));
+  });
+
+  // ===================== Pestaña 3: Cuentas por Pagar =====================
+  const activePayables = payables.filter(p => p.status !== 'Pagada');
+  const cxpTotals = (() => {
+    const porPagar = round2(activePayables.reduce((s, p) => s + (Number(p.balance_usd) || 0), 0));
+    const comprado = round2(activePayables.reduce((s, p) => s + (Number(p.total_usd) || 0), 0));
+    const liquidado = round2(payables.reduce((s, p) => s + Math.max(0, (Number(p.total_usd) || 0) - (Number(p.balance_usd) || 0)), 0));
+    const now = new Date();
+    const vencida = round2(activePayables
+      .filter(p => p.due_date && new Date(p.due_date) < now)
+      .reduce((s, p) => s + (Number(p.balance_usd) || 0), 0));
+    return { porPagar, comprado, liquidado, vencida };
+  })();
+
+  const supplierGroups: SupplierConsolidated[] = (() => {
+    const map = new Map<string, SupplierConsolidated>();
+    const now = new Date();
+    activePayables.forEach(p => {
+      const name = (p.supplier_name || 'Proveedor sin nombre').trim();
+      const key = name.toLowerCase();
+      let group = map.get(key);
+      if (!group) {
+        group = {
+          key,
+          name,
+          doc: p.supplier_doc || '',
+          invoices: [],
+          totalCompras: 0,
+          saldoPendiente: 0,
+          isOverdue: false
+        };
+        map.set(key, group);
+      }
+      group.invoices.push(p);
+      group.totalCompras = round2(group.totalCompras + (Number(p.total_usd) || 0));
+      group.saldoPendiente = round2(group.saldoPendiente + (Number(p.balance_usd) || 0));
+      if (p.supplier_doc && !group.doc) group.doc = p.supplier_doc;
+      if (p.due_date && new Date(p.due_date) < now) group.isOverdue = true;
+    });
+    return Array.from(map.values()).sort((a, b) => b.saldoPendiente - a.saldoPendiente);
+  })();
+
+  const filteredSupplierGroups = supplierGroups.filter(g => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return g.name.toLowerCase().includes(q) ||
+      g.doc.toLowerCase().includes(q) ||
+      g.invoices.some(i => (i.doc_number || '').toLowerCase().includes(q));
+  });
+
+  // ===================== Exportación =====================
   const handleExportExcel = () => {
-    const exportData = filteredPayments.map(p => ({
-      'Fecha': new Date(p.created_at).toLocaleString(),
-      'Comprobante': p.doc_number,
-      'Tipo': p.doc_type,
-      'Cliente': p.customer_name,
-      'Método de Pago': p.method,
-      'Banco / Destino': p.bank_name,
-      'Monto (USD)': p.amount_usd,
-      'Monto (VES)': p.amount_ves
-    }));
+    let exportData: any[] = [];
+    let sheetName = 'Cuentas Bancarias';
+    let fileName = 'Reporte_Cuentas';
 
-    const ws = createWorksheetWithBusinessHeader('Reporte de Pagos y Recaudaciones', exportData);
+    if (activeTab === 'bancos') {
+      sheetName = 'Cronologia Bancaria';
+      fileName = `Cuentas_Bancarias_${selectedAccount?.bank_name || 'General'}`;
+      exportData = filteredLedger.map(m => ({
+        'Fecha': new Date(m.created_at).toLocaleString(),
+        'Banco': selectedAccount?.bank_name || '',
+        'Referencia': m.reference || '',
+        'Operación': m.type,
+        'Concepto': m.concept || '',
+        'Débito (USD)': m.type === 'SALIDA' ? m.amountUSD : 0,
+        'Crédito (USD)': m.type === 'ENTRADA' ? m.amountUSD : 0,
+        'Saldo (USD)': m.runningBalance,
+        'Tasa del movimiento': Number(m.rate) || exchangeRate
+      }));
+    } else if (activeTab === 'cxc') {
+      sheetName = 'Cuentas por Cobrar';
+      fileName = 'Cuentas_por_Cobrar';
+      exportData = filteredClientGroups.flatMap(g => g.invoices.map(i => ({
+        'Cliente': g.name,
+        'RIF/CI': i.customer_doc || g.doc,
+        'Teléfono': i.customer_phone || g.phone,
+        'Factura': i.doc_number,
+        'Fecha': i.created_at ? new Date(i.created_at).toLocaleDateString() : '',
+        'Vence': i.due_date ? new Date(i.due_date).toLocaleDateString() : '—',
+        'Total factura (USD)': round2(Number(i.total_usd) || 0),
+        'Saldo pendiente (USD)': round2(Number(i.balance_usd) || 0),
+        'Saldo pendiente (VES)': round2((Number(i.balance_usd) || 0) * exchangeRate),
+        'Estado': i.status
+      })));
+    } else {
+      sheetName = 'Cuentas por Pagar';
+      fileName = 'Cuentas_por_Pagar';
+      exportData = filteredSupplierGroups.flatMap(g => g.invoices.map(i => ({
+        'Proveedor': g.name,
+        'RIF': i.supplier_doc || g.doc,
+        'Factura': i.doc_number,
+        'Fecha': i.created_at ? new Date(i.created_at).toLocaleDateString() : '',
+        'Vence': i.due_date ? new Date(i.due_date).toLocaleDateString() : '—',
+        'Total compra (USD)': round2(Number(i.total_usd) || 0),
+        'Saldo por pagar (USD)': round2(Number(i.balance_usd) || 0),
+        'Saldo por pagar (VES)': round2((Number(i.balance_usd) || 0) * exchangeRate),
+        'Estado': i.status
+      })));
+    }
+
+    if (exportData.length === 0) return;
+    const ws = createWorksheetWithBusinessHeader(sheetName, exportData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Reporte de Pagos');
-    XLSX.writeFile(wb, `Reporte_Pagos_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, `${fileName}_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
+
+  const tabs: { id: ReportTab; label: string; icon: typeof Landmark }[] = [
+    { id: 'bancos', label: 'Cuentas Bancarias', icon: Landmark },
+    { id: 'cxc', label: 'Cuentas por Cobrar', icon: CreditCard },
+    { id: 'cxp', label: 'Cuentas por Pagar', icon: ShoppingCart }
+  ];
+
+  const renderDetailToggle = (key: string, active: boolean) => (
+    <Button
+      variant={active ? 'secondary' : 'ghost'}
+      onClick={() => setExpandedKey(active ? null : key)}
+      style={{ height: 30, fontSize: 11, padding: '0 10px', gap: 4 }}
+      title={active ? 'Cerrar estado de cuenta' : 'Ver estado de cuenta'}
+    >
+      {active ? <ChevronUp size={14} /> : <Eye size={14} />}
+      {active ? 'Cerrar' : 'Ver estado'}
+    </Button>
+  );
 
   return (
     <div className="content rep-acc-root">
       {/* 1. Encabezado de Página */}
-      <div className="page-head flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="page-head">
         <div>
-          <h1>Reporte de Cuentas y Pagos</h1>
+          <h1>Reporte de Cuentas</h1>
           <p className="muted">
-            Auditoría de recaudaciones, métodos de pago y conciliación con cuentas bancarias.
+            Bancos, cobranzas y pagos del negocio: saldos, cronología y consolidados.
           </p>
         </div>
-        <div className="actions rep-head-actions flex flex-wrap items-center gap-2">
+        <div className="actions rep-head-actions">
           <Button variant="secondary" onClick={loadData} title="Actualizar datos">
             <RefreshCcw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             <span className="rep-long">Actualizar</span>
@@ -186,7 +403,7 @@ export function AccountsReportPage() {
           </Button>
           <Button variant="secondary" onClick={handleExportExcel} title="Exportar a Excel">
             <FileDown className="w-4 h-4" />
-            <span className="rep-long">Exportar Excel (.xlsx)</span>
+            <span className="rep-long">Exportar Excel</span>
             <span className="rep-short">Excel</span>
           </Button>
           <Button variant="secondary" onClick={() => window.print()} title="Imprimir reporte">
@@ -197,162 +414,395 @@ export function AccountsReportPage() {
         </div>
       </div>
 
-      {/* 2. Rejilla de Métricas KPI */}
-      <div className="grid grid-4 kpi-duo gap-4 mb-6">
-        <Card>
-          <div className="kpi-label">TOTAL RECAUDADO ($)</div>
-          <div className="kpi-value text-text mt-1">{formatUSD(totalUSD)}</div>
-          <span className="muted small">Monto consolidado en divisas</span>
-        </Card>
-
-        <Card>
-          <div className="kpi-label">TOTAL LIQUIDADO (VES)</div>
-          <div className="kpi-value text-text mt-1">
-            Bs. {totalVES.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </div>
-          <span className="muted small">Tasa BCV: {exchangeRate.toFixed(2)} Bs/$</span>
-        </Card>
-
-        <Card>
-          <div className="kpi-label">TRANSACCIONES LIQUIDADAS</div>
-          <div className="kpi-value text-text mt-1">{filteredPayments.length}</div>
-          <span className="muted small">{totalDivisasCount} con componente en divisas</span>
-        </Card>
-
-        <Card>
-          <div className="kpi-label">CANALES BANCARIOS ACTIVOS</div>
-          <div className="kpi-value text-text mt-1">{uniqueBanks}</div>
-          <span className="muted small">Banesco, Venezuela, Efectivo</span>
-        </Card>
+      {/* 2. Pestañas internas */}
+      <div className="rep-acc-tabs" role="tablist">
+        {tabs.map(t => {
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === t.id}
+              className={`rep-acc-tab ${activeTab === t.id ? 'active' : ''}`}
+              onClick={() => switchTab(t.id)}
+            >
+              <Icon size={14} />
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* 3. Filtros y Búsqueda */}
+      {/* 3. Buscador del periodo activo */}
       <Card className="mb-6">
-        <div className="flex flex-col xl:flex-row items-center justify-between gap-4 fin-filters">
-          <div className="relative w-full xl:w-72">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-            <input
-              type="text"
-              placeholder="Buscar por cliente, documento..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="input pl-9 w-full text-xs"
-            />
+        <div className="acc-search-row">
+          <Search className="w-4 h-4 text-muted shrink-0" />
+          <input
+            type="text"
+            className="input acc-search-input"
+            placeholder={
+              activeTab === 'bancos' ? 'Buscar por concepto, referencia u operador...'
+              : activeTab === 'cxc' ? 'Buscar por cliente, RIF, teléfono o factura...'
+              : 'Buscar por proveedor, RIF o factura...'
+            }
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <Button variant="ghost" onClick={() => setSearchQuery('')} style={{ height: 30, fontSize: 11, padding: '0 8px' }}>
+              Limpiar
+            </Button>
+          )}
+        </div>
+      </Card>
+
+      {/* ==================== PESTAÑA: CUENTAS BANCARIAS ==================== */}
+      {activeTab === 'bancos' && (
+        <>
+          {/* Selector de cuenta */}
+          {accounts.length > 1 && (
+            <div className="acc-bank-chips">
+              {accounts.map(a => (
+                <button
+                  key={a.id}
+                  type="button"
+                  className={`acc-bank-chip ${a.id === selectedAccountId ? 'active' : ''}`}
+                  onClick={() => { setSelectedAccountId(a.id); setExpandedKey(null); }}
+                >
+                  <b>{a.bank_name}</b>
+                  <span>{a.account_type || a.currency || ''}</span>
+                  <span className="acc-bank-chip-balance">{formatUSD(round2(Number(a.balance) || 0))}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {accounts.length === 0 ? (
+            <Card>
+              <div className="p-8 text-center muted small">
+                No hay cuentas bancarias registradas. Regístralas en el módulo «Bancos».
+              </div>
+            </Card>
+          ) : !selectedAccount ? (
+            <Card>
+              <div className="p-8 text-center muted small">Selecciona una cuenta bancaria.</div>
+            </Card>
+          ) : (
+            <>
+              {/* Tarjetas de resumen de la cuenta */}
+              <div className="grid grid-4 kpi-duo gap-4 mb-6">
+                <Card>
+                  <div className="kpi-label">SALDO INICIAL</div>
+                  <div className="kpi-value text-text mt-1">{formatUSD(bankTotals.saldoInicial)}</div>
+                  <span className="muted small">Antes de los movimientos</span>
+                </Card>
+                <Card>
+                  <div className="kpi-label">TOTAL DE INGRESOS</div>
+                  <div className="kpi-value positive mt-1">{formatUSD(bankTotals.ingresos)}</div>
+                  <span className="muted small">Entradas registradas</span>
+                </Card>
+                <Card>
+                  <div className="kpi-label">TOTAL DE EGRESOS</div>
+                  <div className="kpi-value negative mt-1">{formatUSD(bankTotals.egresos)}</div>
+                  <span className="muted small">Salidas registradas</span>
+                </Card>
+                <Card>
+                  <div className="kpi-label">SALDO AL CORTE</div>
+                  <div className="kpi-value text-text mt-1">{formatUSD(bankTotals.saldoCorte)}</div>
+                  <span className="muted small">
+                    {formatVES(round2(bankTotals.saldoCorte * exchangeRate))} · Tasa: {exchangeRate.toFixed(2)}
+                  </span>
+                </Card>
+              </div>
+
+              {/* Detalle cronológico */}
+              <Card>
+                <div className="section-head mb-4">
+                  <h3>{selectedAccount.bank_name} — Detalle Cronológico</h3>
+                  <span className="badge brand">{filteredLedger.length} movimientos</span>
+                </div>
+
+                {isLoading ? (
+                  <div className="p-8 text-center muted small">Cargando movimientos...</div>
+                ) : filteredLedger.length === 0 ? (
+                  <div className="p-8 text-center muted small">
+                    Esta cuenta no tiene movimientos registrados con el filtro actual.
+                  </div>
+                ) : (
+                  <div className="table-wrap">
+                    <table className="table acc-bank-table">
+                      <thead>
+                        <tr>
+                          <th>Fecha</th>
+                          <th>Referencia</th>
+                          <th>Operación</th>
+                          <th>Concepto</th>
+                          <th className="num">Débito ($)</th>
+                          <th className="num">Crédito ($)</th>
+                          <th className="num">Saldo ($)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredLedger.map(m => (
+                          <tr key={m.id}>
+                            <td className="muted text-xs">{new Date(m.created_at).toLocaleDateString()}</td>
+                            <td className="text-xs font-medium">{m.reference || '—'}</td>
+                            <td>
+                              <Badge tone={m.type === 'ENTRADA' ? 'success' : 'warning'}>
+                                {m.type === 'ENTRADA' ? 'Ingreso' : 'Egreso'}
+                              </Badge>
+                            </td>
+                            <td className="text-xs">{m.concept || '—'}</td>
+                            <td className="num font-bold">
+                              {m.type === 'SALIDA' ? (
+                                <>
+                                  -{formatUSD(m.amountUSD)}
+                                  <div className="muted text-xs num">{formatVES(m.amountVES)}</div>
+                                </>
+                              ) : <span className="muted">—</span>}
+                            </td>
+                            <td className="num font-bold">
+                              {m.type === 'ENTRADA' ? (
+                                <>
+                                  {formatUSD(m.amountUSD)}
+                                  <div className="muted text-xs num">{formatVES(m.amountVES)}</div>
+                                </>
+                              ) : <span className="muted">—</span>}
+                            </td>
+                            <td className="num font-bold">{formatUSD(m.runningBalance)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </Card>
+            </>
+          )}
+        </>
+      )}
+
+      {/* ==================== PESTAÑA: CUENTAS POR COBRAR ==================== */}
+      {activeTab === 'cxc' && (
+        <>
+          <div className="grid grid-4 kpi-duo gap-4 mb-6">
+            <Card>
+              <div className="kpi-label">TOTAL CUENTAS POR COBRAR</div>
+              <div className="kpi-value text-text mt-1">{formatUSD(cxcTotals.porCobrar)}</div>
+              <span className="muted small">{formatVES(round2(cxcTotals.porCobrar * exchangeRate))}</span>
+            </Card>
+            <Card>
+              <div className="kpi-label">FACTURADO A CRÉDITO</div>
+              <div className="kpi-value text-text mt-1">{formatUSD(cxcTotals.facturado)}</div>
+              <span className="muted small">{clientGroups.length} clientes con deuda</span>
+            </Card>
+            <Card>
+              <div className="kpi-label">CRÉDITO COBRADO</div>
+              <div className="kpi-value positive mt-1">{formatUSD(cxcTotals.cobrado)}</div>
+              <span className="muted small">Abonos y facturas liquidadas</span>
+            </Card>
+            <Card>
+              <div className="kpi-label">CARTERA VENCIDA</div>
+              <div className="kpi-value negative mt-1">{formatUSD(cxcTotals.vencida)}</div>
+              <span className="muted small">Facturas fuera de fecha</span>
+            </Card>
           </div>
 
-          {/* Rango de Fechas (Desde / Hasta en la misma línea) */}
-          <div className="flex items-end gap-2 flex-nowrap overflow-x-auto w-full xl:w-auto pb-1 xl:pb-0" style={{ display: 'flex', alignItems: 'flex-end', flexWrap: 'nowrap' }}>
-            <div className="flex items-center gap-1.5 flex-nowrap">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted whitespace-nowrap">Desde:</span>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="input text-xs"
-                style={{ fontSize: '12px', width: '115px', height: '36px', padding: '0 8px' }}
-                title="Fecha inicial (Desde)"
-              />
+          <Card>
+            <div className="section-head mb-4">
+              <h3>Historial Consolidado de la Cartera</h3>
+              <span className="badge brand">{filteredClientGroups.length} clientes</span>
             </div>
-            <div className="flex items-center gap-1.5 flex-nowrap">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted whitespace-nowrap">Hasta:</span>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="input text-xs"
-                style={{ fontSize: '12px', width: '115px', height: '36px', padding: '0 8px' }}
-                title="Fecha final (Hasta)"
-              />
-            </div>
-            {(startDate || endDate) && (
-              <Button
-                variant="ghost"
-                onClick={() => { setStartDate(''); setEndDate(''); }}
-                style={{ height: '34px', fontSize: '11px', padding: '0 8px', color: 'var(--muted)' }}
-              >
-                Limpiar
-              </Button>
+
+            {isLoading ? (
+              <div className="p-8 text-center muted small">Cargando cartera...</div>
+            ) : filteredClientGroups.length === 0 ? (
+              <div className="p-8 text-center muted small">
+                No hay clientes con saldo pendiente en este periodo.
+              </div>
+            ) : (
+              <div className="table-wrap">
+                <table className="table acc-cxc-table">
+                  <thead>
+                    <tr>
+                      <th>Cliente</th>
+                      <th>Teléfono / RIF</th>
+                      <th>Factura(s)</th>
+                      <th className="num">Total Factura</th>
+                      <th className="num">Pendiente ($)</th>
+                      <th className="num">Pendiente (Bs)</th>
+                      <th className="num">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredClientGroups.map(g => (
+                      <Fragment key={g.key}>
+                        <tr>
+                          <td className="font-semibold text-xs">
+                            {g.name}
+                            {g.isOverdue && <span className="badge danger acc-mini-badge">Vencida</span>}
+                          </td>
+                          <td className="text-xs">
+                            <div>{g.phone || '—'}</div>
+                            <div className="muted">{g.doc || 'Sin RIF'}</div>
+                          </td>
+                          <td className="text-xs font-medium">{g.invoices.length > 1 ? `${g.invoices.length} facturas` : g.invoices[0]?.doc_number || '—'}</td>
+                          <td className="num font-semibold">{formatUSD(g.totalFacturado)}</td>
+                          <td className="num font-bold">{formatUSD(g.saldoPendiente)}</td>
+                          <td className="num muted">{formatVES(round2(g.saldoPendiente * exchangeRate))}</td>
+                          <td className="num">{renderDetailToggle(`cxc-${g.key}`, expandedKey === `cxc-${g.key}`)}</td>
+                        </tr>
+                        {expandedKey === `cxc-${g.key}` && (
+                          <tr className="acc-detail-row">
+                            <td colSpan={7}>
+                              <div className="acc-detail-box">
+                                <h4>Estado de cuenta de {g.name}</h4>
+                                <div className="acc-detail-grid">
+                                  {g.invoices.map(i => (
+                                    <div key={i.id} className="acc-detail-item">
+                                      <div className="acc-detail-line">
+                                        <b>{i.doc_number || 'Sin número'}</b>
+                                        <Badge tone={i.status === 'Pagada' ? 'success' : i.due_date && new Date(i.due_date) < new Date() ? 'danger' : 'brand'}>
+                                          {i.status || 'PENDIENTE'}
+                                        </Badge>
+                                      </div>
+                                      <div className="acc-detail-line muted">
+                                        <span>Fecha: {i.created_at ? new Date(i.created_at).toLocaleDateString() : '—'}</span>
+                                        <span>Vence: {i.due_date ? new Date(i.due_date).toLocaleDateString() : '—'}</span>
+                                      </div>
+                                      <div className="acc-detail-line">
+                                        <span>Total: <b>{formatUSD(round2(Number(i.total_usd) || 0))}</b></span>
+                                        <span className="negative">Pendiente: <b>{formatUSD(round2(Number(i.balance_usd) || 0))}</b></span>
+                                      </div>
+                                      <div className="acc-detail-line muted">
+                                        <span>Pendiente Bs: {formatVES(round2((Number(i.balance_usd) || 0) * exchangeRate))}</span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
+          </Card>
+        </>
+      )}
+
+      {/* ==================== PESTAÑA: CUENTAS POR PAGAR ==================== */}
+      {activeTab === 'cxp' && (
+        <>
+          <div className="grid grid-4 kpi-duo gap-4 mb-6">
+            <Card>
+              <div className="kpi-label">TOTAL POR PAGAR</div>
+              <div className="kpi-value text-text mt-1">{formatUSD(cxpTotals.porPagar)}</div>
+              <span className="muted small">{formatVES(round2(cxpTotals.porPagar * exchangeRate))}</span>
+            </Card>
+            <Card>
+              <div className="kpi-label">COMPRAS A CRÉDITO</div>
+              <div className="kpi-value text-text mt-1">{formatUSD(cxpTotals.comprado)}</div>
+              <span className="muted small">{supplierGroups.length} proveedores con deuda</span>
+            </Card>
+            <Card>
+              <div className="kpi-label">TOTAL LIQUIDADO</div>
+              <div className="kpi-value positive mt-1">{formatUSD(cxpTotals.liquidado)}</div>
+              <span className="muted small">Pagos y compras saldadas</span>
+            </Card>
+            <Card>
+              <div className="kpi-label">DEUDAS VENCIDAS</div>
+              <div className="kpi-value negative mt-1">{formatUSD(cxpTotals.vencida)}</div>
+              <span className="muted small">Facturas fuera de fecha</span>
+            </Card>
           </div>
 
-          <div className="flex items-center gap-3 w-full xl:w-auto">
-            <span className="text-xs text-muted font-semibold whitespace-nowrap">Banco:</span>
-            <select
-              value={bankFilter}
-              onChange={(e) => setBankFilter(e.target.value)}
-              className="input text-xs"
-            >
-              <option value="TODOS">Todos</option>
-              <option value="Banesco">Banesco</option>
-              <option value="Venezuela">Banco de Venezuela</option>
-              <option value="Caja">Caja Efectivo</option>
-            </select>
-          </div>
-        </div>
-      </Card>
+          <Card>
+            <div className="section-head mb-4">
+              <h3>Consolidado de Proveedores</h3>
+              <span className="badge brand">{filteredSupplierGroups.length} proveedores</span>
+            </div>
 
-      {/* 4. Tabla de Transacciones y Pagos */}
-      <Card>
-        <div className="section-head mb-4">
-          <h3>Detalle de Pagos y Liquidaciones</h3>
-          <span className="badge brand">{filteredPayments.length} registros</span>
-        </div>
-
-        {isLoading ? (
-          <div className="p-8 text-center muted small">Cargando pagos y transacciones...</div>
-        ) : filteredPayments.length === 0 ? (
-          <div className="p-8 text-center muted small">No se encontraron pagos con los filtros seleccionados.</div>
-        ) : (
-          <div className="table-wrap">
-            <table className="table report-table rep-acc-table">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Comprobante</th>
-                  <th className="rep-col-oculta">Tipo</th>
-                  <th>Cliente</th>
-                  <th className="rep-col-oculta">Método de Pago</th>
-                  <th className="rep-col-oculta">Banco / Destino</th>
-                  <th className="num">Monto ($)</th>
-                  <th className="num rep-col-oculta">Monto (VES)</th>
-                  <th className="num">Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPayments.map((p) => (
-                  <tr key={p.id}>
-                    <td className="muted text-xs">{new Date(p.created_at).toLocaleDateString()}</td>
-                    <td className="font-bold text-xs">{p.doc_number}</td>
-                    <td className="rep-col-oculta">
-                      <Badge tone={p.doc_type.includes('FACT') ? 'success' : p.doc_type.includes('NOTA') ? 'warning' : 'brand'}>
-                        {p.doc_type}
-                      </Badge>
-                    </td>
-                    <td className="font-semibold text-xs">{p.customer_name}</td>
-                    <td className="text-xs font-medium rep-col-oculta">{p.method}</td>
-                    <td className="rep-col-oculta">
-                      <span className="badge warning">{p.bank_name}</span>
-                    </td>
-                    <td className="num font-bold">{formatUSD(p.amount_usd)}</td>
-                    <td className="num muted rep-col-oculta">
-                      Bs. {p.amount_ves.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    <td className="num">
-                      <Button
-                        variant="primary"
-                        onClick={() => navigate(`/ventas-flash/reporte/${p.sale_id}`)}
-                        title="Ver detalle del comprobante"
-                      >
-                        <Eye className="w-4 h-4" /> <span className="rep-long">Detalle</span>
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
+            {isLoading ? (
+              <div className="p-8 text-center muted small">Cargando cuentas por pagar...</div>
+            ) : filteredSupplierGroups.length === 0 ? (
+              <div className="p-8 text-center muted small">
+                No hay proveedores con saldo pendiente en este periodo.
+              </div>
+            ) : (
+              <div className="table-wrap">
+                <table className="table acc-cxp-table">
+                  <thead>
+                    <tr>
+                      <th>Proveedor</th>
+                      <th>RIF</th>
+                      <th>Factura(s)</th>
+                      <th className="num">Total Compras</th>
+                      <th className="num">Por Pagar ($)</th>
+                      <th className="num">Por Pagar (Bs)</th>
+                      <th className="num">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredSupplierGroups.map(g => (
+                      <Fragment key={g.key}>
+                        <tr>
+                          <td className="font-semibold text-xs">
+                            {g.name}
+                            {g.isOverdue && <span className="badge danger acc-mini-badge">Vencida</span>}
+                          </td>
+                          <td className="text-xs">{g.doc || 'Sin RIF'}</td>
+                          <td className="text-xs font-medium">{g.invoices.length > 1 ? `${g.invoices.length} facturas` : g.invoices[0]?.doc_number || '—'}</td>
+                          <td className="num font-semibold">{formatUSD(g.totalCompras)}</td>
+                          <td className="num font-bold">{formatUSD(g.saldoPendiente)}</td>
+                          <td className="num muted">{formatVES(round2(g.saldoPendiente * exchangeRate))}</td>
+                          <td className="num">{renderDetailToggle(`cxp-${g.key}`, expandedKey === `cxp-${g.key}`)}</td>
+                        </tr>
+                        {expandedKey === `cxp-${g.key}` && (
+                          <tr className="acc-detail-row">
+                            <td colSpan={7}>
+                              <div className="acc-detail-box">
+                                <h4>Estado de cuenta de {g.name}</h4>
+                                <div className="acc-detail-grid">
+                                  {g.invoices.map(i => (
+                                    <div key={i.id} className="acc-detail-item">
+                                      <div className="acc-detail-line">
+                                        <b>{i.doc_number || 'Sin número'}</b>
+                                        <Badge tone={i.status === 'Pagada' ? 'success' : i.due_date && new Date(i.due_date) < new Date() ? 'danger' : 'brand'}>
+                                          {i.status || 'PENDIENTE'}
+                                        </Badge>
+                                      </div>
+                                      <div className="acc-detail-line muted">
+                                        <span>Fecha: {i.created_at ? new Date(i.created_at).toLocaleDateString() : '—'}</span>
+                                        <span>Vence: {i.due_date ? new Date(i.due_date).toLocaleDateString() : '—'}</span>
+                                      </div>
+                                      <div className="acc-detail-line">
+                                        <span>Total: <b>{formatUSD(round2(Number(i.total_usd) || 0))}</b></span>
+                                        <span className="negative">Pendiente: <b>{formatUSD(round2(Number(i.balance_usd) || 0))}</b></span>
+                                      </div>
+                                      <div className="acc-detail-line muted">
+                                        <span>Pendiente Bs: {formatVES(round2((Number(i.balance_usd) || 0) * exchangeRate))}</span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        </>
+      )}
     </div>
   );
 }

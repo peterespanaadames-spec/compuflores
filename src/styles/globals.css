@@ -5698,4 +5698,220 @@ button:active:not(:disabled) {
   .pnl-root .card.bg-white p { font-size: 9.5px !important; }
 }
 
+/* =====================================================================
+   REPORTE DE CUENTAS (rep-acc-root) — ESTRUCTURA EN 3 PESTAÑAS
+   Cuentas Bancarias (saldo inicial, ingresos, egresos, saldo al corte
+   y cronología débito/crédito con saldo corrido), Cuentas por Cobrar
+   (consolidado por cliente con «Ver estado») y Cuentas por Pagar
+   (consolidado por proveedor con «Ver estado»). Escritorio + móvil;
+   el tramo ≤360px va un punto menos.
+   ===================================================================== */
+
+/* --- Pestañas internas (escritorio) --- */
+.rep-acc-tabs {
+  display: flex;
+  gap: 4px;
+  background: #f0f1f6;
+  padding: 4px;
+  border-radius: var(--radius-sm, 10px);
+  margin-bottom: 14px;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.rep-acc-tab {
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rep-acc-tab.active {
+  background: #ffffff;
+  color: var(--text);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.rep-acc-tab svg { flex: 0 0 auto; }
+
+/* --- Buscador, chips de cuenta y estado de cuenta --- */
+.acc-search-row { display: flex; align-items: center; gap: 8px; }
+.acc-search-row .input { flex: 1 1 auto; min-width: 0; }
+.acc-bank-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.acc-bank-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 10px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  font-size: 11px;
+}
+.acc-bank-chip span { color: var(--muted); font-size: 9.5px; }
+.acc-bank-chip b { color: var(--text); font-size: 11px; }
+.acc-bank-chip .acc-bank-chip-balance { color: var(--brand-700); font-weight: 800; font-size: 11px; }
+.acc-bank-chip.active {
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 1px var(--brand-500);
+}
+.acc-mini-badge { margin-left: 6px; font-size: 9px; padding: 1px 5px !important; }
+
+.acc-detail-row > td { padding: 4px 10px 12px !important; background: #f8fafc; }
+.acc-detail-box h4 { margin: 8px 0; font-size: 12px; font-weight: 800; color: var(--text); }
+.acc-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 8px;
+}
+.acc-detail-item {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 8px 10px;
+}
+.acc-detail-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  margin: 2px 0;
+}
+
+@media (max-width: 767px) {
+  /* Título «Reporte de Cuentas» en una sola línea */
+  .rep-acc-root .page-head h1 { font-size: 13px !important; line-height: 1.2 !important; white-space: nowrap; }
+
+  /* Pestañas: 3 en una fila a todo el ancho */
+  .rep-acc-root .rep-acc-tabs { width: 100%; padding: 3px; gap: 3px; margin-bottom: 8px; }
+  .rep-acc-root .rep-acc-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 28px;
+    padding: 0 3px;
+    font-size: 9px;
+    gap: 3px;
+    justify-content: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rep-acc-root .rep-acc-tab svg { width: 10px; height: 10px; }
+
+  /* Buscador ceñido */
+  .rep-acc-root .acc-search-row { gap: 6px; }
+  .rep-acc-root .acc-search-row .input { height: 30px !important; font-size: 11px !important; }
+
+  /* Chips de cuenta: 2 por fila */
+  .rep-acc-root .acc-bank-chips { gap: 5px; margin-bottom: 10px; }
+  .rep-acc-root .acc-bank-chip { flex: 1 1 46%; min-width: 0; padding: 5px 8px; }
+
+  /* KPI: conservar la referencia bimonetaria (saldo al corte) */
+  .rep-acc-root .grid-4 { gap: 6px !important; margin-bottom: 10px !important; }
+  .rep-acc-root .grid-4 .card { padding: 8px 7px !important; border-radius: 10px; }
+  .rep-acc-root .grid-4 .kpi-label { font-size: 8.5px !important; }
+  .rep-acc-root .grid-4 .kpi-value { font-size: 13.5px !important; margin: 2px 0 0; }
+  .rep-acc-root .grid-4 .card:nth-child(1) .muted.small,
+  .rep-acc-root .grid-4 .card:nth-child(2) .muted.small,
+  .rep-acc-root .grid-4 .card:nth-child(3) .muted.small { display: none !important; }
+  .rep-acc-root .grid-4 .card:nth-child(4) .muted.small { display: block !important; font-size: 9px; }
+
+  /* Tarjetas de tablas */
+  .rep-acc-root .card { padding: 10px 8px !important; margin-bottom: 10px; }
+  .rep-acc-root .section-head h3 { font-size: 12.5px !important; }
+
+  /* --- Ficha cronológica bancaria --- */
+  .rep-acc-root .acc-bank-table { display: block; font-size: 11px; }
+  .rep-acc-root .acc-bank-table thead { display: none !important; }
+  .rep-acc-root .acc-bank-table tbody { display: block; }
+  .rep-acc-root .acc-bank-table tr { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+  .rep-acc-root .acc-bank-table tr:last-child { border-bottom: none; }
+  .rep-acc-root .acc-bank-table td { display: block; padding: 1px 0 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rep-acc-root .acc-bank-table td:nth-child(1) { order: 1; flex: 0 0 auto; font-size: 9.5px; color: var(--muted); }
+  .rep-acc-root .acc-bank-table td:nth-child(3) { order: 2; flex: 0 0 auto; }
+  .rep-acc-root .acc-bank-table td:nth-child(7) { order: 3; margin-left: auto; font-weight: 800; font-size: 11px; }
+  .rep-acc-root .acc-bank-table td:nth-child(4) { order: 4; flex: 1 1 100%; min-width: 0; font-size: 10.5px; color: #334155; }
+  .rep-acc-root .acc-bank-table td:nth-child(2) { order: 5; flex: 0 0 auto; font-size: 9.5px; color: var(--muted); max-width: 40%; }
+  .rep-acc-root .acc-bank-table td:nth-child(5) { order: 6; flex: 0 0 auto; font-size: 10px; margin-left: auto; }
+  .rep-acc-root .acc-bank-table td:nth-child(6) { order: 7; flex: 0 0 auto; font-size: 10px; }
+  .rep-acc-root .acc-bank-table td .muted.text-xs { display: none !important; }
+  .rep-acc-root .acc-bank-table td .badge { font-size: 8.5px !important; padding: 1px 5px !important; }
+
+  /* --- Fichas consolidadas (CxC y CxP comparten estructura) --- */
+  .rep-acc-root .acc-cxc-table,
+  .rep-acc-root .acc-cxp-table { display: block; font-size: 11px; }
+  .rep-acc-root .acc-cxc-table thead,
+  .rep-acc-root .acc-cxp-table thead { display: none !important; }
+  .rep-acc-root .acc-cxc-table tbody,
+  .rep-acc-root .acc-cxp-table tbody { display: block; }
+  .rep-acc-root .acc-cxc-table tr,
+  .rep-acc-root .acc-cxp-table tr { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+  .rep-acc-root .acc-cxc-table tr:last-child,
+  .rep-acc-root .acc-cxp-table tr:last-child { border-bottom: none; }
+  .rep-acc-root .acc-cxc-table td,
+  .rep-acc-root .acc-cxp-table td { display: block; padding: 1px 0 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Línea 1: entidad · pendiente $ [ver estado] */
+  .rep-acc-root .acc-cxc-table td:nth-child(1),
+  .rep-acc-root .acc-cxp-table td:nth-child(1) { order: 1; flex: 1 1 auto; min-width: 0; font-weight: 700; font-size: 11px; }
+  .rep-acc-root .acc-cxc-table td:nth-child(5),
+  .rep-acc-root .acc-cxp-table td:nth-child(5) { order: 2; margin-left: auto; font-weight: 800; font-size: 11px; }
+  .rep-acc-root .acc-cxc-table td:nth-child(7),
+  .rep-acc-root .acc-cxp-table td:nth-child(7) { order: 3; flex: 0 0 auto; }
+  /* Línea 2: RIF/teléfono · total · pendiente Bs */
+  .rep-acc-root .acc-cxc-table td:nth-child(2),
+  .rep-acc-root .acc-cxp-table td:nth-child(2) { order: 4; flex: 0 0 auto; max-width: 44%; font-size: 9.5px; color: var(--muted); }
+  .rep-acc-root .acc-cxc-table td:nth-child(4),
+  .rep-acc-root .acc-cxp-table td:nth-child(4) { order: 5; margin-left: auto; font-size: 10px; font-weight: 600; }
+  .rep-acc-root .acc-cxc-table td:nth-child(6),
+  .rep-acc-root .acc-cxp-table td:nth-child(6) { order: 6; flex: 0 0 auto; font-size: 9.5px; color: var(--muted); }
+  /* Facturas resumidas en línea propia */
+  .rep-acc-root .acc-cxc-table td:nth-child(3),
+  .rep-acc-root .acc-cxp-table td:nth-child(3) { order: 7; flex: 1 1 100%; min-width: 0; font-size: 9.5px; color: var(--muted); }
+  /* Botón «Ver estado» pequeño y táctil */
+  .rep-acc-root .acc-cxc-table td:nth-child(7) .btn,
+  .rep-acc-root .acc-cxp-table td:nth-child(7) .btn { height: 26px !important; padding: 0 7px !important; font-size: 9.5px !important; }
+  .rep-acc-root .acc-cxc-table td:nth-child(7) .btn svg,
+  .rep-acc-root .acc-cxp-table td:nth-child(7) .btn svg { width: 11px; height: 11px; }
+
+  /* Estado de cuenta desplegado a una columna */
+  .rep-acc-root .acc-detail-row > td { display: block; flex: 1 1 100%; padding: 2px 4px 10px !important; }
+  .rep-acc-root .acc-detail-box h4 { font-size: 11px; margin: 6px 0; }
+  .rep-acc-root .acc-detail-grid { grid-template-columns: 1fr !important; gap: 6px; }
+  .rep-acc-root .acc-detail-item { padding: 6px 8px; }
+  .rep-acc-root .acc-detail-line { font-size: 10px; }
+}
+
+/* --- Reporte de Cuentas: tramo extra <=360px (un punto menos) --- */
+@media (max-width: 360px) {
+  .rep-acc-root { padding: 10px !important; }
+  .rep-acc-root .page-head h1 { font-size: 12px !important; }
+  .rep-acc-root .rep-acc-tab { height: 26px; font-size: 8.5px; gap: 2px; }
+  .rep-acc-root .rep-acc-tab svg { width: 9px; height: 9px; }
+  .rep-acc-root .acc-search-row .input { height: 28px !important; font-size: 10.5px !important; }
+  .rep-acc-root .acc-bank-chip { flex: 1 1 100%; padding: 4px 7px; }
+  .rep-acc-root .grid-4 { gap: 5px !important; }
+  .rep-acc-root .grid-4 .card { padding: 7px 6px !important; }
+  .rep-acc-root .grid-4 .kpi-value { font-size: 12.5px !important; }
+  .rep-acc-root .card { padding: 8px 7px !important; }
+  .rep-acc-root .acc-bank-table tr,
+  .rep-acc-root .acc-cxc-table tr,
+  .rep-acc-root .acc-cxp-table tr { padding: 3px 5px !important; }
+  .rep-acc-root .acc-bank-table td:nth-child(7),
+  .rep-acc-root .acc-cxc-table td:nth-child(1),
+  .rep-acc-root .acc-cxp-table td:nth-child(1) { font-size: 10px !important; }
+  .rep-acc-root .acc-cxc-table td:nth-child(7) .btn,
+  .rep-acc-root .acc-cxp-table td:nth-child(7) .btn { height: 25px !important; padding: 0 6px !important; font-size: 9px !important; }
+  .rep-acc-root .acc-detail-line { font-size: 9.5px; }
+}
+
 
