@@ -46,6 +46,7 @@ interface BankMovementLite {
   user_name: string;
   rate: number;
   commission: number;
+  commission_type?: 'Fija' | 'Porcentual';
   amount: number;
   created_at: string;
 }
@@ -75,11 +76,16 @@ interface PayableRow {
   created_at: string;
 }
 
-// Ficha de cronología bancaria con saldo corrido (débito/crédito)
+// Ficha de cronología bancaria con saldo corrido (débito/crédito).
+// IMPORTANTE: el monto y el saldo de cada cuenta están en la MONEDA de la
+// propia cuenta (bank_accounts.currency). El equivalente en la otra moneda
+// se calcula con la tasa registrada en el propio movimiento (auditoría).
 interface BankLedgerRow extends BankMovementLite {
   runningBalance: number;
-  amountUSD: number;
-  amountVES: number;
+  amountAcc: number;   // monto en la moneda de la cuenta (SALIDA sin comisión)
+  commissionAcc: number; // comisión efectiva en la moneda de la cuenta
+  equivOther: number;  // equivalente en la otra moneda a la tasa del movimiento
+  effRate: number;
 }
 
 interface ClientConsolidated {
@@ -170,33 +176,52 @@ export function AccountsReportPage() {
 
   // ===================== Pestaña 1: Cuentas Bancarias =====================
   const selectedAccount = accounts.find(a => a.id === selectedAccountId) || null;
+  // Cada cuenta maneja SU propia moneda: el saldo y los movimientos están en ella
+  const selectedCurrency: 'USD' | 'VES' = selectedAccount?.currency === 'USD' ? 'USD' : 'VES';
+  const fmtAcc = (n: number) => (selectedCurrency === 'USD' ? formatUSD(round2(n), '$ ') : formatVES(round2(n)));
+  const fmtOther = (n: number) => (selectedCurrency === 'USD' ? formatVES(round2(n)) : formatUSD(round2(n), '$ '));
+  // Moneda de cualquier cuenta, para los chips del selector
+  const fmtByCurrency = (cur: string | undefined, n: number) =>
+    cur === 'USD' ? formatUSD(round2(n), '$ ') : formatVES(round2(n));
 
   const accountLedger: BankLedgerRow[] = (() => {
     if (!selectedAccount) return [];
-    const rows = movements
+    const allRows = movements
       .filter(m => m.bank_account_id === selectedAccount.id)
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
-    const totalIn = round2(rows.filter(m => m.type === 'ENTRADA').reduce((s, m) => s + (Number(m.amount) || 0), 0));
-    const totalOut = round2(rows.filter(m => m.type === 'SALIDA').reduce((s, m) => s + (Number(m.amount) || 0), 0));
+    const effectiveCommission = (m: BankMovementLite) => {
+      const amt = round2(Number(m.amount) || 0);
+      const comm = Number(m.commission) || 0;
+      return m.commission_type === 'Porcentual' ? round2(amt * (comm / 100)) : round2(comm);
+    };
+
+    // Totales con TODOS los movimientos (el buscador solo filtra la vista)
+    const totalIn = round2(allRows.filter(m => m.type === 'ENTRADA').reduce((s, m) => s + (Number(m.amount) || 0), 0));
+    const totalOut = round2(allRows.filter(m => m.type === 'SALIDA').reduce((s, m) => s + (Number(m.amount) || 0) + effectiveCommission(m), 0));
+
     // Saldo inicial reconstruido: saldo actual menos el efecto neto de los movimientos
     let running = round2((Number(selectedAccount.balance) || 0) - (totalIn - totalOut));
 
-    return rows.map(m => {
-      const amountUSD = round2(Number(m.amount) || 0);
-      const rate = Number(m.rate) > 0 ? Number(m.rate) : exchangeRate;
-      const amountVES = round2(amountUSD * rate);
-      running = round2(running + (m.type === 'ENTRADA' ? amountUSD : -amountUSD));
-      return { ...m, runningBalance: running, amountUSD, amountVES };
+    return allRows.map(m => {
+      const amountAcc = round2(Number(m.amount) || 0);
+      const commissionAcc = effectiveCommission(m);
+      // Tasa del propio movimiento; si viene en 1 (no registrada) se usa la vigente
+      const rawRate = Number(m.rate) || 0;
+      const effRate = rawRate > 1 ? rawRate : exchangeRate;
+      const equivOther = selectedCurrency === 'USD' ? round2(amountAcc * effRate) : round2(amountAcc / effRate);
+      running = round2(running + (m.type === 'ENTRADA' ? amountAcc : -(amountAcc + commissionAcc)));
+      return { ...m, runningBalance: running, amountAcc, commissionAcc, equivOther, effRate };
     }).reverse(); // Cronológico reciente primero
   })();
 
   const bankTotals = (() => {
     const rows = accountLedger;
-    const ingresos = round2(rows.filter(m => m.type === 'ENTRADA').reduce((s, m) => s + m.amountUSD, 0));
-    const egresos = round2(rows.filter(m => m.type === 'SALIDA').reduce((s, m) => s + m.amountUSD, 0));
+    const ingresos = round2(rows.filter(m => m.type === 'ENTRADA').reduce((s, m) => s + m.amountAcc, 0));
+    const egresos = round2(rows.filter(m => m.type === 'SALIDA').reduce((s, m) => s + m.amountAcc + m.commissionAcc, 0));
     const saldoCorte = round2(Number(selectedAccount?.balance) || 0);
     const saldoInicial = round2(saldoCorte - (ingresos - egresos));
+    // Tasa de referencia para el equivalente del saldo (vigente)
     return { ingresos, egresos, saldoCorte, saldoInicial };
   })();
 
@@ -318,17 +343,25 @@ export function AccountsReportPage() {
     if (activeTab === 'bancos') {
       sheetName = 'Cronologia Bancaria';
       fileName = `Cuentas_Bancarias_${selectedAccount?.bank_name || 'General'}`;
-      exportData = filteredLedger.map(m => ({
-        'Fecha': new Date(m.created_at).toLocaleString(),
-        'Banco': selectedAccount?.bank_name || '',
-        'Referencia': m.reference || '',
-        'Operación': m.type,
-        'Concepto': m.concept || '',
-        'Débito (USD)': m.type === 'SALIDA' ? m.amountUSD : 0,
-        'Crédito (USD)': m.type === 'ENTRADA' ? m.amountUSD : 0,
-        'Saldo (USD)': m.runningBalance,
-        'Tasa del movimiento': Number(m.rate) || exchangeRate
-      }));
+      const curLabel = selectedCurrency === 'USD' ? 'USD' : 'VES';
+      const otherLabel = selectedCurrency === 'USD' ? 'VES' : 'USD';
+      exportData = filteredLedger.map(m => {
+        const row: any = {
+          'Fecha': new Date(m.created_at).toLocaleString(),
+          'Banco': selectedAccount?.bank_name || '',
+          'Moneda de la cuenta': curLabel,
+          'Referencia': m.reference || '',
+          'Operación': m.type,
+          'Concepto': m.concept || '',
+          'Tasa del movimiento': m.effRate
+        };
+        row[`Débito (${curLabel})`] = m.type === 'SALIDA' ? round2(m.amountAcc + m.commissionAcc) : 0;
+        row[`Crédito (${curLabel})`] = m.type === 'ENTRADA' ? m.amountAcc : 0;
+        row[`Comisión (${curLabel})`] = m.type === 'SALIDA' ? m.commissionAcc : 0;
+        row[`Saldo (${curLabel})`] = m.runningBalance;
+        row[`Equiv. (${otherLabel})`] = m.equivOther;
+        return row;
+      });
     } else if (activeTab === 'cxc') {
       sheetName = 'Cuentas por Cobrar';
       fileName = 'Cuentas_por_Cobrar';
@@ -472,7 +505,7 @@ export function AccountsReportPage() {
                 >
                   <b>{a.bank_name}</b>
                   <span>{a.account_type || a.currency || ''}</span>
-                  <span className="acc-bank-chip-balance">{formatUSD(round2(Number(a.balance) || 0))}</span>
+                  <span className="acc-bank-chip-balance">{fmtByCurrency(a.currency, Number(a.balance) || 0)}</span>
                 </button>
               ))}
             </div>
@@ -490,28 +523,29 @@ export function AccountsReportPage() {
             </Card>
           ) : (
             <>
-              {/* Tarjetas de resumen de la cuenta */}
+              {/* Tarjetas de resumen de la cuenta (en la moneda de la cuenta) */}
               <div className="grid grid-4 kpi-duo gap-4 mb-6">
                 <Card>
                   <div className="kpi-label">SALDO INICIAL</div>
-                  <div className="kpi-value text-text mt-1">{formatUSD(bankTotals.saldoInicial)}</div>
+                  <div className="kpi-value text-text mt-1">{fmtAcc(bankTotals.saldoInicial)}</div>
                   <span className="muted small">Antes de los movimientos</span>
                 </Card>
                 <Card>
                   <div className="kpi-label">TOTAL DE INGRESOS</div>
-                  <div className="kpi-value positive mt-1">{formatUSD(bankTotals.ingresos)}</div>
+                  <div className="kpi-value positive mt-1">{fmtAcc(bankTotals.ingresos)}</div>
                   <span className="muted small">Entradas registradas</span>
                 </Card>
                 <Card>
                   <div className="kpi-label">TOTAL DE EGRESOS</div>
-                  <div className="kpi-value negative mt-1">{formatUSD(bankTotals.egresos)}</div>
-                  <span className="muted small">Salidas registradas</span>
+                  <div className="kpi-value negative mt-1">{fmtAcc(bankTotals.egresos)}</div>
+                  <span className="muted small">Salidas con comisiones</span>
                 </Card>
                 <Card>
                   <div className="kpi-label">SALDO AL CORTE</div>
-                  <div className="kpi-value text-text mt-1">{formatUSD(bankTotals.saldoCorte)}</div>
+                  <div className="kpi-value text-text mt-1">{fmtAcc(bankTotals.saldoCorte)}</div>
                   <span className="muted small">
-                    {formatVES(round2(bankTotals.saldoCorte * exchangeRate))} · Tasa: {exchangeRate.toFixed(2)}
+                    {fmtOther(selectedCurrency === 'USD' ? bankTotals.saldoCorte * exchangeRate : bankTotals.saldoCorte / exchangeRate)}
+                    {' '}· Tasa: {exchangeRate.toFixed(2)}
                   </span>
                 </Card>
               </div>
@@ -538,9 +572,9 @@ export function AccountsReportPage() {
                           <th>Referencia</th>
                           <th>Operación</th>
                           <th>Concepto</th>
-                          <th className="num">Débito ($)</th>
-                          <th className="num">Crédito ($)</th>
-                          <th className="num">Saldo ($)</th>
+                          <th className="num">{selectedCurrency === 'USD' ? 'Débito ($)' : 'Débito (Bs)'}</th>
+                          <th className="num">{selectedCurrency === 'USD' ? 'Crédito ($)' : 'Crédito (Bs)'}</th>
+                          <th className="num">{selectedCurrency === 'USD' ? 'Saldo ($)' : 'Saldo (Bs)'}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -557,20 +591,20 @@ export function AccountsReportPage() {
                             <td className="num font-bold">
                               {m.type === 'SALIDA' ? (
                                 <>
-                                  -{formatUSD(m.amountUSD)}
-                                  <div className="muted text-xs num">{formatVES(m.amountVES)}</div>
+                                  -{fmtAcc(m.amountAcc + m.commissionAcc)}
+                                  <div className="muted text-xs num">≈ {fmtOther(m.equivOther)}</div>
                                 </>
                               ) : <span className="muted">—</span>}
                             </td>
                             <td className="num font-bold">
                               {m.type === 'ENTRADA' ? (
                                 <>
-                                  {formatUSD(m.amountUSD)}
-                                  <div className="muted text-xs num">{formatVES(m.amountVES)}</div>
+                                  {fmtAcc(m.amountAcc)}
+                                  <div className="muted text-xs num">≈ {fmtOther(m.equivOther)}</div>
                                 </>
                               ) : <span className="muted">—</span>}
                             </td>
-                            <td className="num font-bold">{formatUSD(m.runningBalance)}</td>
+                            <td className="num font-bold">{fmtAcc(m.runningBalance)}</td>
                           </tr>
                         ))}
                       </tbody>
