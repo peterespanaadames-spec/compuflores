@@ -9,6 +9,8 @@ import {
   Printer,
   Landmark,
   ShoppingCart,
+  Calendar,
+  Filter,
   ChevronUp
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
@@ -121,6 +123,13 @@ export function AccountsReportPage() {
   const [movements, setMovements] = useState<BankMovementLite[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState('');
 
+  // Filtros de movimientos (pestaña Cuentas Bancarias)
+  type PeriodFilter = 'today' | '7d' | 'month' | 'prevMonth' | 'all' | 'custom';
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('month');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'todos' | 'ENTRADA' | 'SALIDA'>('todos');
+
   // Pestañas 2 y 3
   const [receivables, setReceivables] = useState<ReceivableRow[]>([]);
   const [payables, setPayables] = useState<PayableRow[]>([]);
@@ -215,22 +224,91 @@ export function AccountsReportPage() {
     }).reverse(); // Cronológico reciente primero
   })();
 
-  const bankTotals = (() => {
-    const rows = accountLedger;
-    const ingresos = round2(rows.filter(m => m.type === 'ENTRADA').reduce((s, m) => s + m.amountAcc, 0));
-    const egresos = round2(rows.filter(m => m.type === 'SALIDA').reduce((s, m) => s + m.amountAcc + m.commissionAcc, 0));
-    const saldoCorte = round2(Number(selectedAccount?.balance) || 0);
-    const saldoInicial = round2(saldoCorte - (ingresos - egresos));
-    // Tasa de referencia para el equivalente del saldo (vigente)
-    return { ingresos, egresos, saldoCorte, saldoInicial };
+  // ===================== Filtros de movimientos =====================
+  // Fecha local (AAAA-MM-DD) de un movimiento, para comparar con los selectores
+  const localDateKey = (iso: string) => {
+    const d = new Date(iso);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  const applyPeriod = (p: Exclude<PeriodFilter, 'custom'>) => {
+    const now = new Date();
+    const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const today = iso(now);
+    if (p === 'today') {
+      setFromDate(today);
+      setToDate(today);
+    } else if (p === '7d') {
+      const from = new Date(now);
+      from.setDate(from.getDate() - 6);
+      setFromDate(iso(from));
+      setToDate(today);
+    } else if (p === 'month') {
+      setFromDate(iso(new Date(now.getFullYear(), now.getMonth(), 1)));
+      setToDate(today);
+    } else if (p === 'prevMonth') {
+      setFromDate(iso(new Date(now.getFullYear(), now.getMonth() - 1, 1)));
+      setToDate(iso(new Date(now.getFullYear(), now.getMonth(), 0)));
+    } else {
+      setFromDate('');
+      setToDate('');
+    }
+    setPeriodFilter(p);
+  };
+
+  // Rango efectivo: el de los botones predefinidos o el personalizado
+  const effectiveRange = (() => {
+    if (periodFilter === 'custom' || (periodFilter !== 'all' && fromDate && toDate)) {
+      return { from: fromDate || null, to: toDate || null };
+    }
+    if (periodFilter === 'all') return { from: null, to: null };
+    // Los predefinidos ya escriben fromDate/toDate al pulsarse; respaldo por si acaso
+    const now = new Date();
+    const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const today = iso(now);
+    if (periodFilter === 'today') return { from: today, to: today };
+    if (periodFilter === '7d') {
+      const from = new Date(now);
+      from.setDate(from.getDate() - 6);
+      return { from: iso(from), to: today };
+    }
+    if (periodFilter === 'month') return { from: iso(new Date(now.getFullYear(), now.getMonth(), 1)), to: today };
+    if (periodFilter === 'prevMonth') return { from: iso(new Date(now.getFullYear(), now.getMonth() - 1, 1)), to: iso(new Date(now.getFullYear(), now.getMonth(), 0)) };
+    return { from: null, to: null };
+  })();
+
+  const movementInPeriod = (dateKey: string) => {
+    const { from, to } = effectiveRange;
+    if (from && dateKey < from) return false;
+    if (to && dateKey > to) return false;
+    return true;
+  };
+
+  // KPI del periodo seleccionado: saldos al inicio y al corte del rango
+  const periodTotals = (() => {
+    const saldoCorteCuenta = round2(Number(selectedAccount?.balance) || 0);
+    // Efecto neto de los movimientos POSTERIORES al corte (para el saldo al corte del periodo)
+    const netAfter = round2(accountLedger
+      .filter(m => effectiveRange.to && localDateKey(m.created_at) > effectiveRange.to)
+      .reduce((s, m) => s + (m.type === 'ENTRADA' ? m.amountAcc : -(m.amountAcc + m.commissionAcc)), 0));
+    const saldoAlCorte = round2(saldoCorteCuenta - netAfter);
+    const inPeriod = accountLedger.filter(m => movementInPeriod(localDateKey(m.created_at)));
+    const ingresos = round2(inPeriod.filter(m => m.type === 'ENTRADA').reduce((s, m) => s + m.amountAcc, 0));
+    const egresos = round2(inPeriod.filter(m => m.type === 'SALIDA').reduce((s, m) => s + m.amountAcc + m.commissionAcc, 0));
+    const saldoInicial = round2(saldoAlCorte - (ingresos - egresos));
+    return { ingresos, egresos, saldoCorte: saldoAlCorte, saldoInicial };
   })();
 
   const filteredLedger = accountLedger.filter(m => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return true;
-    return (m.concept || '').toLowerCase().includes(q) ||
-      (m.reference || '').toLowerCase().includes(q) ||
-      (m.user_name || '').toLowerCase().includes(q);
+    if (q) {
+      const hit = (m.concept || '').toLowerCase().includes(q) ||
+        (m.reference || '').toLowerCase().includes(q) ||
+        (m.user_name || '').toLowerCase().includes(q);
+      if (!hit) return false;
+    }
+    if (typeFilter !== 'todos' && m.type !== typeFilter) return false;
+    return movementInPeriod(localDateKey(m.created_at));
   });
 
   // ===================== Pestaña 2: Cuentas por Cobrar =====================
@@ -467,28 +545,117 @@ export function AccountsReportPage() {
         })}
       </div>
 
-      {/* 3. Buscador del periodo activo */}
-      <Card className="mb-6">
-        <div className="acc-search-row">
-          <Search className="w-4 h-4 text-muted shrink-0" />
-          <input
-            type="text"
-            className="input acc-search-input"
-            placeholder={
-              activeTab === 'bancos' ? 'Buscar por concepto, referencia u operador...'
-              : activeTab === 'cxc' ? 'Buscar por cliente, RIF, teléfono o factura...'
-              : 'Buscar por proveedor, RIF o factura...'
-            }
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <Button variant="ghost" onClick={() => setSearchQuery('')} style={{ height: 30, fontSize: 11, padding: '0 8px' }}>
-              Limpiar
-            </Button>
-          )}
-        </div>
-      </Card>
+      {/* 3. Filtros */}
+      {activeTab === 'bancos' ? (
+        <Card className="mb-6">
+          <div className="acc-filters">
+            {/* Fila 1: periodo predefinido + tipo de movimiento */}
+            <div className="acc-filters-row1">
+              <div className="acc-period-tabs" role="group" aria-label="Período predefinido">
+                {([
+                  { id: 'today', label: 'Hoy' },
+                  { id: '7d', label: '7 días' },
+                  { id: 'month', label: 'Este mes' },
+                  { id: 'prevMonth', label: 'Mes anterior' },
+                  { id: 'all', label: 'Histórico completo' }
+                ] as const).map(p => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className={`acc-period-tab ${periodFilter === p.id ? 'active' : ''}`}
+                    onClick={() => applyPeriod(p.id)}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+              <div className="acc-type-filter">
+                <Filter size={14} className="text-muted shrink-0" />
+                <span className="acc-type-label">Tipo:</span>
+                <select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value as 'todos' | 'ENTRADA' | 'SALIDA')}
+                  className="input acc-type-select"
+                >
+                  <option value="todos">Todos</option>
+                  <option value="ENTRADA">Ingresos (+)</option>
+                  <option value="SALIDA">Egresos (-)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Fila 2: rango de fechas + búsqueda textual */}
+            <div className="acc-filters-row2">
+              <div className="acc-date-field">
+                <span className="acc-date-label">Desde:</span>
+                <div className="acc-date-box">
+                  <input
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) => { setFromDate(e.target.value); setPeriodFilter('custom'); }}
+                    className="input acc-date-input"
+                    title="Fecha inicial (Desde)"
+                  />
+                  <Calendar size={14} className="acc-date-icon" />
+                </div>
+              </div>
+              <div className="acc-date-field">
+                <span className="acc-date-label">Hasta:</span>
+                <div className="acc-date-box">
+                  <input
+                    type="date"
+                    value={toDate}
+                    onChange={(e) => { setToDate(e.target.value); setPeriodFilter('custom'); }}
+                    className="input acc-date-input"
+                    title="Fecha final (Hasta)"
+                  />
+                  <Calendar size={14} className="acc-date-icon" />
+                </div>
+              </div>
+              <div className="acc-search-box">
+                <Search size={14} className="text-muted shrink-0" />
+                <input
+                  type="text"
+                  className="input acc-search-inline"
+                  placeholder="Referencia, concepto, notas..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              {(periodFilter === 'custom' || searchQuery || typeFilter !== 'todos') && (
+                <Button
+                  variant="ghost"
+                  onClick={() => { setSearchQuery(''); setTypeFilter('todos'); applyPeriod('month'); }}
+                  style={{ height: 30, fontSize: 11, padding: '0 8px', color: 'var(--muted)' }}
+                >
+                  Limpiar
+                </Button>
+              )}
+            </div>
+          </div>
+        </Card>
+      ) : (
+        <Card className="mb-6">
+          <div className="acc-search-row">
+            <Search className="w-4 h-4 text-muted shrink-0" />
+            <input
+              type="text"
+              className="input acc-search-input"
+              placeholder={
+                activeTab === 'cxc' ? 'Buscar por cliente, RIF, teléfono o factura...'
+                : 'Buscar por proveedor, RIF o factura...'
+              }
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <Button variant="ghost" onClick={() => setSearchQuery('')} style={{ height: 30, fontSize: 11, padding: '0 8px' }}>
+                Limpiar
+              </Button>
+            )}
+          </div>
+        </Card>
+      )}
 
       {/* ==================== PESTAÑA: CUENTAS BANCARIAS ==================== */}
       {activeTab === 'bancos' && (
@@ -523,28 +690,28 @@ export function AccountsReportPage() {
             </Card>
           ) : (
             <>
-              {/* Tarjetas de resumen de la cuenta (en la moneda de la cuenta) */}
+              {/* Tarjetas de resumen del periodo (en la moneda de la cuenta) */}
               <div className="grid grid-4 kpi-duo gap-4 mb-6">
                 <Card>
                   <div className="kpi-label">SALDO INICIAL</div>
-                  <div className="kpi-value text-text mt-1">{fmtAcc(bankTotals.saldoInicial)}</div>
-                  <span className="muted small">Antes de los movimientos</span>
+                  <div className="kpi-value text-text mt-1">{fmtAcc(periodTotals.saldoInicial)}</div>
+                  <span className="muted small">Al arranque del periodo</span>
                 </Card>
                 <Card>
                   <div className="kpi-label">TOTAL DE INGRESOS</div>
-                  <div className="kpi-value positive mt-1">{fmtAcc(bankTotals.ingresos)}</div>
-                  <span className="muted small">Entradas registradas</span>
+                  <div className="kpi-value positive mt-1">{fmtAcc(periodTotals.ingresos)}</div>
+                  <span className="muted small">Entradas del periodo</span>
                 </Card>
                 <Card>
                   <div className="kpi-label">TOTAL DE EGRESOS</div>
-                  <div className="kpi-value negative mt-1">{fmtAcc(bankTotals.egresos)}</div>
+                  <div className="kpi-value negative mt-1">{fmtAcc(periodTotals.egresos)}</div>
                   <span className="muted small">Salidas con comisiones</span>
                 </Card>
                 <Card>
                   <div className="kpi-label">SALDO AL CORTE</div>
-                  <div className="kpi-value text-text mt-1">{fmtAcc(bankTotals.saldoCorte)}</div>
+                  <div className="kpi-value text-text mt-1">{fmtAcc(periodTotals.saldoCorte)}</div>
                   <span className="muted small">
-                    {fmtOther(selectedCurrency === 'USD' ? bankTotals.saldoCorte * exchangeRate : bankTotals.saldoCorte / exchangeRate)}
+                    {fmtOther(selectedCurrency === 'USD' ? periodTotals.saldoCorte * exchangeRate : periodTotals.saldoCorte / exchangeRate)}
                     {' '}· Tasa: {exchangeRate.toFixed(2)}
                   </span>
                 </Card>
@@ -561,7 +728,7 @@ export function AccountsReportPage() {
                   <div className="p-8 text-center muted small">Cargando movimientos...</div>
                 ) : filteredLedger.length === 0 ? (
                   <div className="p-8 text-center muted small">
-                    Esta cuenta no tiene movimientos registrados con el filtro actual.
+                    No hay movimientos que coincidan con el periodo, el tipo o la búsqueda.
                   </div>
                 ) : (
                   <div className="table-wrap">

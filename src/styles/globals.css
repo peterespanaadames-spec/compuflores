@@ -5789,6 +5789,96 @@ button:active:not(:disabled) {
   margin: 2px 0;
 }
 
+/* --- Módulo de filtros y búsqueda de movimientos (pestaña Bancarias) --- */
+.acc-filters { display: flex; flex-direction: column; gap: 10px; }
+.acc-filters-row1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.acc-period-tabs {
+  display: flex;
+  gap: 3px;
+  background: #f0f1f6;
+  padding: 4px;
+  border-radius: var(--radius-sm, 10px);
+  flex-wrap: wrap;
+}
+.acc-period-tab {
+  border: none;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.acc-period-tab.active {
+  background: #ffffff;
+  color: var(--text);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.acc-type-filter { display: flex; align-items: center; gap: 6px; }
+.acc-type-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); white-space: nowrap; }
+.acc-type-select { height: 32px; font-size: 12px; font-weight: 600; min-width: 130px; }
+
+.acc-filters-row2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.acc-date-field { display: flex; align-items: center; gap: 6px; }
+.acc-date-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); white-space: nowrap; }
+.acc-date-box { position: relative; display: inline-flex; align-items: center; }
+.acc-date-input { height: 32px; font-size: 12px; width: 130px; padding: 0 26px 0 8px; }
+.acc-date-icon { position: absolute; right: 8px; color: var(--muted); pointer-events: none; }
+.acc-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 220px;
+  min-width: 200px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0 10px;
+  height: 32px;
+}
+.acc-search-inline { border: none !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; height: auto !important; font-size: 12px; }
+
+@media (max-width: 767px) {
+  .rep-acc-root .acc-filters { gap: 8px; }
+  /* Fila 1: pestañas de periodo a todo el ancho, tipo debajo */
+  .rep-acc-root .acc-filters-row1 { flex-direction: column; align-items: stretch; gap: 6px; }
+  .rep-acc-root .acc-period-tabs { width: 100%; padding: 3px; gap: 3px; }
+  .rep-acc-root .acc-period-tab { flex: 1 1 30%; min-width: 0; padding: 5px 4px; font-size: 9.5px; text-align: center; }
+  .rep-acc-root .acc-type-filter { gap: 5px; }
+  .rep-acc-root .acc-type-select { flex: 1 1 auto; min-width: 0; height: 30px !important; font-size: 11px !important; }
+  /* Fila 2: fechas en par, búsqueda a ancho completo */
+  .rep-acc-root .acc-filters-row2 { gap: 6px; }
+  .rep-acc-root .acc-date-field { flex: 1 1 44%; min-width: 0; }
+  .rep-acc-root .acc-date-label { font-size: 9px; }
+  .rep-acc-root .acc-date-box { flex: 1 1 auto; min-width: 0; }
+  .rep-acc-root .acc-date-input { width: 100% !important; height: 30px !important; font-size: 11px !important; padding: 0 24px 0 6px !important; }
+  .rep-acc-root .acc-search-box { flex: 1 1 100%; min-width: 0; height: 30px; padding: 0 8px; }
+  .rep-acc-root .acc-search-inline { font-size: 11px !important; }
+}
+
+@media (max-width: 360px) {
+  .rep-acc-root .acc-period-tab { padding: 5px 2px; font-size: 8.5px; }
+  .rep-acc-root .acc-date-field { flex: 1 1 100%; }
+  .rep-acc-root .acc-date-input { height: 28px !important; font-size: 10.5px !important; }
+  .rep-acc-root .acc-type-select { height: 28px !important; font-size: 10.5px !important; }
+  .rep-acc-root .acc-search-box { height: 28px; }
+  .rep-acc-root .acc-search-inline { font-size: 10.5px !important; }
+}
+
 @media (max-width: 767px) {
   /* Título «Reporte de Cuentas» en una sola línea */
   .rep-acc-root .page-head h1 { font-size: 13px !important; line-height: 1.2 !important; white-space: nowrap; }
